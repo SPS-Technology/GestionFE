@@ -1,0 +1,8 @@
+body {
+    margin-bottom: 70px; /* Ajoutez une marge en bas pour éviter que le pied de page ne chevauche le contenu */
+  }
+  
+  .app-container {
+    min-height: calc(100vh - 110px); /* Calculez la hauteur minimale de votre contenu pour s'adapter à l'écran */
+  }
+  
