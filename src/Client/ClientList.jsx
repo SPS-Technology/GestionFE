@@ -3,50 +3,49 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import Navigation from "../Acceuil/Navigation";
 
-const FournisseurList = () => {
-  const [fournisseurs, setFournisseurs] = useState([]);
-  const [newFournisseur, setNewFournisseur] = useState({
+const ClientList = () => {
+  const [clients, setClients] = useState([]);
+  const [newClient, setNewClient] = useState({
     raison_sociale: "",
     adresse: "",
     tel: "",
     ville: "",
     abreviation: "",
+    zone: "",
   });
 
-  const fetchFournisseurs = async () => {
+  const fetchClients = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/fournisseurs"
-      );
+      const response = await axios.get("http://localhost:8000/api/clients");
       console.log("API Response:", response.data);
-      setFournisseurs(response.data.fournisseurs);
+      setClients(response.data.clients);
     } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs:", error);
+      console.error("Erreur lors de la récupération des clients:", error);
     }
   };
 
   useEffect(() => {
-    fetchFournisseurs();
+    fetchClients();
   }, []);
 
   const handleEdit = (id) => {
-    const existingFournisseur = fournisseurs.find(
-      (fournisseur) => fournisseur.id === id
-    );
+    const existingClient = clients.find((client) => client.id === id);
 
     Swal.fire({
-      title: "Modifier Fournisseur",
+      title: "Modifier Client",
       html:
         `<label for="raison_sociale">Raison Sociale</label>` +
-        `<input type="text" id="raison_sociale" class="swal2-input" value="${existingFournisseur.raison_sociale}">` +
+        `<input type="text" id="raison_sociale" class="swal2-input" value="${existingClient.raison_sociale}">` +
         `<label for="adresse">Adresse</label>` +
-        `<input type="text" id="adresse" class="swal2-input" value="${existingFournisseur.adresse}">` +
+        `<input type="text" id="adresse" class="swal2-input" value="${existingClient.adresse}">` +
         `<label for="tel">Téléphone</label>` +
-        `<input type="text" id="tel" class="swal2-input" value="${existingFournisseur.tel}">` +
+        `<input type="text" id="tel" class="swal2-input" value="${existingClient.tel}">` +
         `<label for="ville">Ville</label>` +
-        `<input type="text" id="ville" class="swal2-input" value="${existingFournisseur.ville}">` +
+        `<input type="text" id="ville" class="swal2-input" value="${existingClient.ville}">` +
         `<label for="abreviation">Abréviation</label>` +
-        `<input type="text" id="abreviation" class="swal2-input" value="${existingFournisseur.abreviation}">`,
+        `<input type="text" id="abreviation" class="swal2-input" value="${existingClient.abreviation}">` +
+        `<label for="zone">Zone</label>` +
+        `<input type="text" id="zone" class="swal2-input" value="${existingClient.zone}">`,
       focusConfirm: false,
       showCancelButton: true, // Affiche le bouton "Annuler"
       cancelButtonText: "Annuler", // Texte du bouton "Annuler"
@@ -57,30 +56,28 @@ const FournisseurList = () => {
           tel: document.getElementById("tel").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
+          zone: document.getElementById("zone").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Fournisseur modifié:", result.value);
+        console.log("Client modifié:", result.value);
         axios
-          .put(`http://localhost:8000/api/fournisseurs/${id}`, result.value)
+          .put(`http://localhost:8000/api/clients/${id}`, result.value)
           .then(() => {
-            fetchFournisseurs();
+            fetchClients();
             Swal.fire({
               icon: "success",
               title: "Succès!",
-              text: "Fournisseur modifié avec succès.",
+              text: "Client modifié avec succès.",
             });
           })
           .catch((error) => {
-            console.error(
-              "Erreur lors de la modification du fournisseur:",
-              error
-            );
+            console.error("Erreur lors de la modification du client:", error);
             Swal.fire({
               icon: "error",
               title: "Erreur!",
-              text: "Échec de la modification du fournisseur.",
+              text: "Échec de la modification du client.",
             });
           });
       } else {
@@ -91,27 +88,27 @@ const FournisseurList = () => {
 
   const handleDelete = (id) => {
     const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
+      "Êtes-vous sûr de vouloir supprimer ce client ?"
     );
 
     if (isConfirmed) {
-      console.log(`Suppression confirmée pour l'ID du fournisseur ${id}`);
+      console.log(`Suppression confirmée pour l'ID du client ${id}`);
       axios
-        .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+        .delete(`http://localhost:8000/api/clients/${id}`)
         .then(() => {
-          fetchFournisseurs();
+          fetchClients();
           Swal.fire({
             icon: "success",
             title: "Succès!",
-            text: "Fournisseur supprimé avec succès.",
+            text: "Client supprimé avec succès.",
           });
         })
         .catch((error) => {
-          console.error("Erreur lors de la suppression du fournisseur:", error);
+          console.error("Erreur lors de la suppression du client:", error);
           Swal.fire({
             icon: "error",
             title: "Erreur!",
-            text: "Échec de la suppression du fournisseur.",
+            text: "Échec de la suppression du client.",
           });
         });
     } else {
@@ -119,9 +116,9 @@ const FournisseurList = () => {
     }
   };
 
-  const handleAddFournisseur = () => {
+  const handleAddClient = () => {
     Swal.fire({
-      title: "Ajouter Fournisseur",
+      title: "Ajouter Client",
       html:
         '<label for="raison_sociale">Raison Sociale</label>' +
         '<input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">' +
@@ -132,12 +129,13 @@ const FournisseurList = () => {
         '<label for="ville">Ville</label>' +
         '<input type="text" id="ville" class="swal2-input" placeholder="Ville">' +
         '<label for="abreviation">Abréviation</label>' +
-        '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">',
+        '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">' +
+        '<label for="zone">Zone</label>' +
+        '<input type="text" id="zone" class="swal2-input" placeholder="Zone">',
       confirmButtonText: "ajouter",
       focusConfirm: false,
       showCancelButton: true, // Affiche le bouton "Annuler"
       cancelButtonText: "Annuler", // Texte du bouton "Annuler"
-
       preConfirm: () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
@@ -145,27 +143,28 @@ const FournisseurList = () => {
           tel: document.getElementById("tel").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
+          zone: document.getElementById("zone").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Nouveau fournisseur:", result.value);
+        console.log("Nouveau client:", result.value);
         axios
-          .post("http://localhost:8000/api/fournisseurs", result.value)
+          .post("http://localhost:8000/api/clients", result.value)
           .then(() => {
-            fetchFournisseurs();
+            fetchClients();
             Swal.fire({
               icon: "success",
               title: "Succès!",
-              text: "Fournisseur ajouté avec succès.",
+              text: "Client ajouté avec succès.",
             });
           })
           .catch((error) => {
-            console.error("Erreur lors de l'ajout du fournisseur:", error);
+            console.error("Erreur lors de l'ajout du client:", error);
             Swal.fire({
               icon: "error",
               title: "Erreur!",
-              text: "Échec de l'ajout du fournisseur.",
+              text: "Échec de l'ajout du client.",
             });
           });
       }
@@ -175,12 +174,11 @@ const FournisseurList = () => {
   return (
     <div>
       <Navigation />
-
-      <h2>Liste des Fournisseurs</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddFournisseur}>
-        Ajouter Fournisseur
+      <h2>Liste des Clients</h2>
+      <button className="btn btn-primary mb-3" onClick={handleAddClient}>
+        Ajouter Client
       </button>
-      {fournisseurs && fournisseurs.length > 0 ? (
+      {clients && clients.length > 0 ? (
         <table className="table">
           <thead>
             <tr>
@@ -190,28 +188,30 @@ const FournisseurList = () => {
               <th>Téléphone</th>
               <th>Ville</th>
               <th>Abréviation</th>
+              <th>Zone</th>
               <th>Action</th>
             </tr>
           </thead>
           <tbody>
-            {fournisseurs.map((fournisseur) => (
-              <tr key={fournisseur.id}>
-                <td>{fournisseur.id}</td>
-                <td>{fournisseur.raison_sociale}</td>
-                <td>{fournisseur.adresse}</td>
-                <td>{fournisseur.tel}</td>
-                <td>{fournisseur.ville}</td>
-                <td>{fournisseur.abreviation}</td>
+            {clients.map((client) => (
+              <tr key={client.id}>
+                <td>{client.id}</td>
+                <td>{client.raison_sociale}</td>
+                <td>{client.adresse}</td>
+                <td>{client.tel}</td>
+                <td>{client.ville}</td>
+                <td>{client.abreviation}</td>
+                <td>{client.zone}</td>
                 <td>
                   <button
                     className="btn btn-warning ms-2"
-                    onClick={() => handleEdit(fournisseur.id)}
+                    onClick={() => handleEdit(client.id)}
                   >
                     <i className="fas fa-edit"></i>
                   </button>
                   <button
                     className="btn btn-danger"
-                    onClick={() => handleDelete(fournisseur.id)}
+                    onClick={() => handleDelete(client.id)}
                   >
                     <i className="fas fa-minus-circle"></i>
                   </button>
@@ -221,10 +221,10 @@ const FournisseurList = () => {
           </tbody>
         </table>
       ) : (
-        <p>Aucun fournisseur disponible</p>
+        <p>Aucun client disponible</p>
       )}
     </div>
   );
 };
 
-export default FournisseurList;
+export default ClientList;

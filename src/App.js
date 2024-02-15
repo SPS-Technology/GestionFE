@@ -1,22 +1,21 @@
+// App.js
 import React from 'react';
-import Navbar from './Acceuil/Navbar';
-import Footer from './Acceuil/Footer';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Navigation from './Acceuil/Navigation';
 import FournisseurList from './Fournisseur/FournisseurList';
-
+import ClientList from './Client/ClientList';
+import ProduitList from './Produit/ProduitList';
 
 const App = () => {
   return (
-    <div>
-      <Navbar />
-      <div className="container-fluid">
-        <div className="row">
-          <Footer />
-          <div className="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-            <FournisseurList />
-          </div>
-        </div>
-      </div>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Navigation />} />
+        <Route path="/fournisseurs" element={<FournisseurList />} />
+        <Route path="/clients" element={<ClientList />} />
+        <Route path="/produits" element={<ProduitList />} />
+      </Routes>
+    </Router>
   );
 }
 
