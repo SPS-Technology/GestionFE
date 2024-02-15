@@ -4,6 +4,13 @@ import Swal from "sweetalert2";
 
 const FournisseurList = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [newFournisseur, setNewFournisseur] = useState({
+    raison_sociale: "",
+    adresse: "",
+    tel: "",
+    ville: "",
+    abreviation: "",
+  });
 
   const fetchFournisseurs = async () => {
     try {
@@ -11,7 +18,7 @@ const FournisseurList = () => {
       console.log('API Response:', response.data);
       setFournisseurs(response.data.fournisseurs);
     } catch (error) {
-      console.error('Error fetching fournisseurs:', error);
+      console.error('Erreur lors de la récupération des fournisseurs:', error);
     }
   };
 
@@ -20,48 +27,136 @@ const FournisseurList = () => {
   }, []);
 
   const handleEdit = (id) => {
-    console.log(`Edit button clicked for Fournisseur ID ${id}`);
+    const existingFournisseur = fournisseurs.find(fournisseur => fournisseur.id === id);
+
+    Swal.fire({
+      title: 'Modifier Fournisseur',
+      html:
+        `<label for="raison_sociale">Raison Sociale</label>` +
+        `<input type="text" id="raison_sociale" class="swal2-input" value="${existingFournisseur.raison_sociale}">` +
+        `<label for="adresse">Adresse</label>` +
+        `<input type="text" id="adresse" class="swal2-input" value="${existingFournisseur.adresse}">` +
+        `<label for="tel">Téléphone</label>` +
+        `<input type="text" id="tel" class="swal2-input" value="${existingFournisseur.tel}">` +
+        `<label for="ville">Ville</label>` +
+        `<input type="text" id="ville" class="swal2-input" value="${existingFournisseur.ville}">` +
+        `<label for="abreviation">Abréviation</label>` +
+        `<input type="text" id="abreviation" class="swal2-input" value="${existingFournisseur.abreviation}">`,
+      focusConfirm: false,
+      preConfirm: () => {
+        return {
+          raison_sociale: document.getElementById('raison_sociale').value,
+          adresse: document.getElementById('adresse').value,
+          tel: document.getElementById('tel').value,
+          ville: document.getElementById('ville').value,
+          abreviation: document.getElementById('abreviation').value,
+        };
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        console.log('Fournisseur modifié:', result.value);
+        axios.put(`http://localhost:8000/api/fournisseurs/${id}`, result.value)
+          .then(() => {
+            fetchFournisseurs();
+            Swal.fire({
+              icon: 'success',
+              title: 'Succès!',
+              text: 'Fournisseur modifié avec succès.',
+            });
+          })
+          .catch((error) => {
+            console.error('Erreur lors de la modification du fournisseur:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Erreur!',
+              text: 'Échec de la modification du fournisseur.',
+            });
+          });
+      }
+    });
   };
 
   const handleDelete = (id) => {
-    const isConfirmed = window.confirm("Are you sure you want to delete this fournisseur?");
-    
+    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ce fournisseur ?");
+
     if (isConfirmed) {
-      // Perform the deletion logic here
-      console.log(`Delete confirmed for Fournisseur ID ${id}`);
-      
-      // Example: Make a DELETE request to your API
+      console.log(`Suppression confirmée pour l'ID du fournisseur ${id}`);
       axios.delete(`http://localhost:8000/api/fournisseurs/${id}`)
         .then(() => {
-          // If successful, update the state by fetching the updated list of fournisseurs
           fetchFournisseurs();
-
-          // Show success message using Swal
           Swal.fire({
             icon: 'success',
-            title: 'Success!',
-            text: 'Fournisseur supprimé avec succes .',
+            title: 'Succès!',
+            text: 'Fournisseur supprimé avec succès.',
           });
         })
         .catch((error) => {
-          console.error('Error deleting fournisseur:', error);
-
-          // Show error message using Swal
+          console.error('Erreur lors de la suppression du fournisseur:', error);
           Swal.fire({
             icon: 'error',
-            title: 'Error!',
-            text: 'Failed to delete fournisseur.',
+            title: 'Erreur!',
+            text: 'Échec de la suppression du fournisseur.',
           });
         });
     } else {
-      // Handle the case where the user cancels the delete operation
-      console.log("Delete canceled");
+      console.log("Suppression annulée");
     }
+  };
+
+  const handleAddFournisseur = () => {
+    Swal.fire({
+      title: 'Ajouter Fournisseur',
+      html:
+        '<label for="raison_sociale">Raison Sociale</label>' +
+        '<input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">' +
+        '<label for="adresse">Adresse</label>' +
+        '<input type="text" id="adresse" class="swal2-input" placeholder="Adresse">' +
+        '<label for="tel">Téléphone</label>' +
+        '<input type="text" id="tel" class="swal2-input" placeholder="Téléphone">' +
+        '<label for="ville">Ville</label>' +
+        '<input type="text" id="ville" class="swal2-input" placeholder="Ville">' +
+        '<label for="abreviation">Abréviation</label>' +
+        '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">',
+      focusConfirm: false,
+      preConfirm: () => {
+        return {
+          raison_sociale: document.getElementById('raison_sociale').value,
+          adresse: document.getElementById('adresse').value,
+          tel: document.getElementById('tel').value,
+          ville: document.getElementById('ville').value,
+          abreviation: document.getElementById('abreviation').value,
+        };
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        console.log('Nouveau fournisseur:', result.value);
+        axios.post('http://localhost:8000/api/fournisseurs', result.value)
+          .then(() => {
+            fetchFournisseurs();
+            Swal.fire({
+              icon: 'success',
+              title: 'Succès!',
+              text: 'Fournisseur ajouté avec succès.',
+            });
+          })
+          .catch((error) => {
+            console.error('Erreur lors de l\'ajout du fournisseur:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Erreur!',
+              text: 'Échec de l\'ajout du fournisseur.',
+            });
+          });
+      }
+    });
   };
 
   return (
     <div>
       <h2>Liste des Fournisseurs</h2>
+      <button className="btn btn-primary mb-3" onClick={handleAddFournisseur}>
+        Ajouter Fournisseur
+      </button>
       {fournisseurs && fournisseurs.length > 0 ? (
         <table className="table">
           <thead>
@@ -86,16 +181,16 @@ const FournisseurList = () => {
                 <td>{fournisseur.abreviation}</td>
                 <td>
                   <button
-                    className="btn btn-warning ms-2" 
+                    className="btn btn-warning ms-2"
                     onClick={() => handleEdit(fournisseur.id)}
                   >
-                   <i className="fas fa-edit"></i>
+                    <i className="fas fa-edit"></i>
                   </button>
                   <button
                     className="btn btn-danger"
                     onClick={() => handleDelete(fournisseur.id)}
                   >
-                   <i className="fas fa-minus-circle"></i>
+                    <i className="fas fa-minus-circle"></i>
                   </button>
                 </td>
               </tr>
@@ -103,7 +198,7 @@ const FournisseurList = () => {
           </tbody>
         </table>
       ) : (
-        <p>No fournisseurs available</p>
+        <p>Aucun fournisseur disponible</p>
       )}
     </div>
   );
