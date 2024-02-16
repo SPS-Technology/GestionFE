@@ -1,11 +1,12 @@
-/* Font Family */
-body {
-    font-family: "Roboto", sans-serif;
-    font-size: 14px;
-    font-weight: 400;
-    line-height: 1.6em;
+.bg-image-vertical {
+  position: relative;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-position: right center;
+  background-size: auto 100%;
   }
   
+<<<<<<< HEAD
   /* Colors */
   body {
     color: #606060;
@@ -248,3 +249,9 @@ body {
     color: #4285F4 !important;
   }
   
+=======
+  @media (min-width: 1025px) {
+  .h-custom-2 {
+  height: 100%;
+  } }
+>>>>>>> ef6dc374281ed2bd40a5129587370a34df6261a3
