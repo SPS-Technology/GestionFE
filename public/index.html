@@ -2,7 +2,6 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta
@@ -16,19 +15,16 @@
       crossorigin="anonymous"
     />
     <script
-    src="https://kit.fontawesome.com/f0841bede9.js"
-    crossorigin="anonymous"
-  ></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.css" />
-  
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
-  
+      src="https://kit.fontawesome.com/f0841bede9.js"
+      crossorigin="anonymous"
+    ></script>
+
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>React App</title>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-   
   </body>
 </html>

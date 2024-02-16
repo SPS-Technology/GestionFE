@@ -130,14 +130,17 @@ const ProduitList = () => {
         `<label for="Quantite">Quantité</label>` +
         `<input type="text" id="Quantite" class="swal2-input" placeholder="Quantité">` +
         `<label for="typeQuantite">Type Quantité</label>` +
-        `<input type="text" id="typeQuantite" class="swal2-input" placeholder="Type Quantité">` +
+        `<select id="typeQuantite" class="swal2-input">` +
+        `<option value="kg">kg</option>` +
+        `<option value="unitaire">unitaire</option>` +
+        `</select>` +
         `<label for="calibre">Calibre</label>` +
         `<input type="text" id="calibre" class="swal2-input" placeholder="Calibre">` +
         `<label for="fournisseur">Fournisseur</label>` +
         `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
           (option) => `<option value="${option.value}">${option.label}</option>`
         )}</select>`,
-        confirmButtonText: "ajouter",
+      confirmButtonText: "ajouter",
       focusConfirm: false,
       showCancelButton: true,
       cancelButtonText: "Annuler",

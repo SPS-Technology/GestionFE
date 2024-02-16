@@ -133,11 +133,10 @@ const FournisseurList = () => {
         '<input type="text" id="ville" class="swal2-input" placeholder="Ville">' +
         '<label for="abreviation">Abréviation</label>' +
         '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">',
-      confirmButtonText: "ajouter",
+      confirmButtonText: "Ajouter",
       focusConfirm: false,
-      showCancelButton: true, // Affiche le bouton "Annuler"
-      cancelButtonText: "Annuler", // Texte du bouton "Annuler"
-
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
       preConfirm: () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
@@ -151,7 +150,12 @@ const FournisseurList = () => {
       if (result.isConfirmed) {
         console.log("Nouveau fournisseur:", result.value);
         axios
-          .post("http://localhost:8000/api/fournisseurs", result.value)
+          .post("http://localhost:8000/api/fournisseurs", result.value, {
+            withCredentials: true,
+            headers: {
+              'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+            },
+          })
           .then(() => {
             fetchFournisseurs();
             Swal.fire({
@@ -171,6 +175,7 @@ const FournisseurList = () => {
       }
     });
   };
+  
 
   return (
     <div>

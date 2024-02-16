@@ -16,7 +16,7 @@ const ClientList = () => {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/clients");
+      const response = await axios.get("http://localhost:8000/api/clients", { withCredentials: true });
       console.log("API Response:", response.data);
       setClients(response.data.clients);
     } catch (error) {
@@ -63,7 +63,7 @@ const ClientList = () => {
       if (result.isConfirmed) {
         console.log("Client modifié:", result.value);
         axios
-          .put(`http://localhost:8000/api/clients/${id}`, result.value)
+          .put(`http://localhost:8000/api/clients/${id}`, result.value, { withCredentials: true })
           .then(() => {
             fetchClients();
             Swal.fire({
@@ -150,7 +150,7 @@ const ClientList = () => {
       if (result.isConfirmed) {
         console.log("Nouveau client:", result.value);
         axios
-          .post("http://localhost:8000/api/clients", result.value)
+          .post("http://localhost:8000/api/clients", result.value, { withCredentials: true })
           .then(() => {
             fetchClients();
             Swal.fire({

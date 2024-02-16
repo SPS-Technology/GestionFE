@@ -1,22 +1,28 @@
-// App.js
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './AuthContext';
 import Navigation from './Acceuil/Navigation';
 import FournisseurList from './Fournisseur/FournisseurList';
 import ClientList from './Client/ClientList';
 import ProduitList from './Produit/ProduitList';
+import Login from './Login/Login';
+
 
 const App = () => {
+ 
   return (
-    <Router>
+    <div>
+    <AuthProvider>
       <Routes>
+      <Route path="/login" element={<Login />} />
         <Route path="/" element={<Navigation />} />
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
         <Route path="/produits" element={<ProduitList />} />
       </Routes>
-    </Router>
+      </AuthProvider>
+    </div>
   );
-}
+};
 
 export default App;
