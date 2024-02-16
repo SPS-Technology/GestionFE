@@ -8,7 +8,6 @@ body {
   
   /* Colors */
   body {
-    background: linear-gradient(45deg, rgba(66, 183, 245, 0.8) 0%, rgba(66, 245, 189, 0.4) 100%);
     color: #606060;
   }
   
@@ -221,10 +220,6 @@ body {
     font-weight: 700;
     text-transform: uppercase;
   }
-  
-  .form-content {}
-  
-  .form-footer {}
   
   .pen-footer {
     display: flex;

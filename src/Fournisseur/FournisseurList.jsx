@@ -5,23 +5,20 @@ import Navigation from "../Acceuil/Navigation";
 
 const FournisseurList = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
-  const [newFournisseur, setNewFournisseur] = useState({
-    raison_sociale: "",
-    adresse: "",
-    tel: "",
-    ville: "",
-    abreviation: "",
-  });
+  const [users, setUsers] = useState([]);
 
   const fetchFournisseurs = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/fournisseurs"
-      );
+      const response = await axios.get("http://localhost:8000/api/fournisseurs");
+
       console.log("API Response:", response.data);
-      setFournisseurs(response.data.fournisseurs);
+
+      setFournisseurs(response.data.fournisseur);
+
+      const userResponse = await axios.get("http://localhost:8000/api/user");
+      setUsers(userResponse.data.users);
     } catch (error) {
-      console.error("Erreur lors de la récupération des fournisseurs:", error);
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -34,34 +31,63 @@ const FournisseurList = () => {
       (fournisseur) => fournisseur.id === id
     );
 
+
     Swal.fire({
       title: "Modifier Fournisseur",
-      html:
-        `<label for="raison_sociale">Raison Sociale</label>` +
-        `<input type="text" id="raison_sociale" class="swal2-input" value="${existingFournisseur.raison_sociale}">` +
-        `<label for="adresse">Adresse</label>` +
-        `<input type="text" id="adresse" class="swal2-input" value="${existingFournisseur.adresse}">` +
-        `<label for="tel">Téléphone</label>` +
-        `<input type="text" id="tel" class="swal2-input" value="${existingFournisseur.tel}">` +
-        `<label for="ville">Ville</label>` +
-        `<input type="text" id="ville" class="swal2-input" value="${existingFournisseur.ville}">` +
-        `<label for="abreviation">Abréviation</label>` +
-        `<input type="text" id="abreviation" class="swal2-input" value="${existingFournisseur.abreviation}">`,
+      html: `
+        <label for="raison_sociale">Raison Sociale</label>
+        <input type="text" id="raison_sociale" class="swal2-input" value="${
+          existingFournisseur.raison_sociale
+        }">
+
+        <label for="adresse">Adresse</label>
+        <input type="text" id="adresse" class="swal2-input" value="${
+          existingFournisseur.adresse
+        }">
+
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" value="${
+          existingFournisseur.tele
+        }">
+
+        <label for="ville">Ville</label>
+        <input type="text" id="ville" class="swal2-input" value="${
+          existingFournisseur.ville
+        }">
+
+        <label for="abreviation">Abréviation</label>
+        <input type="text" id="abreviation" class="swal2-input" value="${
+          existingFournisseur.abreviation
+        }">
+
+        <label for="zone">Zone</label>
+        <input type="text" id="zone" class="swal2-input" value="${
+          existingFournisseur.zone
+        }">
+
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" value="${
+          existingFournisseur.tele
+        }">
+
+      `,
+      confirmButtonText: "Modifer",
       focusConfirm: false,
-      showCancelButton: true, // Affiche le bouton "Annuler"
-      cancelButtonText: "Annuler", // Texte du bouton "Annuler"
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
       preConfirm: () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
           adresse: document.getElementById("adresse").value,
-          tel: document.getElementById("tel").value,
+          tele: document.getElementById("tele").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
+          zone: document.getElementById("zone").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Fournisseur modifié:", result.value);
         axios
           .put(`http://localhost:8000/api/fournisseurs/${id}`, result.value)
           .then(() => {
@@ -87,15 +113,13 @@ const FournisseurList = () => {
         console.log("Modification annulée");
       }
     });
-  };
-
+  }
   const handleDelete = (id) => {
     const isConfirmed = window.confirm(
       "Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
     );
 
     if (isConfirmed) {
-      console.log(`Suppression confirmée pour l'ID du fournisseur ${id}`);
       axios
         .delete(`http://localhost:8000/api/fournisseurs/${id}`)
         .then(() => {
@@ -120,19 +144,32 @@ const FournisseurList = () => {
   };
 
   const handleAddFournisseur = () => {
+    
     Swal.fire({
       title: "Ajouter Fournisseur",
-      html:
-        '<label for="raison_sociale">Raison Sociale</label>' +
-        '<input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">' +
-        '<label for="adresse">Adresse</label>' +
-        '<input type="text" id="adresse" class="swal2-input" placeholder="Adresse">' +
-        '<label for="tel">Téléphone</label>' +
-        '<input type="text" id="tel" class="swal2-input" placeholder="Téléphone">' +
-        '<label for="ville">Ville</label>' +
-        '<input type="text" id="ville" class="swal2-input" placeholder="Ville">' +
-        '<label for="abreviation">Abréviation</label>' +
-        '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">',
+      html: `
+        <label for="raison_sociale">Raison Sociale</label>
+        <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
+        
+        <label for="adresse">Adresse</label>
+        <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
+        
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
+        
+        <label for="ville">Ville</label>
+        <input type="text" id="ville" class="swal2-input" placeholder="Ville">
+        
+        <label for="abreviation">Abréviation</label>
+        <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
+        
+        <label for="zone">Zone</label>
+        <input type="text" id="zone" class="swal2-input" placeholder="Zone">
+        
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
+    
+      `,
       confirmButtonText: "Ajouter",
       focusConfirm: false,
       showCancelButton: true,
@@ -141,19 +178,22 @@ const FournisseurList = () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
           adresse: document.getElementById("adresse").value,
-          tel: document.getElementById("tel").value,
+          tele: document.getElementById("tele").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
+          zone: document.getElementById("zone").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Nouveau fournisseur:", result.value);
         axios
           .post("http://localhost:8000/api/fournisseurs", result.value, {
             withCredentials: true,
             headers: {
-              'X-CSRF-TOKEN': document.head.querySelector('meta[name="csrf-token"]').content,
+              "X-CSRF-TOKEN": document.head.querySelector(
+                'meta[name="csrf-token"]'
+              ).content,
             },
           })
           .then(() => {
@@ -175,12 +215,11 @@ const FournisseurList = () => {
       }
     });
   };
-  
 
   return (
     <div>
       <Navigation />
-
+  
       <h2>Liste des Fournisseurs</h2>
       <button className="btn btn-primary mb-3" onClick={handleAddFournisseur}>
         Ajouter Fournisseur
@@ -195,6 +234,8 @@ const FournisseurList = () => {
               <th>Téléphone</th>
               <th>Ville</th>
               <th>Abréviation</th>
+              <th>Zone</th>
+              <th>User</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -204,9 +245,11 @@ const FournisseurList = () => {
                 <td>{fournisseur.id}</td>
                 <td>{fournisseur.raison_sociale}</td>
                 <td>{fournisseur.adresse}</td>
-                <td>{fournisseur.tel}</td>
+                <td>{fournisseur.tele}</td>
                 <td>{fournisseur.ville}</td>
                 <td>{fournisseur.abreviation}</td>
+                <td>{fournisseur.zone}</td>
+                <td>{fournisseur.user_id}</td>
                 <td>
                   <button
                     className="btn btn-warning ms-2"
@@ -230,6 +273,6 @@ const FournisseurList = () => {
       )}
     </div>
   );
-};
-
+  
+      }
 export default FournisseurList;

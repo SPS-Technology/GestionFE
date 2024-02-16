@@ -89,6 +89,11 @@ const Navigation = () => {
                   Commands
                 </a>
               </li>
+              <li className="nav-item">
+                <a className="nav-link" href="/fournisseurs">
+                fournisseurs
+                </a>
+              </li>
             </ul>
             <div>
             <button
