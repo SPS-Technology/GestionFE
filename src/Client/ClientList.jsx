@@ -5,22 +5,20 @@ import Navigation from "../Acceuil/Navigation";
 
 const ClientList = () => {
   const [clients, setClients] = useState([]);
-  const [newClient, setNewClient] = useState({
-    raison_sociale: "",
-    adresse: "",
-    tel: "",
-    ville: "",
-    abreviation: "",
-    zone: "",
-  });
+  const [users, setUsers] = useState([]);
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/clients", { withCredentials: true });
+      const response = await axios.get("http://localhost:8000/api/clients");
+      
       console.log("API Response:", response.data);
-      setClients(response.data.clients);
+      setClients(response.data.client);
+
+      
+      const userResponse = await axios.get("http://localhost:8000/api/user");
+      setUsers(userResponse.data.users);
     } catch (error) {
-      console.error("Erreur lors de la récupération des clients:", error);
+      console.error("Error fetching data:", error);
     }
   };
 
@@ -29,41 +27,63 @@ const ClientList = () => {
   }, []);
 
   const handleEdit = (id) => {
-    const existingClient = clients.find((client) => client.id === id);
+    const existingClient = clients.find(
+      (client) => client.id === id
+    );
+
 
     Swal.fire({
       title: "Modifier Client",
-      html:
-        `<label for="raison_sociale">Raison Sociale</label>` +
-        `<input type="text" id="raison_sociale" class="swal2-input" value="${existingClient.raison_sociale}">` +
-        `<label for="adresse">Adresse</label>` +
-        `<input type="text" id="adresse" class="swal2-input" value="${existingClient.adresse}">` +
-        `<label for="tel">Téléphone</label>` +
-        `<input type="text" id="tel" class="swal2-input" value="${existingClient.tel}">` +
-        `<label for="ville">Ville</label>` +
-        `<input type="text" id="ville" class="swal2-input" value="${existingClient.ville}">` +
-        `<label for="abreviation">Abréviation</label>` +
-        `<input type="text" id="abreviation" class="swal2-input" value="${existingClient.abreviation}">` +
-        `<label for="zone">Zone</label>` +
-        `<input type="text" id="zone" class="swal2-input" value="${existingClient.zone}">`,
+      html: `
+        <label for="raison_sociale">Raison Sociale</label>
+        <input type="text" id="raison_sociale" class="swal2-input" value="${existingClient.raison_sociale
+        }">
+
+        <label for="adresse">Adresse</label>
+        <input type="text" id="adresse" class="swal2-input" value="${existingClient.adresse
+        }">
+
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" value="${existingClient.tele
+        }">
+
+        <label for="ville">Ville</label>
+        <input type="text" id="ville" class="swal2-input" value="${existingClient.ville
+        }">
+
+        <label for="abreviation">Abréviation</label>
+        <input type="text" id="abreviation" class="swal2-input" value="${existingClient.abreviation
+        }">
+
+        <label for="zone">Zone</label>
+        <input type="text" id="zone" class="swal2-input" value="${existingClient.zone
+        }"
+
+        <label for="user_id">User</label>
+        <input type="text" id="user_id" class="swal2-input" value="${
+          existingClient.user_id
+        }">
+
+      `,
+      confirmButtonText: "Modifer",
       focusConfirm: false,
-      showCancelButton: true, // Affiche le bouton "Annuler"
-      cancelButtonText: "Annuler", // Texte du bouton "Annuler"
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
       preConfirm: () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
           adresse: document.getElementById("adresse").value,
-          tel: document.getElementById("tel").value,
+          tele: document.getElementById("tele").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
           zone: document.getElementById("zone").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Client modifié:", result.value);
         axios
-          .put(`http://localhost:8000/api/clients/${id}`, result.value, { withCredentials: true })
+          .put(`http://localhost:8000/api/clients/${id}`, result.value)
           .then(() => {
             fetchClients();
             Swal.fire({
@@ -73,7 +93,10 @@ const ClientList = () => {
             });
           })
           .catch((error) => {
-            console.error("Erreur lors de la modification du client:", error);
+            console.error(
+              "Erreur lors de la modification du client:",
+              error
+            );
             Swal.fire({
               icon: "error",
               title: "Erreur!",
@@ -84,7 +107,7 @@ const ClientList = () => {
         console.log("Modification annulée");
       }
     });
-  };
+  }
 
   const handleDelete = (id) => {
     const isConfirmed = window.confirm(
@@ -92,7 +115,6 @@ const ClientList = () => {
     );
 
     if (isConfirmed) {
-      console.log(`Suppression confirmée pour l'ID du client ${id}`);
       axios
         .delete(`http://localhost:8000/api/clients/${id}`)
         .then(() => {
@@ -119,38 +141,55 @@ const ClientList = () => {
   const handleAddClient = () => {
     Swal.fire({
       title: "Ajouter Client",
-      html:
-        '<label for="raison_sociale">Raison Sociale</label>' +
-        '<input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">' +
-        '<label for="adresse">Adresse</label>' +
-        '<input type="text" id="adresse" class="swal2-input" placeholder="Adresse">' +
-        '<label for="tel">Téléphone</label>' +
-        '<input type="text" id="tel" class="swal2-input" placeholder="Téléphone">' +
-        '<label for="ville">Ville</label>' +
-        '<input type="text" id="ville" class="swal2-input" placeholder="Ville">' +
-        '<label for="abreviation">Abréviation</label>' +
-        '<input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">' +
-        '<label for="zone">Zone</label>' +
-        '<input type="text" id="zone" class="swal2-input" placeholder="Zone">',
-      confirmButtonText: "ajouter",
+      html: `
+        <label for="raison_sociale">Raison Sociale</label>
+        <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
+        
+        <label for="adresse">Adresse</label>
+        <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
+        
+        <label for="tele">Téléphone</label>
+        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
+        
+        <label for="ville">Ville</label>
+        <input type="text" id="ville" class="swal2-input" placeholder="Ville">
+        
+        <label for="abreviation">Abréviation</label>
+        <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
+        
+        <label for="zone">Zone</label>
+        <input type="text" id="zone" class="swal2-input" placeholder="Zone">
+
+        <label for="user_id">User</label>
+        <input type="text" id="user_id" class="swal2-input" placeholder="User">
+    
+      `,
+      confirmButtonText: "Ajouter",
       focusConfirm: false,
-      showCancelButton: true, // Affiche le bouton "Annuler"
-      cancelButtonText: "Annuler", // Texte du bouton "Annuler"
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
       preConfirm: () => {
         return {
           raison_sociale: document.getElementById("raison_sociale").value,
           adresse: document.getElementById("adresse").value,
-          tel: document.getElementById("tel").value,
+          tele: document.getElementById("tele").value,
           ville: document.getElementById("ville").value,
           abreviation: document.getElementById("abreviation").value,
           zone: document.getElementById("zone").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
       if (result.isConfirmed) {
-        console.log("Nouveau client:", result.value);
         axios
-          .post("http://localhost:8000/api/clients", result.value, { withCredentials: true })
+          .post("http://localhost:8000/api/clients", result.value, {
+            withCredentials: true,
+            headers: {
+              "X-CSRF-TOKEN": document.head.querySelector(
+                'meta[name="csrf-token"]'
+              ).content,
+            },
+          })
           .then(() => {
             fetchClients();
             Swal.fire({
@@ -170,10 +209,11 @@ const ClientList = () => {
       }
     });
   };
-
+  
   return (
     <div>
       <Navigation />
+
       <h2>Liste des Clients</h2>
       <button className="btn btn-primary mb-3" onClick={handleAddClient}>
         Ajouter Client
@@ -189,6 +229,7 @@ const ClientList = () => {
               <th>Ville</th>
               <th>Abréviation</th>
               <th>Zone</th>
+              <th>User</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -198,10 +239,11 @@ const ClientList = () => {
                 <td>{client.id}</td>
                 <td>{client.raison_sociale}</td>
                 <td>{client.adresse}</td>
-                <td>{client.tel}</td>
+                <td>{client.tele}</td>
                 <td>{client.ville}</td>
                 <td>{client.abreviation}</td>
                 <td>{client.zone}</td>
+                <td>{client.user.name}</td>
                 <td>
                   <button
                     className="btn btn-warning ms-2"

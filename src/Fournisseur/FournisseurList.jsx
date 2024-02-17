@@ -10,22 +10,24 @@ const FournisseurList = () => {
   const fetchFournisseurs = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/fournisseurs");
-
+  
       console.log("API Response:", response.data);
-
+  
       setFournisseurs(response.data.fournisseur);
-
+  
       const userResponse = await axios.get("http://localhost:8000/api/user");
       setUsers(userResponse.data.users);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
+  
 
   useEffect(() => {
     fetchFournisseurs();
   }, []);
 
+  
   const handleEdit = (id) => {
     const existingFournisseur = fournisseurs.find(
       (fournisseur) => fournisseur.id === id
@@ -65,9 +67,9 @@ const FournisseurList = () => {
           existingFournisseur.zone
         }">
 
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${
-          existingFournisseur.tele
+        <label for="user_id">User</label>
+        <input type="text" id="user_id" class="swal2-input" value="${
+          existingFournisseur.user_id
         }">
 
       `,
@@ -145,6 +147,7 @@ const FournisseurList = () => {
 
   const handleAddFournisseur = () => {
     
+    
     Swal.fire({
       title: "Ajouter Fournisseur",
       html: `
@@ -166,9 +169,8 @@ const FournisseurList = () => {
         <label for="zone">Zone</label>
         <input type="text" id="zone" class="swal2-input" placeholder="Zone">
         
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
-    
+        <label for="user_id">User</label>
+        <input type="text" id="user_id" class="swal2-input" placeholder="User">
       `,
       confirmButtonText: "Ajouter",
       focusConfirm: false,
@@ -249,7 +251,7 @@ const FournisseurList = () => {
                 <td>{fournisseur.ville}</td>
                 <td>{fournisseur.abreviation}</td>
                 <td>{fournisseur.zone}</td>
-                <td>{fournisseur.user_id}</td>
+                <td>{fournisseur.user.name}</td>
                 <td>
                   <button
                     className="btn btn-warning ms-2"
