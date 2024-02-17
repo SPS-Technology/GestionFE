@@ -12,12 +12,12 @@ const ProduitList = () => {
       const produitsResponse = await axios.get(
         "http://localhost:8000/api/produits"
       );
-      setProduits(produitsResponse.data.produits);
+      setProduits(produitsResponse.data.produit);
 
       const fournisseursResponse = await axios.get(
         "http://localhost:8000/api/fournisseurs"
       );
-      setFournisseurs(fournisseursResponse.data.fournisseurs);
+      setFournisseurs(fournisseursResponse.data.fournisseur);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -38,31 +38,27 @@ const ProduitList = () => {
     Swal.fire({
       title: "Modifier Produit",
       html:
-        `<label for="nom">Nom</label>` +
-        `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
-        `<label for="Quantite">Quantité</label>` +
-        `<input type="text" id="Quantite" class="swal2-input" value="${existingProduit.Quantite}">` +
-        `<label for="typeQuantite">Type Quantité</label>` +
-        `<input type="text" id="typeQuantite" class="swal2-input" value="${existingProduit.typeQuantite}">` +
-        `<label for="calibre">Calibre</label>` +
-        `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
-        `<label for="fournisseur">Fournisseur</label>` +
-        `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
-          (option) =>
-            `<option value="${option.value}" ${
-              option.value === existingProduit.idFournisseur ? "selected" : ""
-            }>${option.label}</option>`
-        )}</select>`,
+      `<label for="nom">Nom</label>` +
+      `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
+      `<label for="type_quantite">Type Quantité</label>` +
+      `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
+      `<label for="calibre">Calibre</label>` +
+      `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
+      `<label for="user_id">User</label>` +
+      `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
+      `<label for="fournisseur_id">Fournisseur</label>` +
+      `<input type="text" id="fournisseur_id" class="swal2-input" value="${existingProduit.fournisseur_id}">`
+        ,
       focusConfirm: false,
       showCancelButton: true,
       cancelButtonText: "Annuler",
       preConfirm: () => {
         return {
           nom: document.getElementById("nom").value,
-          Quantite: document.getElementById("Quantite").value,
-          typeQuantite: document.getElementById("typeQuantite").value,
+          type_quantite: document.getElementById("type_quantite").value,
           calibre: document.getElementById("calibre").value,
-          idFournisseur: document.getElementById("fournisseur").value,
+          fournisseur_id: document.getElementById("fournisseur_id").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
@@ -127,15 +123,15 @@ const ProduitList = () => {
       html:
         `<label for="nom">Nom</label>` +
         `<input type="text" id="nom" class="swal2-input" placeholder="Nom">` +
-        `<label for="Quantite">Quantité</label>` +
-        `<input type="text" id="Quantite" class="swal2-input" placeholder="Quantité">` +
-        `<label for="typeQuantite">Type Quantité</label>` +
-        `<select id="typeQuantite" class="swal2-input">` +
+        `<label for="type_quantite">Type Quantité</label>` +
+        `<select id="type_quantite" class="swal2-input">` +
         `<option value="kg">kg</option>` +
         `<option value="unitaire">unitaire</option>` +
         `</select>` +
         `<label for="calibre">Calibre</label>` +
         `<input type="text" id="calibre" class="swal2-input" placeholder="Calibre">` +
+        `<label for="user_id">user</label>` +
+        `<input type="text" id="user_id" class="swal2-input" placeholder="user_id">` +
         `<label for="fournisseur">Fournisseur</label>` +
         `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
           (option) => `<option value="${option.value}">${option.label}</option>`
@@ -147,10 +143,10 @@ const ProduitList = () => {
       preConfirm: () => {
         return {
           nom: document.getElementById("nom").value,
-          Quantite: document.getElementById("Quantite").value,
-          typeQuantite: document.getElementById("typeQuantite").value,
+          type_quantite: document.getElementById("type_quantite").value,
           calibre: document.getElementById("calibre").value,
-          idFournisseur: document.getElementById("fournisseur").value,
+          fournisseur_id: document.getElementById("fournisseur").value,
+          user_id: document.getElementById("user_id").value,
         };
       },
     }).then((result) => {
@@ -190,7 +186,6 @@ const ProduitList = () => {
             <tr>
               <th>ID</th>
               <th>Nom</th>
-              <th>Quantité</th>
               <th>Type Quantité</th>
               <th>Calibre</th>
               <th>fournisseur</th>
@@ -200,15 +195,16 @@ const ProduitList = () => {
           <tbody>
             {produits.map((produit) => {
               const fournisseur = fournisseurs.find(
-                (fournisseur) => fournisseur.id === produit.idFournisseur
+                
+                (fournisseur) => fournisseur.id === produit.fournisseur_id,
+
               );
 
               return (
                 <tr key={produit.id}>
                   <td>{produit.id}</td>
                   <td>{produit.nom}</td>
-                  <td>{produit.Quantite}</td>
-                  <td>{produit.typeQuantite}</td>
+                  <td>{produit.type_quantite}</td>
                   <td>{produit.calibre}</td>
                   <td>
                     {fournisseur ? (

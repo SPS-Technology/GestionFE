@@ -65,9 +65,9 @@ const FournisseurList = () => {
           existingFournisseur.zone
         }">
 
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${
-          existingFournisseur.tele
+        <label for="user_id">user_id</label>
+        <input type="text" id="user_id" class="swal2-input" value="${
+          existingFournisseur.user_id
         }">
 
       `,
@@ -166,8 +166,8 @@ const FournisseurList = () => {
         <label for="zone">Zone</label>
         <input type="text" id="zone" class="swal2-input" placeholder="Zone">
         
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
+        <label for="user_id">user_id</label>
+        <input type="text" id="user_id" class="swal2-input" placeholder="user_id">
     
       `,
       confirmButtonText: "Ajouter",

@@ -13,7 +13,7 @@ const ClientList = () => {
 
       console.log("API Response:", response.data);
 
-      setClients(response.data.clients);
+      setClients(response.data.client);
 
       const userResponse = await axios.get("http://localhost:8000/api/user");
       setUsers(userResponse.data.users);
@@ -59,8 +59,8 @@ const ClientList = () => {
         <input type="text" id="zone" class="swal2-input" value="${existingClient.zone
         }">
 
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${existingClient.tele
+        <label for="user_id">user</label>
+        <input type="text" id="user_id" class="swal2-input" value="${existingClient.user_id
         }">
 
       `,
@@ -159,8 +159,8 @@ const ClientList = () => {
         <label for="zone">Zone</label>
         <input type="text" id="zone" class="swal2-input" placeholder="Zone">
         
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
+        <label for="user_id">user</label>
+        <input type="text" id="user_id" class="swal2-input" placeholder="user_id">
     
       `,
       confirmButtonText: "Ajouter",
