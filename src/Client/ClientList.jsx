@@ -2,8 +2,8 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Form, Button } from 'react-bootstrap';
-import Navigation from "../Acceuil/Navigation";
-import "./style.css"
+import Navigation from "../nav/Navigation";
+import "../style.css"
 
 const ClientList = () => {
   const [clients, setClients] = useState([]);
@@ -152,77 +152,8 @@ const ClientList = () => {
     }
   };
 
-  // const handleAddClient = () => {
-  //   // Swal.fire({
-  //   //   title: "Ajouter Client",
-  //   //   html: `
-  //   //     <label for="raison_sociale">Raison Sociale</label>
-  //   //     <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
-
-  //   //     <label for="adresse">Adresse</label>
-  //   //     <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
-
-  //   //     <label for="tele">Téléphone</label>
-  //   //     <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
-
-  //   //     <label for="ville">Ville</label>
-  //   //     <input type="text" id="ville" class="swal2-input" placeholder="Ville">
-
-  //   //     <label for="abreviation">Abréviation</label>
-  //   //     <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
-
-  //   //     <label for="zone">Zone</label>
-  //   //     <input type="text" id="zone" class="swal2-input" placeholder="Zone">
-
-  //   //     <label for="user_id">user</label>
-  //   //     <input type="text" id="user_id" class="swal2-input" placeholder="user_id">
-
-  //   //   `,
-  //   //   confirmButtonText: "Ajouter",
-  //   //   focusConfirm: false,
-  //   //   showCancelButton: true,
-  //   //   cancelButtonText: "Annuler",
-  //   //   preConfirm: () => {
-  //   //     return {
-  //   //       raison_sociale: document.getElementById("raison_sociale").value,
-  //   //       adresse: document.getElementById("adresse").value,
-  //   //       tele: document.getElementById("tele").value,
-  //   //       ville: document.getElementById("ville").value,
-  //   //       abreviation: document.getElementById("abreviation").value,
-  //   //       zone: document.getElementById("zone").value,
-  //   //       user_id: document.getElementById("user_id").value,
-  //   //     };
-  //   //   },
-  //   // }).then((result) => {
-  //     if (result.isConfirmed) {
-  //       axios
-  //         .post("http://localhost:8000/api/clients", result.value, {
-  //           withCredentials: true,
-  //           headers: {
-  //             "X-CSRF-TOKEN": document.head.querySelector(
-  //               'meta[name="csrf-token"]'
-  //             ).content,
-  //           },
-  //         })
-  //         .then(() => {
-  //           fetchClients();
-  //           Swal.fire({
-  //             icon: "success",
-  //             title: "Succès!",
-  //             text: "Client ajouté avec succès.",
-  //           });
-  //         })
-  //         .catch((error) => {
-  //           console.error("Erreur lors de l'ajout du client:", error);
-  //           Swal.fire({
-  //             icon: "error",
-  //             title: "Erreur!",
-  //             text: "Échec de l'ajout du client.",
-  //           });
-  //         });
-  //     }
-  //   });
   const handleSubmit = (e) => {
+    console.log(handleSubmit);
     e.preventDefault();
     axios
       .post('http://localhost:8000/api/clients', clients)
@@ -261,7 +192,7 @@ const ClientList = () => {
 
       <h2 className="text-center m-2">Liste des Clients</h2>
 
-      <div className="add-client-form">
+      <div className="add-Ajout-form">
         {!showForm && (
           <Button variant="primary" onClick={() => setShowForm(true)}>
             Ajouter un Client

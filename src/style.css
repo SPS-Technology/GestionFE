@@ -1,4 +1,4 @@
-.add-client-form {
+.add-Ajout-form {
     position: fixed;
     top: 70px;
     right: 20px;
@@ -6,7 +6,7 @@
     z-index: 1000;
   }
   
-  .add-client-form form {
+  .add-Ajout-form form {
     width: 500px;
     background-color: #c0bfbf;
     transition: right 0.10s ease-in-out;
@@ -21,7 +21,7 @@
 
   }
   
-  .add-client-form.show {
+  .add-Ajout-form.show {
     right: 0;
   }
   
