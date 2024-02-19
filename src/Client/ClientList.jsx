@@ -283,7 +283,7 @@ const ClientList = () => {
           </Form>
         )}
       </div>
-      <div className="container" >
+      <div className="container mt-5" >
         {clients && clients.length > 0 ? (
           <table className="table table-hover table-bordered">
             <thead className="text-center">

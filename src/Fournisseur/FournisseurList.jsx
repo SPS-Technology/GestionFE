@@ -125,33 +125,49 @@ const FournisseurList = () => {
     });
   }
   const handleDelete = (id) => {
-    const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
-    );
-
-    if (isConfirmed) {
-      axios
-        .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-        .then(() => {
-          fetchFournisseurs();
-          Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: "Fournisseur supprimé avec succès.",
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce fournisseur ?',
+      showDenyButton: true,
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        // User clicked 'Oui', proceed with deletion
+        axios
+          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+          .then(() => {
+            fetchFournisseurs();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Fournisseur supprimé avec succès.",
+            });
+          })
+          .catch((error) => {
+            console.error("Erreur lors de la suppression du fournisseur:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Erreur!",
+              text: "Échec de la suppression du fournisseur.",
+            });
           });
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la suppression du fournisseur:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la suppression du fournisseur.",
-          });
-        });
-    } else {
-      console.log("Suppression annulée");
-    }
+      } else if (result.isDenied) {
+        // User clicked 'Non', do nothing or provide feedback
+      } else {
+        // User dismissed the dialog by clicking outside or pressing Esc key
+        // Handle this case as needed
+        console.log("Suppression annulée");
+      }
+    });
   };
+  
 
   // // const handleAddFournisseur = () => {
 
@@ -356,7 +372,7 @@ const FournisseurList = () => {
         </Form>
       )}
     </div>
-      <div class="container" >
+      <div class="container mt-5" >
         {fournisseurs && fournisseurs.length > 0 ? (
           <table className="table table-hover table-bordered">
             <thead class="text-center">
