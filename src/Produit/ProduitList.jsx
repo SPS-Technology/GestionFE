@@ -176,15 +176,15 @@ const ProduitList = () => {
   return (
     <div>
       <Navigation />
-      <h2>Liste des Produits</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddProduit}>
+      <h2 class="text-center m-2">Liste des Produits</h2>
+      <button className="btn btn-primary col-2 m-2 " onClick={handleAddProduit}>
         Ajouter Produit
       </button>
       {produits && produits.length > 0 ? (
-        <table className="table">
-          <thead>
+        <table className="table table-hover table-bordered">
+          <thead class="text-center">
             <tr>
-              <th>ID</th>
+              <th colSpan={2}>ID</th>
               <th>Nom</th>
               <th>Type Quantité</th>
               <th>Calibre</th>
@@ -192,7 +192,7 @@ const ProduitList = () => {
               <th>Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="text-center">
             {produits.map((produit) => {
               const fournisseur = fournisseurs.find(
                 
@@ -202,6 +202,9 @@ const ProduitList = () => {
 
               return (
                 <tr key={produit.id}>
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="checkbox"></input>
+                  </div>
                   <td>{produit.id}</td>
                   <td>{produit.nom}</td>
                   <td>{produit.type_quantite}</td>
@@ -213,15 +216,15 @@ const ProduitList = () => {
                       <div>No Fournisseur found</div>
                     )}
                   </td>
-                  <td>
+                  <td class="col-2 text-center">
                     <button
-                      className="btn btn-warning ms-2"
+                      className="col-3 btn btn-warning mx-2"
                       onClick={() => handleEdit(produit.id)}
                     >
                       <i className="fas fa-edit"></i>
                     </button>
                     <button
-                      className="btn btn-danger"
+                      className="col-3 btn btn-danger mx-2"
                       onClick={() => handleDelete(produit.id)}
                     >
                       <i className="fas fa-minus-circle"></i>
@@ -233,7 +236,7 @@ const ProduitList = () => {
           </tbody>
         </table>
       ) : (
-        <p>Aucun produit disponible</p>
+        <div class="text-center"><h5>Loading...</h5></div>
       )}
     </div>
   );

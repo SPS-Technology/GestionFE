@@ -11,8 +11,8 @@ const Navigation = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
   const token = localStorage.getItem("API_TOKEN");
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  const [user,setUser]=useState();
-  const { logout } = useAuth(); 
+  const [user, setUser] = useState();
+  const { logout } = useAuth();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -26,7 +26,8 @@ const Navigation = () => {
   const fetchUsers = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/user", {
-        withCredentials: true,});
+        withCredentials: true,
+      });
       setUser(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -56,8 +57,8 @@ const Navigation = () => {
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
+      <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div className="container ">
           <a className="navbar-brand" href="/">
             Gestion de Commandes
           </a>
@@ -72,9 +73,9 @@ const Navigation = () => {
           >
             <span className="navbar-toggler-icon"></span>
           </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
+          <div className="collapse navbar-collapse " id="navbarNav">
             <ul className="navbar-nav ml-auto">
-              
+
               <Link to="/fournisseurs" className="navbar-brand">
                 Fournisseurs
               </Link>
@@ -84,25 +85,26 @@ const Navigation = () => {
               <Link to="/produits" className="navbar-brand">
                 Produits
               </Link>
-              
+
             </ul>
             <div>
-            <button
-              style={{
-                background: "none",
-                textDecoration: "none",
-                border: 0,
-                color: "red",
-                fontFamily: "monospace",
-              }}
-              onClick={() => {
-                handleLogoutClick();
-                logout();
-              }}
-            >
-              <i className="fas fa-sign-out-alt" aria-hidden="true" /> Se déconnecter
-            </button>
-          </div>
+              <button
+                style={{
+                  background: "none",
+                  textDecoration: "none",
+                  border: 0,
+                  color: "white",
+                  fontFamily: "monospace",
+                  
+                }}
+                onClick={() => {
+                  handleLogoutClick();
+                  logout();
+                }}
+              >
+                <i className="fas fa-sign-out-alt" aria-hidden="true" /> déconnecter
+              </button>
+            </div>
           </div>
         </div>
       </nav>

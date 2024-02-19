@@ -36,38 +36,31 @@ const FournisseurList = () => {
       title: "Modifier Fournisseur",
       html: `
         <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" value="${
-          existingFournisseur.raison_sociale
+        <input type="text" id="raison_sociale" class="swal2-input" value="${existingFournisseur.raison_sociale
         }">
 
         <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" value="${
-          existingFournisseur.adresse
+        <input type="text" id="adresse" class="swal2-input" value="${existingFournisseur.adresse
         }">
 
         <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${
-          existingFournisseur.tele
+        <input type="text" id="tele" class="swal2-input" value="${existingFournisseur.tele
         }">
 
         <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" value="${
-          existingFournisseur.ville
+        <input type="text" id="ville" class="swal2-input" value="${existingFournisseur.ville
         }">
 
         <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" value="${
-          existingFournisseur.abreviation
+        <input type="text" id="abreviation" class="swal2-input" value="${existingFournisseur.abreviation
         }">
 
         <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" value="${
-          existingFournisseur.zone
+        <input type="text" id="zone" class="swal2-input" value="${existingFournisseur.zone
         }">
 
         <label for="user_id">user_id</label>
-        <input type="text" id="user_id" class="swal2-input" value="${
-          existingFournisseur.user_id
+        <input type="text" id="user_id" class="swal2-input" value="${existingFournisseur.user_id
         }">
 
       `,
@@ -144,7 +137,7 @@ const FournisseurList = () => {
   };
 
   const handleAddFournisseur = () => {
-    
+
     Swal.fire({
       title: "Ajouter Fournisseur",
       html: `
@@ -217,18 +210,19 @@ const FournisseurList = () => {
   };
 
   return (
-    <div>
+    <div class="col">
       <Navigation />
-  
-      <h2>Liste des Fournisseurs</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddFournisseur}>
+
+      <h2 class="text-center m-2">Liste des Fournisseurs</h2>
+      <button class="btn btn-primary col-2 m-2 "onClick={handleAddFournisseur}>
         Ajouter Fournisseur
       </button>
+      <div class="container" >
       {fournisseurs && fournisseurs.length > 0 ? (
-        <table className="table">
-          <thead>
+        <table className="table table-hover table-bordered">
+          <thead class="text-center">
             <tr>
-              <th>ID</th>
+              <th colSpan={2} class="text-center" >ID</th>
               <th>Raison Sociale</th>
               <th>Adresse</th>
               <th>Téléphone</th>
@@ -236,12 +230,17 @@ const FournisseurList = () => {
               <th>Abréviation</th>
               <th>Zone</th>
               <th>User</th>
-              <th>Action</th>
+              <th colSpan={2} >Action</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody class="text-center">
             {fournisseurs.map((fournisseur) => (
               <tr key={fournisseur.id}>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    <input type="checkbox" class="custom-control-input" id="checkbox"></input>
+                  </div>
+                </td>
                 <td>{fournisseur.id}</td>
                 <td>{fournisseur.raison_sociale}</td>
                 <td>{fournisseur.adresse}</td>
@@ -250,15 +249,15 @@ const FournisseurList = () => {
                 <td>{fournisseur.abreviation}</td>
                 <td>{fournisseur.zone}</td>
                 <td>{fournisseur.user_id}</td>
-                <td>
+                <td class="col-2 text-center">
                   <button
-                    className="btn btn-warning ms-2"
+                    className="col-3 btn btn-warning mx-2"
                     onClick={() => handleEdit(fournisseur.id)}
                   >
                     <i className="fas fa-edit"></i>
                   </button>
                   <button
-                    className="btn btn-danger"
+                    className="col-3 btn btn-danger mx-2"
                     onClick={() => handleDelete(fournisseur.id)}
                   >
                     <i className="fas fa-minus-circle"></i>
@@ -269,10 +268,11 @@ const FournisseurList = () => {
           </tbody>
         </table>
       ) : (
-        <p>Aucun fournisseur disponible</p>
+        <div class="text-center"><h5>Loading...</h5></div>
       )}
     </div>
+    </div>
   );
-  
-      }
+
+}
 export default FournisseurList;
