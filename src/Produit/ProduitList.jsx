@@ -2,10 +2,16 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Navigation from "../Acceuil/Navigation";
+import TablePagination from "@mui/material/TablePagination";
+import Search from "../Acceuil/Search";
 
 const ProduitList = () => {
   const [produits, setProduits] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const fetchProduits = async () => {
     try {
@@ -27,6 +33,28 @@ const ProduitList = () => {
     fetchProduits();
   }, []);
 
+  useEffect(() => {
+    // Filter fournisseurs based on the search term
+    const filtered = produits.filter((prod) =>
+      prod.nom.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setFilteredProducts(filtered);
+  }, [produits, searchTerm]);
+
+  const handleSearch = (term) => {
+    //setCurrentPage(1); // Reset to the first page when searching
+    setSearchTerm(term);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
   const handleEdit = (id) => {
     const existingProduit = produits.find((produit) => produit.id === id);
 
@@ -38,21 +66,23 @@ const ProduitList = () => {
     Swal.fire({
       title: "Modifier Produit",
       html:
-      `<label for="nom">Nom</label>` +
-      `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
-      `<label for="type_quantite">Type Quantité</label>` +
-      `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
-      `<label for="calibre">Calibre</label>` +
-      `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
-      `<label for="user_id">User</label>` +
-      `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
-      // `<label for="idFournisseur">Fournisseur</label>` +
-      // `<input type="text" id="idFournisseur" class="swal2-input" value="${existingProduit.idFournisseur}">`
-      `<label for="fournisseur">Fournisseur</label>` +
-        `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
-          (option) => `<option value="${option.value}">${option.label}</option>`
-        )}</select>`,
-        
+        `<label for="nom">Nom</label>` +
+        `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
+        `<label for="type_quantite">Type Quantité</label>` +
+        `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
+        `<label for="calibre">Calibre</label>` +
+        `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
+        `<label for="user_id">User</label>` +
+        `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
+        `<label for="fournisseur">Fournisseur</label>` +
+
+        `<select id="fournisseur" class="swal2-input">
+  <option value="">Aucun</option>
+  ${fournisseurOptions.map(
+    (option) => `<option value="${option.value}">${option.label}</option>`
+  )}
+</select>`,
+
       confirmButtonText: "modifier",
       focusConfirm: false,
       showCancelButton: true,
@@ -138,9 +168,13 @@ const ProduitList = () => {
         `<label for="user_id">user</label>` +
         `<input type="text" id="user_id" class="swal2-input" placeholder="user_id">` +
         `<label for="fournisseur">Fournisseur</label>` +
-        `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
+
+        `<select id="fournisseur" class="swal2-input">
+          <option value="">Aucun</option>
+        ${fournisseurOptions.map(
           (option) => `<option value="${option.value}">${option.label}</option>`
-        )}</select>`,
+        )}
+      </select>`,
       confirmButtonText: "ajouter",
       focusConfirm: false,
       showCancelButton: true,
@@ -182,63 +216,81 @@ const ProduitList = () => {
     <div>
       <Navigation />
       <h2>Liste des Produits</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddProduit}>
-        Ajouter Produit
-      </button>
-      {produits && produits.length > 0 ? (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nom</th>
-              <th>Type Quantité</th>
-              <th>Calibre</th>
-              <th>fournisseur</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {produits.map((produit) => {
-              const fournisseur = fournisseurs.find(
-                
-                (fournisseur) => fournisseur.id === produit.fournisseur_id,
-
-              );
-
-              return (
-                <tr key={produit.id}>
-                  <td>{produit.id}</td>
-                  <td>{produit.nom}</td>
-                  <td>{produit.type_quantite}</td>
-                  <td>{produit.calibre}</td>
-                  <td>
-                    {fournisseur ? (
-                      <>{fournisseur.raison_sociale}</>
-                    ) : (
-                      <div>No Fournisseur found</div>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-warning ms-2"
-                      onClick={() => handleEdit(produit.id)}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(produit.id)}
-                    >
-                      <i className="fas fa-minus-circle"></i>
-                    </button>
-                  </td>
+      {filteredProducts && filteredProducts.length > 0 ? (
+        <div className="table-container">
+          <div className="search-container mb-3">
+            <Search onSearch={handleSearch} />
+          </div>
+          <button className="btn btn-primary mb-3" onClick={handleAddProduit}>
+            Ajouter Produit
+          </button>
+          {produits && produits.length > 0 ? (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Nom</th>
+                  <th>Type Quantité</th>
+                  <th>Calibre</th>
+                  <th>fournisseur</th>
+                  <th>Action</th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {filteredProducts
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((produit) => {
+                    const fournisseur = fournisseurs.find(
+                      (fournisseur) => fournisseur.id === produit.fournisseur_id
+                    );
+                    return (
+                      <tr key={produit.id}>
+                        <td>{produit.id}</td>
+                        <td>{produit.nom}</td>
+                        <td>{produit.type_quantite}</td>
+                        <td>{produit.calibre}</td>
+                        <td>
+                          {fournisseur ? (
+                            <>{fournisseur.raison_sociale}</>
+                          ) : (
+                            <div>ce produit n'a aucun fournisseur</div>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-warning ms-2"
+                            onClick={() => handleEdit(produit.id)}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </button>
+                          <button
+                            className="btn btn-danger"
+                            onClick={() => handleDelete(produit.id)}
+                          >
+                            <i className="fas fa-minus-circle"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          ) : (
+            <p></p>
+          )}
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredProducts.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </div>
       ) : (
-        <p>Aucun produit disponible</p>
+        <p>Loading ....</p>
       )}
     </div>
   );

@@ -84,11 +84,23 @@ const Navigation = () => {
               <Link to="/produits" className="navbar-brand">
                 Produits
               </Link>
-              <li className="nav-item">
-                <a className="nav-link" href="/commands">
-                  Commands
-                </a>
-              </li>
+              <Link to="/commandes" className="navbar-brand">
+                Commandes
+              </Link>
+              {user && user.role === "admin" && ( // Vérification du rôle d'administrateur pour l'utilisateur connecté
+                <>
+                 
+                    <Link to="/add-user">
+                       Ajouter utilisateur
+                    </Link>
+                
+                 
+                    <Link to="/users">
+                       Gestion utilisateurs
+                    </Link>
+                  
+                </>
+              )}
             </ul>
             <div>
             <button

@@ -2,10 +2,16 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Navigation from "../Acceuil/Navigation";
+import { TablePagination } from "@mui/material";
+import Search from "../Acceuil/Search";
 
 const ClientList = () => {
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredClients, setfilteredClients] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const fetchClients = async () => {
     try {
@@ -26,6 +32,28 @@ const ClientList = () => {
     fetchClients();
   }, []);
 
+  useEffect(() => {
+    // Filter fournisseurs based on the search term
+    const filtered = clients.filter((client) =>
+    client.raison_sociale.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    setfilteredClients(filtered);
+  }, [clients, searchTerm]);
+
+  const handleSearch = (term) => {
+    //setCurrentPage(1); // Reset to the first page when searching
+    setSearchTerm(term);
+  };
+ 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
   const handleEdit = (id) => {
     const existingClient = clients.find(
       (client) => client.id === id
@@ -215,6 +243,11 @@ const ClientList = () => {
       <Navigation />
 
       <h2>Liste des Clients</h2>
+      {filteredClients && filteredClients.length > 0 ? (
+        <div className="table-container">
+          <div className="search-container mb-3">
+            <Search onSearch={handleSearch} />
+          </div>
       <button className="btn btn-primary mb-3" onClick={handleAddClient}>
         Ajouter Client
       </button>
@@ -234,7 +267,8 @@ const ClientList = () => {
             </tr>
           </thead>
           <tbody>
-            {clients.map((client) => (
+          {filteredClients
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((client) => (
               <tr key={client.id}>
                 <td>{client.id}</td>
                 <td>{client.raison_sociale}</td>
@@ -259,14 +293,30 @@ const ClientList = () => {
                   </button>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>Aucun client disponible</p>
-      )}
-    </div>
-  );
-};
+             ))}
+             </tbody>
+           </table>
+         ) : (
+           <p></p>
+         )}
+ 
+         <TablePagination
+           rowsPerPageOptions={[5, 10, 25]}
+           component="div"
+           count={filteredClients.length}
+           rowsPerPage={rowsPerPage}
+           page={page}
+           onPageChange={handleChangePage}
+           onRowsPerPageChange={handleChangeRowsPerPage}
+         />
+       </div>
+     ) : (
+       <p></p>
+     )}
+   </div>
+ );
+ 
+ 
+   }
 
 export default ClientList;
