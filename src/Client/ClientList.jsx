@@ -124,11 +124,20 @@ const ClientList = () => {
   }
 
   const handleDelete = (id) => {
-    const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer ce client ?"
-    );
-
-    if (isConfirmed) {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce client ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
       axios
         .delete(`http://localhost:8000/api/clients/${id}`)
         .then(() => {
@@ -150,7 +159,9 @@ const ClientList = () => {
     } else {
       console.log("Suppression annulée");
     }
-  };
+  });
+};
+
 
   const handleSubmit = (e) => {
     console.log(handleSubmit);

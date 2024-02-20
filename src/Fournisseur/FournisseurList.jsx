@@ -128,7 +128,7 @@ const FournisseurList = () => {
     Swal.fire({
       title: 'Êtes-vous sûr de vouloir supprimer ce fournisseur ?',
       showDenyButton: true,
-      showCancelButton: true,
+      showCancelButton: false,
       confirmButtonText: 'Oui',
       denyButtonText: 'Non',
       customClass: {

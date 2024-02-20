@@ -6,6 +6,7 @@ import FournisseurList from './Fournisseur/FournisseurList';
 import ClientList from './Client/ClientList';
 import ProduitList from './Produit/ProduitList';
 import Login from './Login/Login';
+import CommandeList from './Commande/CommandeList';
 
 
 const App = () => {
@@ -19,6 +20,9 @@ const App = () => {
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
         <Route path="/produits" element={<ProduitList />} />
+        <Route path="/commandes" element={<CommandeList />} />
+
+        
       </Routes>
       </AuthProvider>
     </div>

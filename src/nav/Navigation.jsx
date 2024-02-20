@@ -59,9 +59,6 @@ const Navigation = () => {
     <>
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
         <div className="container ">
-          <a className="navbar-brand" href="/">
-            Gestion de Commandes
-          </a>
           <button
             className="navbar-toggler"
             type="button"
@@ -76,6 +73,9 @@ const Navigation = () => {
           <div className="collapse navbar-collapse " id="navbarNav">
             <ul className="navbar-nav ml-auto">
 
+            <Link to="/commandes" className="navbar-brand">
+              Gestion de Commandes
+            </Link>
               <Link to="/fournisseurs" className="navbar-brand">
                 Fournisseurs
               </Link>
