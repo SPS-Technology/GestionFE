@@ -1,152 +1,429 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { Form, Button } from "react-bootstrap";
+import "../style.css";
 import Navigation from "../Acceuil/Navigation";
-import TablePagination from '@mui/material/TablePagination';
+import TablePagination from "@mui/material/TablePagination";
 import Search from "../Acceuil/Search";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTrash,
+  faFilePdf,
+  faFileExcel,
+  faPrint,
+} from "@fortawesome/free-solid-svg-icons";
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 
 const FournisseurList = () => {
-  const [fournisseurs, setFournisseurs] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [existingFournisseur, setExistingFournisseur] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredFournisseurs, setFilteredFournisseurs] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [fournisseurs, setFournisseurs] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [addFormData, setAddFormData] = useState({
+    raison_sociale: "",
+    adresse: "",
+    tele: "",
+    ville: "",
+    abreviation: "",
+    zone: "",
+    user_id: "",
+  });
   
+  const [editFormData, setEditFormData] = useState({
+    raison_sociale: "",
+    adresse: "",
+    tele: "",
+    ville: "",
+    abreviation: "",
+    zone: "",
+    user_id: "",
+  });
+
   const fetchFournisseurs = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/fournisseurs");
-  
+      const response = await axios.get(
+        "http://localhost:8000/api/fournisseurs"
+      );
+
       console.log("API Response:", response.data);
-  
+
       setFournisseurs(response.data.fournisseur);
-  
-      const userResponse = await axios.get("http://localhost:8000/api/user");
-      setUsers(userResponse.data.users);
+
+      const usersResponse = await axios.get("http://localhost:8000/api/users");
+      setUsers(usersResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  
 
   useEffect(() => {
     fetchFournisseurs();
   }, []);
 
   useEffect(() => {
-    // Filter fournisseurs based on the search term
     const filtered = fournisseurs.filter((fournisseur) =>
-      fournisseur.raison_sociale.toLowerCase().includes(searchTerm.toLowerCase())
+      fournisseur.raison_sociale
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
     );
 
     setFilteredFournisseurs(filtered);
   }, [fournisseurs, searchTerm]);
 
   const handleSearch = (term) => {
-    //setCurrentPage(1); // Reset to the first page when searching
     setSearchTerm(term);
   };
- 
+
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+  };
+
+  const handleCheckboxChange = (itemId) => {
+    if (selectedItems.includes(itemId)) {
+      setSelectedItems(selectedItems.filter((id) => id !== itemId));
+    } else {
+      setSelectedItems([...selectedItems, itemId]);
+    }
   };
 
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  const handleEdit = (id) => {
-    const existingFournisseur = fournisseurs.find(
-      (fournisseur) => fournisseur.id === id
-    );
 
+  const handleDeleteSelected = () => {
+    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
 
-    Swal.fire({
-      title: "Modifier Fournisseur",
-      html: `
-        <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" value="${
-          existingFournisseur.raison_sociale
-        }">
-
-        <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" value="${
-          existingFournisseur.adresse
-        }">
-
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${
-          existingFournisseur.tele
-        }">
-
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" value="${
-          existingFournisseur.ville
-        }">
-
-        <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" value="${
-          existingFournisseur.abreviation
-        }">
-
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" value="${
-          existingFournisseur.zone
-        }">
-
-        <label for="user_id">User</label>
-        <input type="text" id="user_id" class="swal2-input" value="${
-          existingFournisseur.user_id
-        }">
-
-      `,
-      confirmButtonText: "Modifer",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
+    selectedItems.forEach((id) => {
+      if (isConfirmed) {
         axios
-          .put(`http://localhost:8000/api/fournisseurs/${id}`, result.value)
+          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
           .then(() => {
             fetchFournisseurs();
             Swal.fire({
               icon: "success",
               title: "Succès!",
-              text: "Fournisseur modifié avec succès.",
+              text: "Fournisseur supprimé avec succès.",
             });
           })
           .catch((error) => {
             console.error(
-              "Erreur lors de la modification du fournisseur:",
+              "Erreur lors de la suppression du fournisseur:",
               error
             );
             Swal.fire({
               icon: "error",
               title: "Erreur!",
-              text: "Échec de la modification du fournisseur.",
+              text: "Échec de la suppression du fournisseur.",
             });
           });
       } else {
-        console.log("Modification annulée");
+        console.log("Suppression annulée");
       }
     });
-  }
-  const handleDelete = (id) => {
-    const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer ce fournisseur ?"
+    fetchFournisseurs();
+
+    setSelectedItems([]);
+  };
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (selectAll) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(fournisseurs.map((fournisseur) => fournisseur.id));
+    }
+  };
+
+  const printList = (tableId, title, fournisseurList) => {
+    const printWindow = window.open(" ", "_blank", " ");
+
+    if (printWindow) {
+      const tableToPrint = document.getElementById(tableId);
+
+      if (tableToPrint) {
+        const newWindowDocument = printWindow.document;
+        newWindowDocument.write(`
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <h1 class="h1"> Gestion Commandes </h1>
+              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+              <style>
+  
+                body {
+                  font-family: 'Arial', sans-serif;
+                  margin-bottom: 60px;
+                }
+  
+                .page-header {
+                  text-align: center;
+                  font-size: 24px;
+                  margin-bottom: 20px;
+                }
+  
+                .h1 {
+                  text-align: center;
+                }
+  
+                .list-title {
+                  font-size: 18px;
+                  margin-bottom: 10px;
+                }
+  
+                .header {
+                  font-size: 16px;
+                  margin-bottom: 10px;
+                }
+  
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-bottom: 20px;
+                }
+  
+                th, td {
+                  border: 1px solid #ddd;
+                  padding: 8px;
+                  text-align: left;
+                }
+  
+                .footer {
+                  position: fixed;
+                  bottom: 0;
+                  width: 100%;
+                  text-align: center;
+                  font-size: 14px;
+                  margin-top: 30px;
+                  background-color: #fff;
+                }
+  
+                @media print {
+                  .footer {
+                    position: fixed;
+                    bottom: 0;
+                  }
+  
+                  body {
+                    margin-bottom: 0;
+                  }
+                  .no-print {
+                    display: none;
+                  }
+                }
+  
+                .content-wrapper {
+                  margin-bottom: 100px;
+                }
+  
+                .extra-space {
+                  margin-bottom: 30px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="page-header print-no-date">${title}</div>
+              <ul>
+                ${
+                  Array.isArray(fournisseurList)
+                    ? fournisseurList.map((item) => `<li>${item}</li>`).join("")
+                    : ""
+                }
+              </ul>
+              <div class="content-wrapper">
+                ${tableToPrint.outerHTML}
+              </div>
+              <script>
+                setTimeout(() => {
+                  window.print();
+                  window.onafterprint = function () {
+                    window.close();
+                  };
+                }, 1000);
+              </script>
+            </body>
+            </html>
+          `);
+
+        newWindowDocument.close();
+      } else {
+        console.error(`Table with ID '${tableId}' not found.`);
+      }
+    } else {
+      console.error("Error opening print window.");
+    }
+  };
+
+  const exportToPdf = () => {
+    const pdf = new jsPDF();
+
+    // Define the columns and rows for the table
+    const columns = [
+      "ID",
+      "Raison Sociale",
+      "Adresse",
+      "Téléphone",
+      "Ville",
+      "Abréviation",
+      "Zone",
+      "User",
+    ];
+    const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
+      selectedItems.includes(fournisseur.id)
     );
+    const rows = selectedFournisseurs.map((fournisseur) => [
+      fournisseur.id,
+      fournisseur.raison_sociale,
+      fournisseur.adresse,
+      fournisseur.tele,
+      fournisseur.ville,
+      fournisseur.abreviation,
+      fournisseur.zone,
+      fournisseur.user_id,
+    ]);
+
+    // Set the margin and padding
+    const margin = 10;
+    const padding = 5;
+
+    // Calculate the width of the columns
+    const columnWidths = columns.map(
+      (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
+    );
+    const tableWidth = columnWidths.reduce((total, width) => total + width, 0);
+
+    // Calculate the height of the rows
+    const rowHeight = 10;
+    const tableHeight = rows.length * rowHeight;
+
+    // Set the table position
+    const startX = (pdf.internal.pageSize.width - tableWidth) / 2;
+    const startY = margin;
+
+    // Add the table headers
+    pdf.setFont("helvetica", "bold");
+    pdf.setFillColor(200, 220, 255);
+    pdf.rect(startX, startY, tableWidth, rowHeight, "F");
+    pdf.autoTable({
+      head: [columns],
+      startY: startY + padding,
+      styles: {
+        fillColor: [200, 220, 255],
+        textColor: [0, 0, 0],
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { cellWidth: columnWidths[0] },
+        1: { cellWidth: columnWidths[1] },
+        2: { cellWidth: columnWidths[2] },
+        3: { cellWidth: columnWidths[3] },
+        4: { cellWidth: columnWidths[4] },
+        5: { cellWidth: columnWidths[5] },
+        6: { cellWidth: columnWidths[6] },
+        7: { cellWidth: columnWidths[7] },
+      },
+    });
+
+    // Add the table rows
+    pdf.setFont("helvetica", "");
+    pdf.autoTable({
+      body: rows,
+      startY: startY + rowHeight + padding * 2,
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: columnWidths[0] },
+        1: { cellWidth: columnWidths[1] },
+        2: { cellWidth: columnWidths[2] },
+        3: { cellWidth: columnWidths[3] },
+        4: { cellWidth: columnWidths[4] },
+        5: { cellWidth: columnWidths[5] },
+        6: { cellWidth: columnWidths[6] },
+        7: { cellWidth: columnWidths[7] },
+      },
+    });
+
+    // Save the PDF
+    pdf.save("fournisseurs.pdf");
+  };
+
+  const exportToExcel = () => {
+    const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
+      selectedItems.includes(fournisseur.id)
+    );
+    const ws = XLSX.utils.json_to_sheet(selectedFournisseurs);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Fournisseurs");
+    XLSX.writeFile(wb, "fournisseurs.xlsx");
+  };
+
+  const handleEdit = (id) => {
+    const foundFournisseur = fournisseurs.find(
+      (fournisseur) => fournisseur.id === id
+    );
+
+    console.log("Existing Fournisseur:", foundFournisseur);
+
+    setExistingFournisseur(foundFournisseur);
+    setFormData({
+      raison_sociale: foundFournisseur.raison_sociale,
+      adresse: foundFournisseur.adresse,
+      tele: foundFournisseur.tele,
+      ville: foundFournisseur.ville,
+      abreviation: foundFournisseur.abreviation,
+      zone: foundFournisseur.zone,
+      user_id: foundFournisseur.user_id,
+    });
+
+    setShowForm(true);
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+
+    console.log("Existing Fournisseur:", existingFournisseur);
+
+    axios
+      .put(
+        `http://localhost:8000/api/fournisseurs/${existingFournisseur.id}`,
+        formData
+      )
+      .then(() => {
+        fetchFournisseurs();
+        setShowForm(false);
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: "Fournisseur modifié avec succès.",
+        });
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la modification du fournisseur:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de la modification du fournisseur.",
+        });
+      });
+  };
+
+  
+  const handleDelete = (id) => {
+    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
 
     if (isConfirmed) {
       axios
@@ -172,158 +449,387 @@ const FournisseurList = () => {
     }
   };
 
-  const handleAddFournisseur = () => {
-    
-    
-    Swal.fire({
-      title: "Ajouter Fournisseur",
-      html: `
-        <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
+  const handleAddFournisseur = (e) => {
+    e.preventDefault();
+    axios
+      .post("http://localhost:8000/api/fournisseurs", formData)
+      .then(() => {
+        fetchFournisseurs();
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: "Fournisseur ajouté avec succès.",
+        });
+        setShowForm(false);
+        setFormData({
+          raison_sociale: "",
+          adresse: "",
+          tele: "",
+          ville: "",
+          abreviation: "",
+          zone: "",
+          user_id: "",
+        });
         
-        <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
-        
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
-        
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" placeholder="Ville">
-        
-        <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
-        
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" placeholder="Zone">
-        
-        <label for="user_id">User</label>
-        <input type="text" id="user_id" class="swal2-input" placeholder="User">
-      `,
-      confirmButtonText: "Ajouter",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .post("http://localhost:8000/api/fournisseurs", result.value, {
-            withCredentials: true,
-            headers: {
-              "X-CSRF-TOKEN": document.head.querySelector(
-                'meta[name="csrf-token"]'
-              ).content,
-            },
-          })
-          .then(() => {
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Fournisseur ajouté avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de l'ajout du fournisseur:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de l'ajout du fournisseur.",
-            });
-          });
-      }
+      })
+      .catch((error) => {
+        console.error("Erreur lors de l'ajout du fournisseur:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de l'ajout du fournisseur.",
+        });
+      });
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setFormData({
+      raison_sociale: "",
+      adresse: "",
+      tele: "",
+      ville: "",
+      abreviation: "",
+      zone: "",
+      user_id: "",
     });
   };
 
   return (
     <div>
       <Navigation />
-  
-      <h2>Liste des Fournisseurs</h2>
-      {filteredFournisseurs && filteredFournisseurs.length > 0 ? (
-        <div className="table-container">
-          <div className="search-container mb-3">
-            <Search onSearch={handleSearch} />
-          </div>
-          <button className="btn btn-primary mb-3" onClick={handleAddFournisseur}>
-            Ajouter Fournisseur
-          </button>
-          {fournisseurs && fournisseurs.length > 0 ? (
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Raison Sociale</th>
-                  <th>Adresse</th>
-                  <th>Téléphone</th>
-                  <th>Ville</th>
-                  <th>Abréviation</th>
-                  <th>Zone</th>
-                  <th>User</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredFournisseurs
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((fournisseur) => (
-                    <tr key={fournisseur.id}>
-                      <td>{fournisseur.id}</td>
-                      <td>{fournisseur.raison_sociale}</td>
-                      <td>{fournisseur.adresse}</td>
-                      <td>{fournisseur.tele}</td>
-                      <td>{fournisseur.ville}</td>
-                      <td>{fournisseur.abreviation}</td>
-                      <td>{fournisseur.zone}</td>
-                      <td>{fournisseur.user.name}</td>
-                      <td>
-                        <button
-                          className="btn btn-warning ms-2"
-                          onClick={() => handleEdit(fournisseur.id)}
-                        >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button
-                          className="btn btn-danger"
-                          onClick={() => handleDelete(fournisseur.id)}
-                        >
-                          <i className="fas fa-minus-circle"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          ) : (
-            <p></p>
-          )}
-  
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredFournisseurs.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
+      <div className="container">
+        <h1 className="my-4">Liste des Fournisseurs</h1>
+        <div className="search-container mb-3">
+          <Search onSearch={handleSearch} />
         </div>
-      ) : (
-        <p></p>
-      )}
+        <div className="add-Ajout-form">
+          {!showForm && (
+            <Button variant="primary" onClick={() => setShowForm(true)}>
+              Ajouter un fournisseur
+            </Button>
+          )}
+          {showForm && (
+            <Form className="col-8 row " onSubmit={handleAddFournisseur}>
+              <Button
+                className="col-1"
+                variant="danger"
+                onClick={() => setShowForm(false)}
+              >
+                X
+              </Button>
+              <h4 className="text-center">Ajouter un fournisseur</h4>
+              <Form.Group className="col-6 m-2" controlId="raison_sociale">
+                <Form.Label>Raison Sociale</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="raison_sociale"
+                  value={fournisseurs.raison_sociale}
+                  onChange={handleChange}
+                  placeholder="Raison Sociale"
+                />
+              </Form.Group>
+              <Form.Group className="col-10 m-2" controlId="adresse">
+                <Form.Label>Adresse</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="adresse"
+                  value={fournisseurs.adresse}
+                  onChange={handleChange}
+                  placeholder="Adresse"
+                />
+              </Form.Group>
+              <Form.Group className="col-6 m-2" controlId="tele">
+                <Form.Label>Téléphone</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="tele"
+                  value={fournisseurs.tele}
+                  onChange={handleChange}
+                  placeholder="06XXXXXXXX"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2" controlId="ville">
+                <Form.Label>Ville</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ville"
+                  value={fournisseurs.ville}
+                  onChange={handleChange}
+                  placeholder="Ville"
+                />
+              </Form.Group>
+              <Form.Group className="col-6 m-2" controlId="abreviation">
+                <Form.Label>Abréviation</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="abreviation"
+                  value={fournisseurs.abreviation}
+                  onChange={handleChange}
+                  placeholder="Abréviation"
+                />
+              </Form.Group>
+
+              <Form.Group className="col-4 m-2" controlId="zone">
+                <Form.Label>Zone</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="zone"
+                  value={fournisseurs.zone}
+                  onChange={handleChange}
+                  placeholder="Zone"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
+                <Form.Label>Sélectionnez un utilisateur</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="user_id"
+                  value={fournisseurs.user_id || ""}
+                  onChange={handleChange}
+                >
+                  {/* Option par défaut avec une valeur nulle */}
+                  <option value="">Sélectionnez un utilisateur</option>
+
+                  {/* Options pour les utilisateurs */}
+                  {users &&
+                    users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                </Form.Control>
+              </Form.Group>
+
+              <Form.Group className="col-7 mt-5">
+                <Button className="col-5" variant="primary" type="submit">
+                  Ajouter
+                </Button>
+              </Form.Group>
+            </Form>
+          )}
+        </div>
+        <div className="add-Ajout-form">
+          {showForm && (
+            <Form
+              className="col-8 row "
+              onSubmit={handleEditSubmit}
+            >
+              <Button
+                className="col-1"
+                variant="danger"
+                onClick={() => setShowForm(false)}
+              >
+                X
+              </Button>
+              <h4 className="text-center">Modifier un fournisseur</h4>
+              <Form.Group className="col-6 m-2" controlId="raison_sociale">
+                <Form.Label>Raison Sociale</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="raison_sociale"
+                  value={formData.raison_sociale}
+                  onChange={handleChange}
+                  placeholder="Raison Sociale"
+                />
+              </Form.Group>
+              <Form.Group className="col-10 m-2" controlId="adresse">
+                <Form.Label>Adresse</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="adresse"
+                  value={formData.adresse}
+                  onChange={handleChange}
+                  placeholder="Adresse"
+                />
+              </Form.Group>
+              <Form.Group className="col-6 m-2" controlId="tele">
+                <Form.Label>Téléphone</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="tele"
+                  value={formData.tele}
+                  onChange={handleChange}
+                  placeholder="06XXXXXXXX"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2" controlId="ville">
+                <Form.Label>Ville</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ville"
+                  value={formData.ville}
+                  onChange={handleChange}
+                  placeholder="Ville"
+                />
+              </Form.Group>
+              <Form.Group className="col-6 m-2" controlId="abreviation">
+                <Form.Label>Abréviation</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="abreviation"
+                  value={formData.abreviation}
+                  onChange={handleChange}
+                  placeholder="Abréviation"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2" controlId="zone">
+                <Form.Label>Zone</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="zone"
+                  value={formData.zone}
+                  onChange={handleChange}
+                  placeholder="Zone"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
+                <Form.Label>Sélectionnez un utilisateur</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="user_id"
+                  value={formData.user_id || ""}
+                  onChange={handleChange}
+                >
+                  {/* Option par défaut avec une valeur nulle */}
+                  <option value="">Sélectionnez un utilisateur</option>
+
+                  {/* Options pour les utilisateurs */}
+                  {users &&
+                    users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                </Form.Control>
+              </Form.Group>
+              <Form.Group className="col-7 mt-5">
+                <Button className="col-5" variant="primary" type="submit">
+                  Modifier
+                </Button>
+              </Form.Group>
+            </Form>
+          )}
+        </div>
+        <table className="table" id="fournisseursTable">
+          <thead>
+            <tr>
+              <th>
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAllChange}
+                />
+              </th>
+              <th>ID</th>
+              <th>Raison Sociale</th>
+              <th>Adresse</th>
+              <th>Téléphone</th>
+              <th>Ville</th>
+              <th>Abréviation</th>
+              <th>Zone</th>
+              <th>User</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredFournisseurs
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((fournisseur) => (
+                <tr key={fournisseur.id}>
+                  <td>
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(fournisseur.id)}
+                      onChange={() => handleCheckboxChange(fournisseur.id)}
+                    />
+                  </td>
+                  <td>{fournisseur.id}</td>
+                  <td>{fournisseur.raison_sociale}</td>
+                  <td>{fournisseur.adresse}</td>
+                  <td>{fournisseur.tele}</td>
+                  <td>{fournisseur.ville}</td>
+                  <td>{fournisseur.abreviation}</td>
+                  <td>{fournisseur.zone}</td>
+                  <td>{fournisseur.user.name}</td>
+                  {/* <td>
+                  {fournisseur.user.photo && (
+                      <img
+                        src={fournisseur.user.photo}
+                        alt="Photo de l'utilisateur"
+                        style={{
+                          width: "70px",
+                          height: "70px",
+                          borderRadius: "70%",
+                        }}
+                      />
+                    )}
+                    </td> */}
+                  <td className="col-2 text-center">
+                    <button
+                      className="col-3 btn btn-warning mx-2"
+                      onClick={() => handleEdit(fournisseur.id)}
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+
+                    <button
+                      className="col-3 btn btn-danger mx-2"
+                      onClick={() => handleDelete(fournisseur.id)}
+                    >
+                      <i className="fas fa-minus-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25]}
+          component="div"
+          count={filteredFournisseurs.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
+        <div className="d-flex justify-content-between">
+          <div>
+            <Button
+              variant="danger"
+              disabled={selectedItems.length === 0}
+              onClick={handleDeleteSelected}
+              className="me-2"
+            >
+              <FontAwesomeIcon icon={faTrash} className="me-2" />
+              Supprimer sélection
+            </Button>
+            <Button variant="info" onClick={exportToPdf} className="me-2">
+              <FontAwesomeIcon icon={faFilePdf} className="me-2" />
+              Export PDF
+            </Button>
+            <Button variant="success" onClick={exportToExcel} className="me-2">
+              <FontAwesomeIcon icon={faFileExcel} className="me-2" />
+              Export Excel
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() =>
+                printList(
+                  "fournisseursTable",
+                  "Liste des Fournisseurs",
+                  fournisseurs
+                )
+              }
+            >
+              <FontAwesomeIcon icon={faPrint} className="me-2" />
+              Imprimer
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
-  
-  
-    }
+};
 export default FournisseurList;

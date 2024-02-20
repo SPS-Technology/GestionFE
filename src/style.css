@@ -1,0 +1,27 @@
+.add-Ajout-form {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    transition: right 10.s ease-in-out;
+    z-index: 1000;
+  }
+  
+  .add-Ajout-form form {
+    width: 500px;
+    background-color: #c0bfbf;
+    transition: right 0.10s ease-in-out;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19), 0 6px 6px rgba(0, 0, 0, 0.23);
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    display: flex;
+
+
+  }
+  
+  .add-Ajout-form.show {
+    right: 0;
+  }
+  
