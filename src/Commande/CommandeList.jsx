@@ -60,6 +60,25 @@ const CommandeList = () => {
     setSelectedProducts(updatedProducts);
   };
 
+  const addProductsToCommande = async () => {
+    try {
+      // Pour chaque produit sélectionné, envoyez une requête d'insertion
+      for (const product of selectedProducts) {
+        const { id: produit_id, quantity: quantite, prix_unitaire } = product;
+        await axios.post("http://localhost:8000/api/ligne_commande", {
+          commande_id: selectedClient, // Supposons que selectedClient contient l'ID de la commande en cours
+          produit_id,
+          quantite,
+          prix_unitaire
+        });
+      }
+      // Réinitialiser les produits sélectionnés après les avoir ajoutés à la commande
+      setSelectedProducts([]);
+    } catch (error) {
+      console.error("Error adding products to commande:", error);
+    }
+  };
+
   return (
     <div className="col row" >
       <Navigation />
@@ -75,26 +94,19 @@ const CommandeList = () => {
         </Form.Select>
       </div>
 
-      <div className="col-4 mt-3">
-      <Form.Label>Sélectionner des produits:</Form.Label>
+      <div className="col-3 mt-3">
+        <Form.Label>Sélectionner des produits:</Form.Label>
         <Table striped bordered hover>
           <thead>
             <tr>
-              <th>ID</th>
               <th>Nom</th>
-              <th>Type Quantité</th>
-              <th>Calibre</th>
               <th>Add</th>
             </tr>
           </thead>
           <tbody>
             {produits.map(produit => (
               <tr key={produit.id}>
-                <td>{produit.id}</td>
                 <td>{produit.nom}</td>
-                <td>{produit.type_quantite}</td>
-                <td>{produit.calibre}</td>
-
                 <td>
                   <Form.Check
                     type="checkbox"
@@ -106,7 +118,6 @@ const CommandeList = () => {
             ))}
           </tbody>
         </Table>
-
       </div>
 
       <div className="container mt-3 col-5" >
@@ -133,25 +144,27 @@ const CommandeList = () => {
             ))}
           </tbody>
         </Table>
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Sélectionner la quantité</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Form.Label>Quantité:</Form.Label>
+            <Form.Control
+              type="number"
+              value={quantity}
+              onChange={(e) => setQuantity(parseInt(e.target.value))}
+            />
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Annuler</Button>
+            <Button variant="primary" onClick={handleAddProduct}>Ajouter</Button>
+          </Modal.Footer>
+        </Modal>
+        <div>
+          <Button variant="primary" onClick={addProductsToCommande}>Ajouter à la commande</Button>
+        </div>
       </div>
-
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Sélectionner la quantité</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form.Label>Quantité:</Form.Label>
-          <Form.Control
-            type="number"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
-          />
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>Annuler</Button>
-          <Button variant="primary" onClick={handleAddProduct}>Ajouter</Button>
-        </Modal.Footer>
-      </Modal>
     </div>
   );
 };
