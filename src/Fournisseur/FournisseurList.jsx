@@ -27,18 +27,9 @@ const FournisseurList = () => {
   const [users, setUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-  const [addFormData, setAddFormData] = useState({
-    raison_sociale: "",
-    adresse: "",
-    tele: "",
-    ville: "",
-    abreviation: "",
-    zone: "",
-    user_id: "",
-  });
-  
-  const [editFormData, setEditFormData] = useState({
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+    const [formData, setFormData] = useState({
     raison_sociale: "",
     adresse: "",
     tele: "",
@@ -376,8 +367,6 @@ const FournisseurList = () => {
       (fournisseur) => fournisseur.id === id
     );
 
-    console.log("Existing Fournisseur:", foundFournisseur);
-
     setExistingFournisseur(foundFournisseur);
     setFormData({
       raison_sociale: foundFournisseur.raison_sociale,
@@ -389,13 +378,11 @@ const FournisseurList = () => {
       user_id: foundFournisseur.user_id,
     });
 
-    setShowForm(true);
+    setShowEditForm(true); // Show the edit form
   };
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-
-    console.log("Existing Fournisseur:", existingFournisseur);
 
     axios
       .put(
@@ -404,7 +391,7 @@ const FournisseurList = () => {
       )
       .then(() => {
         fetchFournisseurs();
-        setShowForm(false);
+        setShowEditForm(false); // Close the edit form after submission
         Swal.fire({
           icon: "success",
           title: "Succès!",
@@ -460,7 +447,7 @@ const FournisseurList = () => {
           title: "Succès!",
           text: "Fournisseur ajouté avec succès.",
         });
-        setShowForm(false);
+
         setFormData({
           raison_sociale: "",
           adresse: "",
@@ -470,7 +457,8 @@ const FournisseurList = () => {
           zone: "",
           user_id: "",
         });
-        
+
+        setShowAddForm(false); // Close the add form after submission
       })
       .catch((error) => {
         console.error("Erreur lors de l'ajout du fournisseur:", error);
@@ -481,19 +469,18 @@ const FournisseurList = () => {
         });
       });
   };
-
-  const handleCancel = () => {
-    setShowForm(false);
-    setFormData({
-      raison_sociale: "",
-      adresse: "",
-      tele: "",
-      ville: "",
-      abreviation: "",
-      zone: "",
-      user_id: "",
-    });
-  };
+  // const handleCancel = () => {
+  //   setShowForm(false);
+  //   setFormData({
+  //     raison_sociale: "",
+  //     adresse: "",
+  //     tele: "",
+  //     ville: "",
+  //     abreviation: "",
+  //     zone: "",
+  //     user_id: "",
+  //   });
+  // };
 
   return (
     <div>
@@ -504,17 +491,17 @@ const FournisseurList = () => {
           <Search onSearch={handleSearch} />
         </div>
         <div className="add-Ajout-form">
-          {!showForm && (
-            <Button variant="primary" onClick={() => setShowForm(true)}>
+          {!showAddForm && (
+            <Button variant="primary" onClick={() => setShowAddForm(true)}>
               Ajouter un fournisseur
             </Button>
           )}
-          {showForm && (
+          {showAddForm && (
             <Form className="col-8 row " onSubmit={handleAddFournisseur}>
               <Button
                 className="col-1"
                 variant="danger"
-                onClick={() => setShowForm(false)}
+                onClick={() => setShowAddForm(false)}
               >
                 X
               </Button>
@@ -585,7 +572,7 @@ const FournisseurList = () => {
                 <Form.Control
                   as="select"
                   name="user_id"
-                  value={fournisseurs.user_id || ""}
+                  value={fournisseurs.user_id}
                   onChange={handleChange}
                 >
                   {/* Option par défaut avec une valeur nulle */}
@@ -610,7 +597,7 @@ const FournisseurList = () => {
           )}
         </div>
         <div className="add-Ajout-form">
-          {showForm && (
+          {showEditForm && (
             <Form
               className="col-8 row "
               onSubmit={handleEditSubmit}
@@ -618,7 +605,7 @@ const FournisseurList = () => {
               <Button
                 className="col-1"
                 variant="danger"
-                onClick={() => setShowForm(false)}
+                onClick={() => setShowEditForm(false)}
               >
                 X
               </Button>
@@ -688,7 +675,7 @@ const FournisseurList = () => {
                 <Form.Control
                   as="select"
                   name="user_id"
-                  value={formData.user_id || ""}
+                  value={formData.user_id}
                   onChange={handleChange}
                 >
                   {/* Option par défaut avec une valeur nulle */}

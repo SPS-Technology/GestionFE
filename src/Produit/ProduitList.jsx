@@ -18,6 +18,7 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 const ProduitList = () => {
+  const [existingProduct, setExistingProduct] = useState({});
   const [produits, setProduits] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,7 +28,8 @@ const ProduitList = () => {
   const [users, setUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
   const [formData, setFormData] = useState({
     nom: "",
     type_quantite: "",
@@ -153,6 +155,45 @@ const ProduitList = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleEdit = (id) => {
+    const foundProduits = produits.find((prod) => prod.id === id);
+
+    setExistingProduct(foundProduits);
+    setFormData({
+      nom: foundProduits.nom,
+      type_quantite: foundProduits.type_quantite,
+      calibre: foundProduits.calibre,
+      fournisseur_id: foundProduits.fournisseur_id,
+      user_id: foundProduits.user_id,
+    });
+
+    setShowEditForm(true); // Show the edit form
+  };
+
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+
+    axios
+      .put(`http://localhost:8000/api/produits/${existingProduct.id}`, formData)
+      .then(() => {
+        fetchProduits();
+        setShowEditForm(false); // Close the edit form after submission
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: "Produit modifié avec succès.",
+        });
+      })
+      .catch((error) => {
+        console.error("Erreur lors de la modification du produit:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de la modification du produit.",
+        });
+      });
   };
 
   const handleSelectAllChange = () => {
@@ -369,69 +410,69 @@ const ProduitList = () => {
     XLSX.writeFile(wb, "produits.xlsx");
   };
 
-  const handleEdit = (id) => {
-    const existingProduit = produits.find((produit) => produit.id === id);
+  //   const handleEdit = (id) => {
+  //     const existingProduit = produits.find((produit) => produit.id === id);
 
-    const fournisseurOptions = fournisseurs.map((fournisseur) => ({
-      value: fournisseur.id,
-      label: fournisseur.raison_sociale,
-    }));
+  //     const fournisseurOptions = fournisseurs.map((fournisseur) => ({
+  //       value: fournisseur.id,
+  //       label: fournisseur.raison_sociale,
+  //     }));
 
-    Swal.fire({
-      title: "Modifier Produit",
-      html:
-        `<label for="nom">Nom</label>` +
-        `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
-        `<label for="type_quantite">Type Quantité</label>` +
-        `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
-        `<label for="calibre">Calibre</label>` +
-        `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
-        `<label for="user_id">User</label>` +
-        `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
-        `<label for="fournisseur">Fournisseur</label>` +
-        `<select id="fournisseur" class="swal2-input">
-  <option value="">Aucun</option>
-  ${fournisseurOptions.map(
-    (option) => `<option value="${option.value}">${option.label}</option>`
-  )}
-</select>`,
+  //     Swal.fire({
+  //       title: "Modifier Produit",
+  //       html:
+  //         `<label for="nom">Nom</label>` +
+  //         `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
+  //         `<label for="type_quantite">Type Quantité</label>` +
+  //         `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
+  //         `<label for="calibre">Calibre</label>` +
+  //         `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
+  //         `<label for="user_id">User</label>` +
+  //         `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
+  //         `<label for="fournisseur">Fournisseur</label>` +
+  //         `<select id="fournisseur" class="swal2-input">
+  //   <option value="">Aucun</option>
+  //   ${fournisseurOptions.map(
+  //     (option) => `<option value="${option.value}">${option.label}</option>`
+  //   )}
+  // </select>`,
 
-      confirmButtonText: "modifier",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          nom: document.getElementById("nom").value,
-          type_quantite: document.getElementById("type_quantite").value,
-          calibre: document.getElementById("calibre").value,
-          fournisseur_id: document.getElementById("fournisseur").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .put(`http://localhost:8000/api/produits/${id}`, result.value)
-          .then(() => {
-            fetchProduits();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Produit modifié avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de la modification du produit:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la modification du produit.",
-            });
-          });
-      }
-    });
-  };
+  //       confirmButtonText: "modifier",
+  //       focusConfirm: false,
+  //       showCancelButton: true,
+  //       cancelButtonText: "Annuler",
+  //       preConfirm: () => {
+  //         return {
+  //           nom: document.getElementById("nom").value,
+  //           type_quantite: document.getElementById("type_quantite").value,
+  //           calibre: document.getElementById("calibre").value,
+  //           fournisseur_id: document.getElementById("fournisseur").value,
+  //           user_id: document.getElementById("user_id").value,
+  //         };
+  //       },
+  //     }).then((result) => {
+  //       if (result.isConfirmed) {
+  //         axios
+  //           .put(`http://localhost:8000/api/produits/${id}`, result.value)
+  //           .then(() => {
+  //             fetchProduits();
+  //             Swal.fire({
+  //               icon: "success",
+  //               title: "Succès!",
+  //               text: "Produit modifié avec succès.",
+  //             });
+  //           })
+  //           .catch((error) => {
+  //             console.error("Erreur lors de la modification du produit:", error);
+  //             Swal.fire({
+  //               icon: "error",
+  //               title: "Erreur!",
+  //               text: "Échec de la modification du produit.",
+  //             });
+  //           });
+  //       }
+  //     });
+  //   };
 
   const handleAddProduit = (e) => {
     e.preventDefault();
@@ -451,7 +492,7 @@ const ProduitList = () => {
           fournisseur_id: "",
           user_id: "",
         });
-        setShowForm(false);
+        setShowAddForm(false);
       })
       .catch((error) => {
         console.error("Erreur lors de l'ajout du produit:", error);
@@ -463,16 +504,16 @@ const ProduitList = () => {
       });
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
-    setFormData({
-      nom: "",
-      type_quantite: "",
-      calibre: "",
-      fournisseur_id: "",
-      user_id: "",
-    });
-  };
+  // const handleCancel = () => {
+  //   setShowForm(false);
+  //   setFormData({
+  //     nom: "",
+  //     type_quantite: "",
+  //     calibre: "",
+  //     fournisseur_id: "",
+  //     user_id: "",
+  //   });
+  // };
 
   return (
     <div>
@@ -483,17 +524,17 @@ const ProduitList = () => {
           <Search onSearch={handleSearch} />
         </div>
         <div className="add-Ajout-form">
-          {!showForm && (
-            <Button variant="primary" onClick={() => setShowForm(true)}>
+          {!showAddForm && (
+            <Button variant="primary" onClick={() => setShowAddForm(true)}>
               Ajouter un Produit
             </Button>
           )}
-          {showForm && (
+          {showAddForm && (
             <Form className="col-8 row " onSubmit={handleAddProduit}>
               <Button
                 className="col-1"
                 variant="danger"
-                onClick={() => setShowForm(false)}
+                onClick={() => setShowAddForm(false)}
               >
                 X
               </Button>
@@ -537,7 +578,7 @@ const ProduitList = () => {
                 <Form.Control
                   as="select"
                   name="user_id"
-                  value={produits.user_id || ""}
+                  value={produits.user_id}
                   onChange={handleChange}
                 >
                   {/* Option par défaut avec une valeur nulle */}
@@ -561,6 +602,7 @@ const ProduitList = () => {
                   value={produits.fournisseur_id}
                   onChange={handleChange}
                 >
+                  <option value="">Sélectionnez un fournisseur</option>
                   {fournisseurs.map((fournisseur) => (
                     <option key={fournisseur.id} value={fournisseur.id}>
                       {fournisseur.raison_sociale}
@@ -572,6 +614,99 @@ const ProduitList = () => {
               <Form.Group className="col-7 mt-5">
                 <Button className="col-5" variant="primary" type="submit">
                   Ajouter
+                </Button>
+              </Form.Group>
+            </Form>
+          )}
+        </div>
+
+        <div className="add-Ajout-form">
+          {showEditForm && (
+            <Form className="col-8 row " onSubmit={handleEditSubmit}>
+              <Button
+                className="col-1"
+                variant="danger"
+                onClick={() => setShowEditForm(false)}
+              >
+                X
+              </Button>
+              <h4 className="text-center">Modifier un Produit</h4>
+              <Form.Group className="col-6 m-2" controlId="nom">
+                <Form.Label>Nom du Produit</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="nom"
+                  value={formData.nom}
+                  onChange={handleChange}
+                  placeholder="Nom du Produit"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2" controlId="type_quantite">
+                <Form.Label>Type de Quantité</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="type_quantite"
+                  value={formData.type_quantite}
+                  onChange={handleChange}
+                >
+                  <option value="">Sélectionnez un type de quantite</option>
+                  <option value="kg">kg</option>
+                  <option value="unitaire">unitaire</option>
+                </Form.Control>
+              </Form.Group>
+
+              <Form.Group className="col-4 m-2" controlId="calibre">
+                <Form.Label>calibre</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="calibre"
+                  value={formData.calibre}
+                  onChange={handleChange}
+                  placeholder="calibre"
+                />
+              </Form.Group>
+              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
+                <Form.Label>Sélectionnez un utilisateur</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="user_id"
+                  value={formData.user_id}
+                  onChange={handleChange}
+                >
+                  {/* Option par défaut avec une valeur nulle */}
+                  <option value="">Sélectionnez un utilisateur</option>
+
+                  {/* Options pour les utilisateurs */}
+                  {users &&
+                    users.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {user.name}
+                      </option>
+                    ))}
+                </Form.Control>
+              </Form.Group>
+
+              <Form.Group className="col-4 m-2 mb-3" controlId="fournisseur_id">
+                <Form.Label>Sélectionnez un fournisseur</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="fournisseur_id"
+                  value={formData.fournisseur_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Sélectionnez un fournisseur</option>
+                  {fournisseurs &&
+                    fournisseurs.map((fournisseur) => (
+                      <option key={fournisseur.id} value={fournisseur.id}>
+                        {fournisseur.raison_sociale}
+                      </option>
+                    ))}
+                </Form.Control>
+              </Form.Group>
+
+              <Form.Group className="col-7 mt-5">
+                <Button className="col-5" variant="primary" type="submit">
+                  Modifier
                 </Button>
               </Form.Group>
             </Form>
@@ -597,52 +732,62 @@ const ProduitList = () => {
               <th>Actions</th>
             </tr>
           </thead>
+
           <tbody>
             {filteredProducts
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((prod) => (
-                <tr key={prod.id}>
-                  <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(prod.id)}
-                      onChange={() => handleCheckboxChange(prod.id)}
-                    />
-                  </td>
-                  <td>{prod.id}</td>
-                  <td>{prod.nom}</td>
-                  <td>{prod.type_quantite}</td>
-                  <td>{prod.calibre}</td>
-                  <td>
-                    {users &&
-                      users.map((user) => (
-                        <span key={user.id}>{user.name}</span>
-                      ))}
-                  </td>
-                  <td>
-                    {fournisseurs.map((fournisseur) => (
-                      <span key={fournisseur.id}>
-                        {fournisseur.raison_sociale}
-                      </span>
-                    ))}
-                  </td>
+              .map((prod) => {
+                const selectedFournisseur = fournisseurs.find(
+                  (fournisseur) => fournisseur.id === prod.fournisseur_id
+                );
+                const selectedUser = users.find(
+                  (user) => user.id === prod.user_id
+                );
+                return (
+                  <tr key={prod.id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={selectedItems.includes(prod.id)}
+                        onChange={() => handleCheckboxChange(prod.id)}
+                      />
+                    </td>
+                    <td>{prod.id}</td>
+                    <td>{prod.nom}</td>
+                    <td>{prod.type_quantite}</td>
+                    <td>{prod.calibre}</td>
+                    <td>
+                      {selectedUser ? (
+                        <>{selectedUser.name}</>
+                      ) : (
+                        <div>No user found</div>
+                      )}
+                    </td>
+                    <td>
+                      {selectedFournisseur ? (
+                        <>{selectedFournisseur.raison_sociale}</>
+                      ) : (
+                        <div>No Fournisseur found</div>
+                      )}
+                    </td>
 
-                  <td class="col-2 text-center">
-                    <button
-                      className="col-3 btn btn-warning mx-2"
-                      onClick={() => handleEdit(prod.id)}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button
-                      className="col-3 btn btn-danger mx-2"
-                      onClick={() => handleDelete(prod.id)}
-                    >
-                      <i className="fas fa-minus-circle"></i>
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    <td className="col-2 text-center">
+                      <button
+                        className="col-3 btn btn-warning mx-2"
+                        onClick={() => handleEdit(prod.id)}
+                      >
+                        <i className="fas fa-edit"></i>
+                      </button>
+                      <button
+                        className="col-3 btn btn-danger mx-2"
+                        onClick={() => handleDelete(prod.id)}
+                      >
+                        <i className="fas fa-minus-circle"></i>
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
           </tbody>
         </table>
 
