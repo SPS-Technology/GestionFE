@@ -1,29 +1,39 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./Login.css";
+import {
+  TextField,
+  Button,
+  Typography,
+  Container,
+  Grid,
+  Card,
+  CardContent,
+} from "@mui/material";
 import { useAuth } from "../AuthContext";
+import "./Login.css";
 
-function Login() {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [error, setError] = useState("");
   const { login } = useAuth();
-
   const navigate = useNavigate();
+
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
-    setEmailError(""); // Réinitialisez l'erreur email
+    setEmailError("");
   };
 
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
-    setPasswordError(""); // Réinitialisez l'erreur password
+    setPasswordError("");
   };
-  const handleEror = (e) => {
-    setError(""); // Réinitialisez l'erreur 
+
+  const handleEror = () => {
+    setError("");
   };
 
   const handleLogin = async (e) => {
@@ -43,6 +53,7 @@ function Login() {
           },
         }
       );
+
       const existingToken = localStorage.getItem("API_TOKEN");
 
       if (!existingToken) {
@@ -54,7 +65,6 @@ function Login() {
       const userData = response.data.user;
 
       login(userData);
-
       navigate("/");
     } catch (error) {
       console.error(error);
@@ -75,85 +85,90 @@ function Login() {
   };
 
   return (
-    <section className="vh-100">
-      <div className="container-fluid">
-        <div className="row">
-          <div className="col-sm-6 text-black">
-            <div className="px-5 ms-xl-4">
-              <img
-                src="/images/egg.png"
-                alt="Logo"
-                className="img-fluid me-3 pt-4 mt-xl-3"
-                style={{ maxWidth: "40px", height: "auto", color: "#709085" }}
-              />{" "}
-              <span className="h1 fw-bold mb-0">Logo</span>
-            </div>
-
-            <div className="d-flex align-items-center h-custom-2 px-5 ms-xl-4 mt-2 pt-4 pt-xl-0 mt-xl-n4">
-              <form style={{ width: "23rem" }} onSubmit={handleLogin}>
-                <h3
-                  className="fw-normal mb-1 pb-2"
-                  style={{ letterSpacing: "1px" }}
-                >
-                  Log in
-                </h3>
-                <div className="form-outline mb-4">
-                  <input
-                    type="email"
-                    name="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    id="form2Example18"
-                    className="form-control form-control-lg"
-                    placeholder="entrez votre email"
-                  />
-
-                  <span style={{ color: "red" }} className="error">
-                    {emailError}
-                  </span>
-                </div>
-
-                <div className="form-outline mb-4">
-                  <input
-                    type="password"
-                    name="password"
-                    value={password}
-                    onChange={handlePasswordChange}
-                    id="form2Example28"
-                    className="form-control form-control-lg"
-                    placeholder="entrer votre password"
-                  />
-                  <span style={{ color: "red" }} className="error">
-                    {passwordError}
-                  </span>
-                </div>
-
-                <div className="pt-1 mb-4">
-                  <button
-                    className="btn btn-info btn-lg btn-block"
-                    type="submit"
-                  >
-                    Login
-                  </button>
-                  <span style={{ color: "red" }}    onChange={handleEror} className="error">
-                    {error}
-                  </span>
-                </div>
-              </form>
-            </div>
-          </div>
-          <div className="col-sm-6 px-0 d-none d-sm-block">
+    <Container component="main" maxWidth="lg">
+      <Grid container>
+        <Grid item xs={12} md={6}>
+          <div className="px-5 ms-xl-4 mt-4">
             <img
-              src="/images/bayd.jpg"
-              alt="Login image"
-              className="w-100 vh-100 img-fluid"
-              style={{ objectFit: "cover", objectPosition: "left" }}
+              src="/images/egg.png"
+              alt="Logo"
+              className="img-fluid me-3"
+              style={{ maxWidth: "40px", height: "auto", color: "#709085" }}
             />
+            <Typography variant="h1" component="div" className="fw-bold mb-0">
+              Logo
+            </Typography>
           </div>
-        </div>
-      </div>
-    </section>
+
+          <Grid
+            container
+            direction="column"
+            justifyContent="center"
+            alignItems="center"
+            className="px-5 mt-2"
+          >
+            <Card elevation={3}>
+              <CardContent>
+                <Typography variant="h4" component="div" className="fw-normal mb-2">
+                  Log in
+                </Typography>
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  fullWidth
+                  id="email"
+                  label="Email"
+                  name="email"
+                  autoComplete="email"
+                  autoFocus
+                  value={email}
+                  onChange={handleEmailChange}
+                  error={Boolean(emailError)}
+                  helperText={emailError}
+                />
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type="password"
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  error={Boolean(passwordError)}
+                  helperText={passwordError}
+                />
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  color="primary"
+                  onClick={handleLogin}
+                  sx={{ mt: 2 }}
+                >
+                  Login
+                </Button>
+                <Typography variant="body2" color="error" sx={{ mt: 1 }} onChange={handleEror}>
+                  {error}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+
+        <Grid item xs={12} md={6} className="px-0 d-none d-md-block">
+          <img
+            src="/images/bayd.jpg"
+            alt="Login image"
+            className="w-100 vh-100 img-fluid"
+            style={{ objectFit: "cover", objectPosition: "left" }}
+          />
+        </Grid>
+      </Grid>
+    </Container>
   );
-}
+};
 
 export default Login;

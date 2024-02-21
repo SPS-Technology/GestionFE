@@ -1,127 +1,211 @@
-// Navigation.js
-import { Link } from "react-router-dom";
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
-// import handleLogout from "../Auth/handleLogout";
 import { useAuth } from "../AuthContext";
+import Drawer from "@mui/material/Drawer";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import ListItemText from "@mui/material/ListItemText";
+import IconButton from "@mui/material/IconButton";
+import MenuIcon from "@mui/icons-material/Menu";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import Avatar from "@mui/material/Avatar";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import BusinessIcon from "@mui/icons-material/Business";
+import PeopleIcon from "@mui/icons-material/People";
+import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import AddCircleIcon from "@mui/icons-material/AddCircle";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+
 const Navigation = () => {
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
   const isAuthenticated = localStorage.getItem("isAuthenticated");
   const token = localStorage.getItem("API_TOKEN");
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  const [user,setUser]=useState();
-  const { logout } = useAuth(); 
+  const { logout } = useAuth();
+  const [openDrawer, setOpenDrawer] = useState(true);
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
+
   useEffect(() => {
-    fetchUsers();
+    fetchUserData();
   }, []);
 
-  const fetchUsers = async () => {
+  const fetchUserData = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/user", {
-        withCredentials: true,});
+        withCredentials: true,
+      });
       setUser(response.data);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching user data:", error);
     }
   };
+
   const handleLogoutClick = async () => {
     try {
-      // Votre logique de déconnexion ici
+      // Logout logic
 
       Swal.fire({
         icon: "success",
-        title: "Succès",
-        text: "Déconnexion réussie!",
+        title: "Success",
+        text: "Logout successful!",
       });
       navigate("/login");
     } catch (error) {
-      console.error("Erreur lors de la déconnexion :", error);
+      console.error("Error during logout:", error);
 
-      // Notification d'erreur
       Swal.fire({
         icon: "error",
-        title: "Erreur",
-        text: "Une erreur s'est produite lors de la déconnexion.",
+        title: "Error",
+        text: "An error occurred during logout.",
       });
     }
+  };
+
+  const handleDrawerOpen = () => {
+    setOpenDrawer(true);
+  };
+
+  const handleDrawerClose = () => {
+    setOpenDrawer(false);
   };
 
   return (
     <>
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          <a className="navbar-brand" href="/">
-            Gestion de Commandes
-          </a>
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navbarNav"
-            aria-controls="navbarNav"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ml-auto">
-              
-              <Link to="/fournisseurs" className="navbar-brand">
-                Fournisseurs
-              </Link>
-              <Link to="/clients" className="navbar-brand">
-                Clients
-              </Link>
-              <Link to="/produits" className="navbar-brand">
-                Produits
-              </Link>
-              <Link to="/commandes" className="navbar-brand">
-                Commandes
-              </Link>
-              {user && user.role === "admin" && ( // Vérification du rôle d'administrateur pour l'utilisateur connecté
-                <>
-                 
-                    <Link to="/add-user">
-                       Ajouter utilisateur
-                    </Link>
-                
-                 
-                    <Link to="/users">
-                       Gestion utilisateurs
-                    </Link>
-                  
-                </>
-              )}
-            </ul>
-            <div>
-            <button
-              style={{
-                background: "none",
-                textDecoration: "none",
-                border: 0,
-                color: "red",
-                fontFamily: "monospace",
-              }}
-              onClick={() => {
-                handleLogoutClick();
-                logout();
-              }}
-            >
-              <i className="fas fa-sign-out-alt" aria-hidden="true" /> Se déconnecter
-            </button>
-          </div>
-          </div>
+      <IconButton
+        color="inherit"
+        aria-label="open drawer"
+        onClick={handleDrawerOpen}
+        edge="start"
+      >
+        <MenuIcon />
+      </IconButton>
+      <Drawer
+        anchor="left"
+        open={openDrawer}
+        onClose={handleDrawerClose}
+        classes={{
+          paper: "custom-drawer-paper",
+        }}
+      >
+        <div className="drawer-header">
+          <IconButton onClick={handleDrawerClose}>
+            <ChevronLeftIcon />
+          </IconButton>
         </div>
-      </nav>
+        <List>
+          {user && (
+            <ListItem button style={{ color: "blue" }}>
+              <ListItemIcon>
+                <Avatar
+                  alt={user.name}
+                  src={user.photo}
+                  style={{ width: "40px", height: "40px" }} // Ajoutez ces styles
+                />
+              </ListItemIcon>
+              <ListItemText primary={`Hello, ${user.name}`} />
+            </ListItem>
+          )}
+
+          <ListItem button component={Link} to="/" style={{ color: "blue" }}>
+            <ListItemIcon>
+              <ShoppingBasketIcon />
+            </ListItemIcon>
+            <ListItemText primary="Gestion commandes" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/fournisseurs"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <BusinessIcon />
+            </ListItemIcon>
+            <ListItemText primary="Fournisseurs" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/clients"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <PeopleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Clients" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/produits"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <AddCircleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Produits" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/commandes"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <ShoppingBasketIcon />
+            </ListItemIcon>
+            <ListItemText primary="Commandes" />
+          </ListItem>
+          {user && user.role === "admin" && (
+            <>
+              <ListItem
+                button
+                component={Link}
+                to="/add-user"
+                style={{ color: "blue" }}
+              >
+                <ListItemIcon>
+                  <AddCircleIcon />
+                </ListItemIcon>
+                <ListItemText primary="Ajouter utilisateur" />
+              </ListItem>
+              <ListItem
+                button
+                component={Link}
+                to="/users"
+                style={{ color: "blue" }}
+              >
+                <ListItemIcon>
+                  <SupervisorAccountIcon />
+                </ListItemIcon>
+                <ListItemText primary="Gestion utilisateurs" />
+              </ListItem>
+            </>
+          )}
+        </List>
+        <List>
+          <ListItem
+            button
+            onClick={handleLogoutClick}
+            style={{ color: "red", background: "white" }}
+          >
+            <ListItemIcon>
+              <ExitToAppIcon />
+            </ListItemIcon>
+            <ListItemText primary="Se déconnecter" />
+          </ListItem>
+        </List>
+      </Drawer>
     </>
   );
 };

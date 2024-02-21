@@ -10,6 +10,7 @@ import CommandeList from './Commande/CommandeList';
 import AddUser from './Users/Adduser';
 import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
+import Dashboard from './Acceuil/Dashboard';
 
 
 const App = () => {
@@ -19,7 +20,7 @@ const App = () => {
     <AuthProvider>
       <Routes>
       <Route path="/login" element={<Login />} />
-        <Route path="/" element={<Navigation />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
         <Route path="/produits" element={<ProduitList />} />
