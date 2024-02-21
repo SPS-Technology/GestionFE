@@ -5,12 +5,13 @@ import Navigation from "../nav/Navigation";
 
 const CommandeList = () => {
   const [clients, setClients] = useState([]);
-  const [selectedClient, setSelectedClient] = useState('');
   const [produits, setProduits] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [quantity, setQuantity] = useState(1);
+  const [selectedProductQuantity, setSelectedProductQuantity] = useState(1);
+  const [selectedProductPrice, setSelectedProductPrice] = useState(1);
+  const [selectedClient, setSelectedClient] = useState(null);
 
   useEffect(() => {
     fetchClients();
@@ -18,7 +19,13 @@ const CommandeList = () => {
   }, []);
 
   const handleClientChange = (event) => {
-    setSelectedClient(event.target.value);
+    const clientId = event.target.value;
+    if (clientId === "") {
+      setSelectedClient(null);
+    } else {
+      const client = clients.find(client => client.id === parseInt(clientId));
+      setSelectedClient(client);
+    }
   };
 
   const fetchClients = async () => {
@@ -40,17 +47,23 @@ const CommandeList = () => {
   };
 
   const handleProductSelect = (id, isChecked) => {
-    const product = produits.find(produit => produit.id === id);
     if (isChecked) {
-      setSelectedProduct(product);
-      setShowModal(true);
+      // Ajouter le produit sélectionné au tableau des produits sélectionnés
+      const productToAdd = produits.find(product => product.id === id);
+      setSelectedProducts([...selectedProducts, productToAdd]);
     } else {
-      setSelectedProduct(null);
+      // Supprimer le produit décoché du tableau des produits sélectionnés
+      const updatedProducts = selectedProducts.filter(product => product.id !== id);
+      setSelectedProducts(updatedProducts);
     }
   };
 
   const handleAddProduct = () => {
-    const productToAdd = { ...selectedProduct, quantity };
+    const productToAdd = {
+      ...selectedProduct,
+      quantity: selectedProductQuantity,
+      prix_unitaire: selectedProductPrice
+    };
     setSelectedProducts([...selectedProducts, productToAdd]);
     setShowModal(false);
   };
@@ -62,17 +75,23 @@ const CommandeList = () => {
 
   const addProductsToCommande = async () => {
     try {
-      // Pour chaque produit sélectionné, envoyez une requête d'insertion
+      const commandeResponse = await axios.post("http://localhost:8000/api/commandes", {
+        client_id: selectedClient,
+        user_id: "1",
+        status: "En cours"
+      });
+      const commande_id = commandeResponse.data.id;
+
       for (const product of selectedProducts) {
         const { id: produit_id, quantity: quantite, prix_unitaire } = product;
-        await axios.post("http://localhost:8000/api/ligne_commande", {
-          commande_id: selectedClient, // Supposons que selectedClient contient l'ID de la commande en cours
+        await axios.post("http://localhost:8000/api/ligneCommandes", {
+          commande_id,
           produit_id,
           quantite,
           prix_unitaire
         });
       }
-      // Réinitialiser les produits sélectionnés après les avoir ajoutés à la commande
+
       setSelectedProducts([]);
     } catch (error) {
       console.error("Error adding products to commande:", error);
@@ -80,9 +99,9 @@ const CommandeList = () => {
   };
 
   return (
-    <div className="col row" >
+    <div className="col row">
       <Navigation />
-      <div className="col-2 mt-3">
+      <div className="col-3 mt-3">
         <Form.Label><a className=" m-3" href="/clients">Liste des Clients</a></Form.Label>
         <Form.Select className="col-4 m-2 mt-2" value={selectedClient} onChange={handleClientChange}>
           <option value="">Sélectionner un client</option>
@@ -92,42 +111,74 @@ const CommandeList = () => {
             </option>
           ))}
         </Form.Select>
+        {selectedClient ? (
+          <div className="col row align-items-start">
+
+            <div className="col-10">
+              <ul className="clientS">
+                <span>Client sélectionné :</span>
+                <li>Raison Sociale : {selectedClient.raison_sociale}</li>
+                <li>Telephone :{selectedClient.tele}</li>
+                <li>Abreviation :{selectedClient.abreviation}</li>
+                <li>Ville :{selectedClient.ville}</li>
+                <li>Adresse :{selectedClient.adresse}</li>
+                <li>Zone :{selectedClient.zone}</li>
+              </ul>
+            </div>
+            <div className="col-2">
+              <Button variant="danger" className="btn-sm" onClick={() => setSelectedClient(null)}>X</Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="col-3 mt-3">
-        <Form.Label>Sélectionner des produits:</Form.Label>
-        <Table striped bordered hover>
-          <thead>
-            <tr>
-              <th>Nom</th>
-              <th>Add</th>
-            </tr>
-          </thead>
-          <tbody>
-            {produits.map(produit => (
-              <tr key={produit.id}>
-                <td>{produit.nom}</td>
-                <td>
-                  <Form.Check
-                    type="checkbox"
-                    id={`produit-${produit.id}`}
-                    onChange={(e) => handleProductSelect(produit.id, e.target.checked)}
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+        <Form.Label>Sélectionner des produits</Form.Label>
+        <Button variant="primary" onClick={() => setShowModal(true)}>Sélectionner des produits</Button>
+
+        <Modal show={showModal} onHide={() => setShowModal(false)}>
+          <Modal.Header closeButton>
+            <Modal.Title>Sélectionner des produits</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <Table striped bordered hover>
+              <thead>
+                <tr>
+                  <th>Nom</th>
+                  <th>Sélectionner</th>
+                </tr>
+              </thead>
+              <tbody>
+                {produits.map(produit => (
+                  <tr key={produit.id}>
+                    <td>{produit.nom}</td>
+                    <td>
+                      <Form.Check
+                        type="checkbox"
+                        id={`produit-${produit.id}`}
+                        onChange={(e) => handleProductSelect(produit.id, e.target.checked)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="primary" onClick={() => setShowModal(false)}>Ajouter</Button>
+          </Modal.Footer>
+        </Modal>
       </div>
 
-      <div className="container mt-3 col-5" >
-        <h4>Produits Sélectionnés</h4>
+      <div className="container mt-3 col-5">
+        <Form.Label>Produits Sélectionnés</Form.Label>
         <Table striped bordered hover>
           <thead>
             <tr>
               <th>Nom</th>
               <th>Type Quantité</th>
               <th>Calibre</th>
+              <th>Quantité</th>
               <th>Action</th>
             </tr>
           </thead>
@@ -137,6 +188,20 @@ const CommandeList = () => {
                 <td>{produit.nom}</td>
                 <td>{produit.type_quantite}</td>
                 <td>{produit.calibre}</td>
+                <td><Form.Control
+                  type="number"
+                  value={produit.quantity}
+                  required
+                  onChange={(e) => {
+                    const updatedProducts = selectedProducts.map(prod => {
+                      if (prod.id === produit.id) {
+                        return { ...prod, quantity: parseInt(e.target.value) };
+                      }
+                      return prod;
+                    });
+                    setSelectedProducts(updatedProducts);
+                  }}
+                /></td>
                 <td>
                   <Button variant="danger" onClick={() => handleRemoveProduct(produit.id)}>Supprimer</Button>
                 </td>
@@ -144,23 +209,6 @@ const CommandeList = () => {
             ))}
           </tbody>
         </Table>
-        <Modal show={showModal} onHide={() => setShowModal(false)}>
-          <Modal.Header closeButton>
-            <Modal.Title>Sélectionner la quantité</Modal.Title>
-          </Modal.Header>
-          <Modal.Body>
-            <Form.Label>Quantité:</Form.Label>
-            <Form.Control
-              type="number"
-              value={quantity}
-              onChange={(e) => setQuantity(parseInt(e.target.value))}
-            />
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Annuler</Button>
-            <Button variant="primary" onClick={handleAddProduct}>Ajouter</Button>
-          </Modal.Footer>
-        </Modal>
         <div>
           <Button variant="primary" onClick={addProductsToCommande}>Ajouter à la commande</Button>
         </div>

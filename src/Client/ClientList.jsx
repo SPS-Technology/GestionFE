@@ -167,7 +167,7 @@ const ClientList = () => {
     console.log(handleSubmit);
     e.preventDefault();
     axios
-      .post('http://localhost:8000/api/clients', clients)
+      .post('http://localhost:8000/api/clients', formData)
       .then(() => {
         fetchClients();
         Swal.fire({

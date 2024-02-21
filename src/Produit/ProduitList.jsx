@@ -278,7 +278,7 @@ const ProduitList = () => {
                   <td>{produit.calibre}</td>
                   <td>
                     {fournisseur ? (
-                      <>{fournisseur.raison_sociale}</>
+                      <>{fournisseur.abreviation}</>
                     ) : (
                       <div>No Fournisseur found</div>
                     )}
