@@ -81,6 +81,7 @@ const Navigation = () => {
 
   return (
     <>
+<<<<<<< HEAD
       <IconButton
         color="inherit"
         aria-label="open drawer"
@@ -101,6 +102,56 @@ const Navigation = () => {
           <IconButton onClick={handleDrawerClose}>
             <ChevronLeftIcon />
           </IconButton>
+=======
+      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div className="container">
+          <a className="navbar-brand" href="/">
+            Gestion de Commandes
+          </a>
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-toggle="collapse"
+            data-target="#navbarNav"
+            aria-controls="navbarNav"
+            aria-expanded="false"
+            aria-label="Toggle navigation"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+          <div className="collapse navbar-collapse" id="navbarNav">
+            <ul className="navbar-nav ml-auto">
+              
+              <Link to="/fournisseurs" className="navbar-brand">
+                Fournisseurs
+              </Link>
+              <Link to="/clients" className="navbar-brand">
+                Clients
+              </Link>
+              <Link to="/produits" className="navbar-brand">
+                Produits
+              </Link>
+              
+            </ul>
+            <div>
+            <button
+              style={{
+                background: "none",
+                textDecoration: "none",
+                border: 0,
+                color: "red",
+                fontFamily: "monospace",
+              }}
+              onClick={() => {
+                handleLogoutClick();
+                logout();
+              }}
+            >
+              <i className="fas fa-sign-out-alt" aria-hidden="true" /> Se déconnecter
+            </button>
+          </div>
+          </div>
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
         </div>
         <List>
           {user && (

@@ -40,18 +40,28 @@ const ProduitList = () => {
 
   const fetchProduits = async () => {
     try {
+<<<<<<< HEAD
       const response = await axios.get("http://localhost:8000/api/produits");
       console.log("API Response:", response.data);
       setProduits(response.data.produit);
+=======
+      const produitsResponse = await axios.get(
+        "http://localhost:8000/api/produits"
+      );
+      setProduits(produitsResponse.data.produit);
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
 
       const fournisseursResponse = await axios.get(
         "http://localhost:8000/api/fournisseurs"
       );
       setFournisseurs(fournisseursResponse.data.fournisseur);
+<<<<<<< HEAD
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
       console.log("users", users);
+=======
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -70,9 +80,60 @@ const ProduitList = () => {
     setFilteredProducts(filtered);
   }, [produits, searchTerm]);
 
+<<<<<<< HEAD
   const handleSearch = (term) => {
     //setCurrentPage(1); // Reset to the first page when searching
     setSearchTerm(term);
+=======
+    Swal.fire({
+      title: "Modifier Produit",
+      html:
+      `<label for="nom">Nom</label>` +
+      `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
+      `<label for="type_quantite">Type Quantité</label>` +
+      `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
+      `<label for="calibre">Calibre</label>` +
+      `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
+      `<label for="user_id">User</label>` +
+      `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
+      `<label for="fournisseur_id">Fournisseur</label>` +
+      `<input type="text" id="fournisseur_id" class="swal2-input" value="${existingProduit.fournisseur_id}">`
+        ,
+      focusConfirm: false,
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
+      preConfirm: () => {
+        return {
+          nom: document.getElementById("nom").value,
+          type_quantite: document.getElementById("type_quantite").value,
+          calibre: document.getElementById("calibre").value,
+          fournisseur_id: document.getElementById("fournisseur_id").value,
+          user_id: document.getElementById("user_id").value,
+        };
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .put(`http://localhost:8000/api/produits/${id}`, result.value)
+          .then(() => {
+            fetchProduits();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Produit modifié avec succès.",
+            });
+          })
+          .catch((error) => {
+            console.error("Erreur lors de la modification du produit:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Erreur!",
+              text: "Échec de la modification du produit.",
+            });
+          });
+      }
+    });
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
   };
 
   const handleDelete = (id) => {
@@ -118,11 +179,47 @@ const ProduitList = () => {
     setPage(0);
   };
 
+<<<<<<< HEAD
   const handleDeleteSelected = () => {
     const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
 
     selectedItems.forEach((id) => {
       if (isConfirmed) {
+=======
+    Swal.fire({
+      title: "Ajouter Produit",
+      html:
+        `<label for="nom">Nom</label>` +
+        `<input type="text" id="nom" class="swal2-input" placeholder="Nom">` +
+        `<label for="type_quantite">Type Quantité</label>` +
+        `<select id="type_quantite" class="swal2-input">` +
+        `<option value="kg">kg</option>` +
+        `<option value="unitaire">unitaire</option>` +
+        `</select>` +
+        `<label for="calibre">Calibre</label>` +
+        `<input type="text" id="calibre" class="swal2-input" placeholder="Calibre">` +
+        `<label for="user_id">user</label>` +
+        `<input type="text" id="user_id" class="swal2-input" placeholder="user_id">` +
+        `<label for="fournisseur">Fournisseur</label>` +
+        `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
+          (option) => `<option value="${option.value}">${option.label}</option>`
+        )}</select>`,
+      confirmButtonText: "ajouter",
+      focusConfirm: false,
+      showCancelButton: true,
+      cancelButtonText: "Annuler",
+      preConfirm: () => {
+        return {
+          nom: document.getElementById("nom").value,
+          type_quantite: document.getElementById("type_quantite").value,
+          calibre: document.getElementById("calibre").value,
+          fournisseur_id: document.getElementById("fournisseur").value,
+          user_id: document.getElementById("user_id").value,
+        };
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
         axios
           .delete(`http://localhost:8000/api/produits/${id}`)
           .then(() => {
@@ -724,14 +821,20 @@ const ProduitList = () => {
                 />
               </th>
               <th>ID</th>
+<<<<<<< HEAD
               <th>Nom du Produit</th>
               <th>Type de Quantite</th>
+=======
+              <th>Nom</th>
+              <th>Type Quantité</th>
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
               <th>Calibre</th>
               <th>User</th>
               <th>Fournisseur</th>
               <th>Actions</th>
             </tr>
           </thead>
+<<<<<<< HEAD
 
           <tbody>
             {filteredProducts
@@ -788,6 +891,46 @@ const ProduitList = () => {
                   </tr>
                 );
               })}
+=======
+          <tbody>
+            {produits.map((produit) => {
+              const fournisseur = fournisseurs.find(
+                
+                (fournisseur) => fournisseur.id === produit.fournisseur_id,
+
+              );
+
+              return (
+                <tr key={produit.id}>
+                  <td>{produit.id}</td>
+                  <td>{produit.nom}</td>
+                  <td>{produit.type_quantite}</td>
+                  <td>{produit.calibre}</td>
+                  <td>
+                    {fournisseur ? (
+                      <>{fournisseur.raison_sociale}</>
+                    ) : (
+                      <div>No Fournisseur found</div>
+                    )}
+                  </td>
+                  <td>
+                    <button
+                      className="btn btn-warning ms-2"
+                      onClick={() => handleEdit(produit.id)}
+                    >
+                      <i className="fas fa-edit"></i>
+                    </button>
+                    <button
+                      className="btn btn-danger"
+                      onClick={() => handleDelete(produit.id)}
+                    >
+                      <i className="fas fa-minus-circle"></i>
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+>>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
           </tbody>
         </table>
 
