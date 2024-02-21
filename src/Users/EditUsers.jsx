@@ -14,7 +14,7 @@ const EditUser = () => {
     name: "",
     email: "",
     role: "",
-    photo: "",
+    photo: null,
     password: "",
   });
 
@@ -35,13 +35,13 @@ const EditUser = () => {
             withCredentials: true,
           }
         );
-        const userData = response.data.user; // Assurez-vous d'accéder aux données de l'utilisateur
+        const userData = response.data.user;
         setUser({
           name: userData.name,
           email: userData.email,
           role: userData.role,
-          photo: userData.photo,
-          password: userData.password, // Ajoutez une vérification pour éviter la valeur undefined
+          photo: null,
+          password: userData.password, 
         });
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -52,29 +52,10 @@ const EditUser = () => {
   }, [id]);
 
   const handleChange = (e) => {
-    if (e.target.type === "file") {
-      // Handle file input
-      const selectedFile = e.target.files[0];
-
-      // Read the contents of the selected file
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setUser({
-          ...user,
-          [e.target.name]: reader.result, // Set the photo property to the base64-encoded file content
-        });
-      };
-
-      if (selectedFile) {
-        reader.readAsDataURL(selectedFile);
-      }
-    } else {
-      // Handle other input types (text, etc.)
-      setUser({
-        ...user,
-        [e.target.name]: e.target.value,
-      });
-    }
+    setUser({
+      ...user,
+      [e.target.name]: e.target.name === "photo" ? e.target.files[0] : e.target.value,
+    });
   };
 
   const handleUpdate = async (e) => {
@@ -84,17 +65,26 @@ const EditUser = () => {
       const csrfToken = document.querySelector(
         'meta[name="csrf-token"]'
       ).content;
+
+      const formData = new FormData();
+      formData.append("name", user.name);
+      formData.append("email", user.email);
+      formData.append("role", user.role);
+      formData.append("photo", user.photo);
+      formData.append("password", user.password);
+
       const response = await axios.put(
         `http://localhost:8000/api/users/${id}`,
-        user,
+        formData,
         {
           withCredentials: true,
           headers: {
             "X-CSRF-TOKEN": csrfToken,
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
         }
       );
+      console.log("FormData:", formData);
 
       if (response.status === 200) {
         Swal.fire({
@@ -109,10 +99,8 @@ const EditUser = () => {
     } catch (error) {
       if (error.response) {
         if (error.response.status === 422) {
-          // Erreurs de validation côté serveur
           setErrors(error.response.data.errors);
         } else {
-          // Autres erreurs côté serveur
           console.error(
             "Erreur de serveur:",
             error.response.status,
@@ -136,7 +124,7 @@ const EditUser = () => {
       <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
         <i className="fas fa-user-plus" aria-hidden="true"></i>
         <h2 style={{ marginBottom: "20px" }}>Modifer un utilisateur</h2>
-        <form onSubmit={handleUpdate}>
+        <form onSubmit={handleUpdate} encType="multipart/form-data">
           <div style={{ marginBottom: "15px" }}>
             <label style={{ marginRight: "10px" }}>Nom:</label>
             <input

@@ -19,6 +19,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import { Menu, MenuItem } from "@mui/material";
 
 const Navigation = () => {
   const [user, setUser] = useState(null);
@@ -48,6 +49,11 @@ const Navigation = () => {
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
+  };
+const [showMenu, setShowMenu] = useState(false);
+
+  const handleToggleMenu = () => {
+    setShowMenu(!showMenu);
   };
 
   const handleLogoutClick = async () => {
@@ -155,17 +161,26 @@ const Navigation = () => {
             </ListItemIcon>
             <ListItemText primary="Produits" />
           </ListItem>
-          <ListItem
-            button
-            component={Link}
-            to="/commandes"
-            style={{ color: "blue" }}
-          >
-            <ListItemIcon>
-              <ShoppingBasketIcon />
-            </ListItemIcon>
-            <ListItemText primary="Commandes" />
-          </ListItem>
+          <ListItem button onClick={handleToggleMenu} style={{ color: "blue" }}>
+        <ListItemIcon>
+          <ShoppingBasketIcon />
+        </ListItemIcon>
+        <ListItemText primary="Gestion Commandes" />
+      </ListItem>
+      {showMenu && (
+        <div style={{ marginLeft: "30px" }}>
+          <Link to="/ajouter-commande" style={{ textDecoration: "none", color: "inherit" }}>
+            <div>
+              Ajouter Commande
+            </div>
+          </Link>
+          <Link to="/list-commandes" style={{ textDecoration: "none", color: "inherit" }}>
+            <div>
+              List Commandes
+            </div>
+          </Link>
+        </div>
+      )}
           {user && user.role === "admin" && (
             <>
               <ListItem

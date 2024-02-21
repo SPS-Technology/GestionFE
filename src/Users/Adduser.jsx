@@ -25,10 +25,18 @@ const AddUser = () => {
   });
 
   const handleChange = (e) => {
-    setUser({
-      ...user,
-      [e.target.name]: e.target.value,
-    });
+    // If the input is a file input (photo), update the state with the selected file
+    if (e.target.name === "photo") {
+      setUser({
+        ...user,
+        [e.target.name]: e.target.files[0],
+      });
+    } else {
+      setUser({
+        ...user,
+        [e.target.name]: e.target.value,
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -38,19 +46,20 @@ const AddUser = () => {
       const csrfToken = document.querySelector(
         'meta[name="csrf-token"]'
       ).content;
+      const formData = new FormData();
+      formData.append("name", user.name);
+      formData.append("email", user.email);
+      formData.append("role", user.role);
+      formData.append("photo", user.photo);
+      formData.append("password", user.password);
+
       const response = await axios.post(
         "http://localhost:8000/api/register",
-        {
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          photo: user.photo,
-          password: user.password,
-        },
+        formData,
         {
           headers: {
             "X-CSRF-TOKEN": csrfToken,
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
           },
           withCredentials: true,
         }
@@ -152,10 +161,10 @@ const AddUser = () => {
             <input
               type="file"
               name="photo"
-              value={user.photo}
               onChange={handleChange}
               style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
             />
+
             <span style={{ color: "red" }}>{errors.photo}</span>
           </div>
           <div style={{ marginBottom: "15px" }}>

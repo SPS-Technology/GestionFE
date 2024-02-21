@@ -29,7 +29,7 @@ const FournisseurList = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     raison_sociale: "",
     adresse: "",
     tele: "",
@@ -98,13 +98,22 @@ const FournisseurList = () => {
       if (isConfirmed) {
         axios
           .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-          .then(() => {
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Fournisseur supprimé avec succès.",
-            });
+          .then((response) => {
+            if (response.data.status === "success") {
+              fetchFournisseurs();
+              Swal.fire({
+                icon: "success",
+                title: "Succès!",
+                text: response.data.message,
+              });
+            } else {
+              console.error(response.data.message);
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: response.data.message,
+              });
+            }
           })
           .catch((error) => {
             console.error(
@@ -121,7 +130,6 @@ const FournisseurList = () => {
         console.log("Suppression annulée");
       }
     });
-    fetchFournisseurs();
 
     setSelectedItems([]);
   };
@@ -408,34 +416,56 @@ const FournisseurList = () => {
       });
   };
 
-  
   const handleDelete = (id) => {
     const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
+  
     if (isConfirmed) {
       axios
         .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-        .then(() => {
-          fetchFournisseurs();
-          Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: "Fournisseur supprimé avec succès.",
-          });
+        .then((response) => {
+          if (response.data.message) {
+            // La suppression a réussi
+            fetchFournisseurs();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: response.data.message,
+            });
+          } else if (response.data.error) {
+            // Une erreur s'est produite
+            if (response.data.error.includes("Cannot delete or update a parent row: a foreign key constraint fails")) {
+              // Erreur de contrainte d'intégrité violée
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+              });
+            } else {
+              // Pour d'autres erreurs
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: response.data.error,
+              });
+            }
+          }
         })
         .catch((error) => {
+          // Erreur lors de la requête
           console.error("Erreur lors de la suppression du fournisseur:", error);
           Swal.fire({
             icon: "error",
             title: "Erreur!",
-            text: "Échec de la suppression du fournisseur.",
+            text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
           });
         });
     } else {
       console.log("Suppression annulée");
     }
   };
-
+  
+  
+  
   const handleAddFournisseur = (e) => {
     e.preventDefault();
     axios
@@ -598,10 +628,7 @@ const FournisseurList = () => {
         </div>
         <div className="add-Ajout-form">
           {showEditForm && (
-            <Form
-              className="col-8 row "
-              onSubmit={handleEditSubmit}
-            >
+            <Form className="col-8 row " onSubmit={handleEditSubmit}>
               <Button
                 className="col-1"
                 variant="danger"
