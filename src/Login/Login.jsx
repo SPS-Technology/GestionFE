@@ -86,17 +86,15 @@ function Login() {
                 className="img-fluid me-3 pt-4 mt-xl-3"
                 style={{ maxWidth: "40px", height: "auto", color: "#709085" }}
               />{" "}
-              <span className="h1 fw-bold mb-0">Logo</span>
             </div>
-
-            <div className="d-flex align-items-center h-custom-2 px-5 ms-xl-4 mt-2 pt-4 pt-xl-0 mt-xl-n4">
+            <div className="d-flex align-items-center h-custom-2 px-5 ms-xl-4 mt-5 pt-4 pt-xl-0 mt-xl-n4">
               <form style={{ width: "23rem" }} onSubmit={handleLogin}>
-                <h3
-                  className="fw-normal mb-1 pb-2"
+                <h4
+                  className="fw-bold mb-1 pb-2"
                   style={{ letterSpacing: "1px" }}
                 >
                   Log in
-                </h3>
+                </h4>
                 <div className="form-outline mb-4">
                   <input
                     type="email"
@@ -144,7 +142,7 @@ function Login() {
           </div>
           <div className="col-sm-6 px-0 d-none d-sm-block">
             <img
-              src="/images/bayd.jpg"
+              src="/images/1.jpg"
               alt="Login image"
               className="w-100 vh-100 img-fluid"
               style={{ objectFit: "cover", objectPosition: "left" }}

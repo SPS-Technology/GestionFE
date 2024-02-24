@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Form, Button, Table, Modal } from 'react-bootstrap';
-import Navigation from "../nav/Navigation";
+import Navigation from "../layouts/Navigation";
 
 const CommandeList = () => {
   const [clients, setClients] = useState([]);
@@ -118,11 +118,6 @@ const CommandeList = () => {
               <ul className="clientS">
                 <span>Client sélectionné :</span>
                 <li>Raison Sociale : {selectedClient.raison_sociale}</li>
-                <li>Telephone :{selectedClient.tele}</li>
-                <li>Abreviation :{selectedClient.abreviation}</li>
-                <li>Ville :{selectedClient.ville}</li>
-                <li>Adresse :{selectedClient.adresse}</li>
-                <li>Zone :{selectedClient.zone}</li>
               </ul>
             </div>
             <div className="col-2">

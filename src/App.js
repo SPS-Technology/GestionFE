@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './AuthContext';
-import Navigation from './nav/Navigation';
+import Navigation from './layouts/Navigation';
 import FournisseurList from './Fournisseur/FournisseurList';
 import ClientList from './Client/ClientList';
 import ProduitList from './Produit/ProduitList';
