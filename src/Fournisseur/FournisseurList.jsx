@@ -85,42 +85,41 @@ const FournisseurList = () => {
   //------------------------- fournisseur Delete Selected ---------------------//
 
   const handleDeleteSelected = () => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
-    selectedItems.forEach((id) => {
-      if (isConfirmed) {
-        axios
-          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-          .then((response) => {
-            if (response.data.status === "success") {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        selectedItems.forEach((id) => {
+          axios
+            .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+            .then((response) => {
               fetchFournisseurs();
               Swal.fire({
                 icon: "success",
                 title: "Succès!",
-                text: response.data.message,
+                text: 'fournisseur supprimé avec succès.',
               });
-            } else {
-              console.error(response.data.message);
+            })
+            .catch((error) => {
+              console.error(
+                "Erreur lors de la suppression du fournisseur:", error);
               Swal.fire({
                 icon: "error",
                 title: "Erreur!",
-                text: response.data.message,
+                text: 'Échec de la suppression du fournisseur.',
               });
-            }
-          })
-          .catch((error) => {
-            console.error(
-              "Erreur lors de la suppression du fournisseur:",
-              error
-            );
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la suppression du fournisseur.",
             });
-          });
-      } else {
-        console.log("Suppression annulée");
+        });
       }
     });
 
@@ -367,53 +366,57 @@ const FournisseurList = () => {
 
   //------------------------- fournisseur Delete---------------------//
   const handleDelete = (id) => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
-    if (isConfirmed) {
-      axios
-        .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-        .then((response) => {
-          if (response.data.message) {
-            // La suppression a réussi
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: response.data.message,
-            });
-          } else if (response.data.error) {
-            // Une erreur s'est produite
-            if (response.data.error.includes("Cannot delete or update a parent row: a foreign key constraint fails")) {
-              // Erreur de contrainte d'intégrité violée
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce fournisseur ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+          .then((response) => {
+            if (response.data.message) {
+              // Successful deletion
+              fetchFournisseurs();
               Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+                icon: 'success',
+                title: 'Succès!',
+                text: "fournisseur supprimé avec succès",
               });
-            } else {
-              // Pour d'autres erreurs
-              Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: response.data.error,
-              });
+            } else if (response.data.error) {
+              // Error occurred
+              if (response.data.error.includes("Impossible de supprimer ou de mettre à jour une ligne parent : une contrainte de clé étrangère échoue")) {
+                // Violated integrity constraint error
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur!',
+                  text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+                });
+              }
             }
-          }
-        })
-        .catch((error) => {
-          // Erreur lors de la requête
-          console.error("Erreur lors de la suppression du fournisseur:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
+          })
+          .catch((error) => {
+            // Request error
+            console.error("Erreur lors de la suppression du fournisseur:", error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Erreur!',
+              text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
+            });
           });
-        });
-    } else {
-      console.log("Suppression annulée");
-    }
-  };
-
+      } else {
+        console.log("Suppression annulée");
+      }
+    });
+  }
   //------------------------- fournisseur EDIT---------------------//
 
   const handleEdit = (fournisseurs) => {

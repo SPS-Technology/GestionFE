@@ -18,7 +18,6 @@ const ProduitList = () => {
   const [users, setUsers] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
 
-
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProduits, setFilteredProduits] = useState([]);
 
@@ -104,66 +103,82 @@ const ProduitList = () => {
   };
 
   const handleDeleteSelected = () => {
-    const isConfirmed = window.confirm("Are you sure you want to delete selected items?");
-    if (isConfirmed) {
-      selectedItems.forEach((id) => {
-        axios.delete(`http://localhost:8000/api/produits/${id}`)
-          .then((response) => {
-            if (response.data.status === "success") {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        selectedItems.forEach((id) => {
+          axios.delete(`http://localhost:8000/api/produits/${id}`)
+            .then((response) => {
               fetchProduits();
               Swal.fire({
                 icon: "success",
                 title: "Success!",
-                text: response.data.message,
+                text: 'produit supprimé avec succès.',
               });
-            } else {
-              console.error(response.data.message);
+            })
+            .catch((error) => {
+              console.error("Error deleting product:", error);
               Swal.fire({
                 icon: "error",
                 title: "Error!",
-                text: response.data.message,
+                text: 'Échec de la suppression du produit.',
               });
-            }
+            });
+        });
+      }
+    });
+    setSelectedItems([]);
+  }
+
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce produit ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios.delete(`http://localhost:8000/api/produits/${id}`)
+          .then((response) => {
+            fetchProduits();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Produit supprimé avec succès.",
+            });
           })
           .catch((error) => {
             console.error("Error deleting product:", error);
             Swal.fire({
               icon: "error",
-              title: "Error!",
-              text: "Failed to delete product.",
+              title: "Erreur!",
+              text: "Échec de la suppression du produit.",
             });
           });
-      });
-      setSelectedItems([]);
-    }
+      } else {
+        console.log("Suppression annulée");
+      }
+    });
   };
-
-  const handleDelete = (id) => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
-    if (isConfirmed) {
-      axios.delete(`http://localhost:8000/api/produits/${id}`)
-        .then((response) => {
-          if (response.data.status === "success") {
-            fetchProduits();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: response.data.message,
-            });
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting product:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la suppression du produit.",
-          });
-        });
-    }
-  };
-
   const handleShowFormButtonClick = () => {
     if (formContainerStyle.right === '-500px') {
       setFormContainerStyle({ right: '0' });

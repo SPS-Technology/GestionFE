@@ -104,46 +104,7 @@ const ClientList = () => {
     }
   }, [editingClientId]);
 
-  //------------------------- CLIENT DELETE---------------------//
 
-  const handleDelete = (id) => {
-    Swal.fire({
-      title: 'Êtes-vous sûr de vouloir supprimer ce client ?',
-      showDenyButton: true,
-      showCancelButton: false,
-      confirmButtonText: 'Oui',
-      denyButtonText: 'Non',
-      customClass: {
-        actions: 'my-actions',
-        cancelButton: 'order-1 right-gap',
-        confirmButton: 'order-2',
-        denyButton: 'order-3',
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .delete(`http://localhost:8000/api/clients/${id}`)
-          .then(() => {
-            fetchClients();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Client supprimé avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de la suppression du client:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la suppression du client.",
-            });
-          });
-      } else {
-        console.log("Suppression annulée");
-      }
-    });
-  };
   //------------------------- CLIENT SUBMIT---------------------//
 
   const handleSubmit = (e) => {
@@ -224,36 +185,35 @@ const ClientList = () => {
   const indexOfFirstClient = indexOfLastClient - rowsPerPage;
   const currentClients = clients.slice(indexOfFirstClient, indexOfLastClient);
 
-  //-------------------------Select --------------------//
-  const handleDeleteSelected = () => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
+  //------------------------- CLIENT DELETE---------------------//
 
-    selectedItems.forEach((id) => {
-      if (isConfirmed) {
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce client ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
         axios
           .delete(`http://localhost:8000/api/clients/${id}`)
-          .then((response) => {
-            if (response.data.status === "success") {
-              fetchClients();
-              Swal.fire({
-                icon: "success",
-                title: "Succès!",
-                text: response.data.message,
-              });
-            } else {
-              console.error(response.data.message);
-              Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: response.data.message,
-              });
-            }
+          .then(() => {
+            fetchClients();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Client supprimé avec succès.",
+            });
           })
           .catch((error) => {
-            console.error(
-              "Erreur lors de la suppression du client:",
-              error
-            );
+            console.error("Erreur lors de la suppression du client:", error);
             Swal.fire({
               icon: "error",
               title: "Erreur!",
@@ -262,6 +222,45 @@ const ClientList = () => {
           });
       } else {
         console.log("Suppression annulée");
+      }
+    });
+  };
+  //-------------------------Select Delete --------------------//
+  const handleDeleteSelected = () => {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        selectedItems.forEach((id) => {
+          axios
+            .delete(`http://localhost:8000/api/clients/${id}`)
+            .then(() => {
+              fetchClients();
+              Swal.fire({
+                icon: 'success',
+                title: 'Succès!',
+                text: 'Client supprimé avec succès.',
+              });
+            })
+            .catch((error) => {
+              console.error("Erreur lors de la suppression du client:", error);
+              Swal.fire({
+                icon: 'error',
+                title: 'Erreur!',
+                text: 'Échec de la suppression du client.',
+              });
+            });
+        });
       }
     });
 
@@ -390,6 +389,7 @@ const ClientList = () => {
               <Button className="col-6" variant="primary" type="submit">
                 {editingClient ? 'Modifier' : 'Ajouter'}
               </Button>
+              <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
             </Form.Group>
           </Form>
         </div>
