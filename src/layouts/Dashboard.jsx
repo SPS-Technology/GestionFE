@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import Navigation from "./Navigation";
 import Card from "@mui/material/Card";
 import CardContent from "@mui/material/CardContent";
 import Typography from "@mui/material/Typography";
@@ -8,7 +7,7 @@ import Grid from "@mui/material/Grid";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-
+import "./styles.css";
 const Dashboard = () => {
   const [clients, setClients] = useState([]);
   const [produits, setProduits] = useState([]);
@@ -16,13 +15,19 @@ const Dashboard = () => {
 
   const fetchCounts = async () => {
     try {
-      const clientResponse = await axios.get("http://localhost:8000/api/clients");
+      const clientResponse = await axios.get(
+        "http://localhost:8000/api/clients"
+      );
       setClients(clientResponse.data.count);
 
-      const produitResponse = await axios.get("http://localhost:8000/api/produits");
+      const produitResponse = await axios.get(
+        "http://localhost:8000/api/produits"
+      );
       setProduits(produitResponse.data.count);
 
-      const fournisseurResponse = await axios.get("http://localhost:8000/api/fournisseurs");
+      const fournisseurResponse = await axios.get(
+        "http://localhost:8000/api/fournisseurs"
+      );
       setFournisseurs(fournisseurResponse.data.count);
     } catch (error) {
       console.error("Error fetching counts:", error);
@@ -35,8 +40,7 @@ const Dashboard = () => {
 
   return (
     <div>
-      <Navigation />
-      <div className="dashboard row">
+      <div className="dashboard">
         <h3>Dashboard</h3>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={4}>

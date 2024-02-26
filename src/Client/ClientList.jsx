@@ -11,7 +11,6 @@ import Search from "../layouts/Search";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
-
 import "../style.css"
 
 //------------------------- CLIENT LIST---------------------//

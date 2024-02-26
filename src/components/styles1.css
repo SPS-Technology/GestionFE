@@ -1,0 +1,73 @@
+/* Add this style to your CSS file */
+.custom-drawer-paper {
+    position: fixed;
+    width: 240px; /* Adjust the width as needed */
+    transition: width 225ms cubic-bezier(0.4, 0, 0.6, 1) 0ms;
+    overflow-x: hidden;
+  }
+  .main-content {
+    transition: transform 0.3s ease; /* Add a smooth transition effect */
+  }
+  
+  .collapsed {
+    transform: translateX(240px); /* Adjust the value based on your drawer width */
+  }
+  /* styles.css */
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.dashboard h3 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.card-container {
+  display: flex;
+  justify-content: space-around;
+}
+
+.card {
+  flex: 1;
+  margin: 0 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-content {
+  text-align: center;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+.card-value {
+  font-size: 2rem;
+  color: #1976d2; /* Primary color */
+}
+
+.card-icon {
+  font-size: 3rem;
+  color: #1976d2; /* Primary color */
+}
+
+.content {
+  transition: margin-left 0.3s;
+}
+
+.custom-drawer-paper {
+  width: 240px; /* Set the default width of the sidebar */
+  overflow-x: hidden;
+  transition: width 0.3s;
+}
+
+.drawer-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  padding: 8px;
+}

@@ -20,7 +20,7 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import { Menu, MenuItem } from "@mui/material";
-
+//import "../styles.css";
 const Navigation = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -30,6 +30,7 @@ const Navigation = () => {
   const { logout } = useAuth();
   const [openDrawer, setOpenDrawer] = useState(true);
 
+  console.log("open drawe", openDrawer);
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -42,15 +43,15 @@ const Navigation = () => {
 
   const fetchUserData = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/api/user", {
+      const response = await axios.get("http://localhost:8000/api/users", {
         withCredentials: true,
       });
-      setUser(response.data);
+      setUser(response.data[0]);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
   };
-const [showMenu, setShowMenu] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleToggleMenu = () => {
     setShowMenu(!showMenu);
@@ -97,7 +98,7 @@ const [showMenu, setShowMenu] = useState(false);
       </IconButton>
       <Drawer
         anchor="left"
-        open= {openDrawer}
+        open={openDrawer}
         onClose={handleDrawerClose}
         classes={{
           paper: "custom-drawer-paper",
@@ -120,14 +121,7 @@ const [showMenu, setShowMenu] = useState(false);
               </ListItemIcon>
               <ListItemText primary={`Hello, ${user.name}`} />
             </ListItem>
-          )}
-
-          <ListItem button component={Link} to="/" style={{ color: "blue" }}>
-            <ListItemIcon>
-              <ShoppingBasketIcon />
-            </ListItemIcon>
-            <ListItemText primary="Gestion commandes" />
-          </ListItem>
+          )}{" "}
           <ListItem
             button
             component={Link}
@@ -161,39 +155,19 @@ const [showMenu, setShowMenu] = useState(false);
             </ListItemIcon>
             <ListItemText primary="Produits" />
           </ListItem>
-          <ListItem button onClick={handleToggleMenu} style={{ color: "blue" }}>
-        <ListItemIcon>
-          <ShoppingBasketIcon />
-        </ListItemIcon>
-        <ListItemText primary="Gestion Commandes" />
-      </ListItem>
-      {showMenu && (
-        <div style={{ marginLeft: "30px" }}>
-          <Link to="/ajouter-commande" style={{ textDecoration: "none", color: "inherit" }}>
-            <div>
-              Ajouter Commande
-            </div>
-          </Link>
-          <Link to="/list-commandes" style={{ textDecoration: "none", color: "inherit" }}>
-            <div>
-              List Commandes
-            </div>
-          </Link>
-        </div>
-      )}
+          <ListItem
+            button
+            component={Link}
+            to="/commandes"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <ShoppingBasketIcon />
+            </ListItemIcon>
+            <ListItemText primary="Gestion Commandes" />
+          </ListItem>
           {user && user.role === "admin" && (
             <>
-              <ListItem
-                button
-                component={Link}
-                to="/add-user"
-                style={{ color: "blue" }}
-              >
-                <ListItemIcon>
-                  <AddCircleIcon />
-                </ListItemIcon>
-                <ListItemText primary="Ajouter utilisateur" />
-              </ListItem>
               <ListItem
                 button
                 component={Link}

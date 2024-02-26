@@ -299,6 +299,7 @@ const ProduitList = () => {
                 onChange={handleChange}
                 placeholder="Nom"
                 className="form-control-sm"
+                required
               />
             </Form.Group>
             <Form.Group className="col-sm-5 m-2 " controlId="type_quantite">
@@ -310,6 +311,7 @@ const ProduitList = () => {
                 onChange={handleChange}
                 placeholder="Type de Quantité"
                 className="form-control-sm"
+                required
               />
             </Form.Group>
             <Form.Group className="col-sm-5 m-2 " controlId="calibre">
@@ -321,29 +323,26 @@ const ProduitList = () => {
                 onChange={handleChange}
                 placeholder="Calibre"
                 className="form-control-sm"
+                required
               />
             </Form.Group>
             <Form.Group className="col-sm-5 m-2 " controlId="fournisseur_id">
-              <Form.Label>ID Fournisseur</Form.Label>
-              <Form.Control
-                type="text"
-                name="fournisseur_id"
-                value={formData.fournisseur_id}
-                onChange={handleChange}
-                placeholder="ID Fournisseur"
-                className="form-control-sm"
-              />
+              <Form.Label>Fournisseur</Form.Label>
+              <Form.Control as="select" name="fournisseur_id" value={formData.fournisseur_id} onChange={handleChange}>
+                  <option value="">Sélectionner</option>
+                  {fournisseurs.map((fournisseur) => (
+                    <option key={fournisseur.id} value={fournisseur.id}>{fournisseur.raison_sociale}</option>
+                  ))}
+                </Form.Control>
             </Form.Group>
             <Form.Group className="col-sm-5 m-2 " controlId="user_id">
-              <Form.Label>Id User</Form.Label>
-              <Form.Control
-                type="text"
-                name="user_id"
-                value={formData.user_id}
-                onChange={handleChange}
-                placeholder="Id User"
-                className="form-control-sm"
-              />
+              <Form.Label>User</Form.Label>
+              <Form.Control as="select" name="user_id" value={formData.user_id} onChange={handleChange}>
+                  <option value="">Sélectionner</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
+                </Form.Control>
             </Form.Group>
             <Form.Group className="col-7 m-3">
               <Button className="col-6" variant="primary" type="submit">
