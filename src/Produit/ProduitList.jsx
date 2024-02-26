@@ -20,7 +20,6 @@ import "jspdf-autotable";
 const ProduitList = () => {
   const [existingProduct, setExistingProduct] = useState({});
   const [produits, setProduits] = useState([]);
-  const [fournisseurs, setFournisseurs] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [page, setPage] = useState(0);
@@ -34,34 +33,18 @@ const ProduitList = () => {
     nom: "",
     type_quantite: "",
     calibre: "",
-    fournisseur_id: "",
     user_id: "",
   });
 
   const fetchProduits = async () => {
     try {
-<<<<<<< HEAD
       const response = await axios.get("http://localhost:8000/api/produits");
       console.log("API Response:", response.data);
       setProduits(response.data.produit);
-=======
-      const produitsResponse = await axios.get(
-        "http://localhost:8000/api/produits"
-      );
-      setProduits(produitsResponse.data.produit);
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
-
-      const fournisseursResponse = await axios.get(
-        "http://localhost:8000/api/fournisseurs"
-      );
-      setFournisseurs(fournisseursResponse.data.fournisseur);
-<<<<<<< HEAD
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
       console.log("users", users);
-=======
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -80,60 +63,9 @@ const ProduitList = () => {
     setFilteredProducts(filtered);
   }, [produits, searchTerm]);
 
-<<<<<<< HEAD
   const handleSearch = (term) => {
     //setCurrentPage(1); // Reset to the first page when searching
     setSearchTerm(term);
-=======
-    Swal.fire({
-      title: "Modifier Produit",
-      html:
-      `<label for="nom">Nom</label>` +
-      `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
-      `<label for="type_quantite">Type Quantité</label>` +
-      `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
-      `<label for="calibre">Calibre</label>` +
-      `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
-      `<label for="user_id">User</label>` +
-      `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
-      `<label for="fournisseur_id">Fournisseur</label>` +
-      `<input type="text" id="fournisseur_id" class="swal2-input" value="${existingProduit.fournisseur_id}">`
-        ,
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          nom: document.getElementById("nom").value,
-          type_quantite: document.getElementById("type_quantite").value,
-          calibre: document.getElementById("calibre").value,
-          fournisseur_id: document.getElementById("fournisseur_id").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .put(`http://localhost:8000/api/produits/${id}`, result.value)
-          .then(() => {
-            fetchProduits();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Produit modifié avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de la modification du produit:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la modification du produit.",
-            });
-          });
-      }
-    });
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
   };
 
   const handleDelete = (id) => {
@@ -179,47 +111,11 @@ const ProduitList = () => {
     setPage(0);
   };
 
-<<<<<<< HEAD
   const handleDeleteSelected = () => {
     const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
 
     selectedItems.forEach((id) => {
       if (isConfirmed) {
-=======
-    Swal.fire({
-      title: "Ajouter Produit",
-      html:
-        `<label for="nom">Nom</label>` +
-        `<input type="text" id="nom" class="swal2-input" placeholder="Nom">` +
-        `<label for="type_quantite">Type Quantité</label>` +
-        `<select id="type_quantite" class="swal2-input">` +
-        `<option value="kg">kg</option>` +
-        `<option value="unitaire">unitaire</option>` +
-        `</select>` +
-        `<label for="calibre">Calibre</label>` +
-        `<input type="text" id="calibre" class="swal2-input" placeholder="Calibre">` +
-        `<label for="user_id">user</label>` +
-        `<input type="text" id="user_id" class="swal2-input" placeholder="user_id">` +
-        `<label for="fournisseur">Fournisseur</label>` +
-        `<select id="fournisseur" class="swal2-input">${fournisseurOptions.map(
-          (option) => `<option value="${option.value}">${option.label}</option>`
-        )}</select>`,
-      confirmButtonText: "ajouter",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          nom: document.getElementById("nom").value,
-          type_quantite: document.getElementById("type_quantite").value,
-          calibre: document.getElementById("calibre").value,
-          fournisseur_id: document.getElementById("fournisseur").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
         axios
           .delete(`http://localhost:8000/api/produits/${id}`)
           .then(() => {
@@ -262,7 +158,6 @@ const ProduitList = () => {
       nom: foundProduits.nom,
       type_quantite: foundProduits.type_quantite,
       calibre: foundProduits.calibre,
-      fournisseur_id: foundProduits.fournisseur_id,
       user_id: foundProduits.user_id,
     });
 
@@ -427,7 +322,7 @@ const ProduitList = () => {
     const pdf = new jsPDF();
 
     // Define the columns and rows for the table
-    const columns = ["ID", "nom", "type_quantite", "calibre", "fournisseur_id"];
+    const columns = ["ID", "nom", "type_quantite", "calibre"];
     const selectedProduits = produits.filter((prod) =>
       selectedItems.includes(prod.id)
     );
@@ -436,7 +331,6 @@ const ProduitList = () => {
       prod.nom,
       prod.type_quantite,
       prod.calibre,
-      prod.fournisseur_id,
     ]);
 
     // Set the margin and padding
@@ -586,7 +480,7 @@ const ProduitList = () => {
           nom: "",
           type_quantite: "",
           calibre: "",
-          fournisseur_id: "",
+
           user_id: "",
         });
         setShowAddForm(false);
@@ -670,7 +564,17 @@ const ProduitList = () => {
                   placeholder="calibre"
                 />
               </Form.Group>
-              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
+              <Form.Group className="col-4 m-2" controlId="user_id">
+                <Form.Label>user_id</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="user_id"
+                  value={produits.user_id}
+                  onChange={handleChange}
+                  placeholder="user_id"
+                />
+              </Form.Group>
+              {/* <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
                 <Form.Label>Sélectionnez un utilisateur</Form.Label>
                 <Form.Control
                   as="select"
@@ -678,10 +582,9 @@ const ProduitList = () => {
                   value={produits.user_id}
                   onChange={handleChange}
                 >
-                  {/* Option par défaut avec une valeur nulle */}
+                 
                   <option value="">Sélectionnez un utilisateur</option>
 
-                  {/* Options pour les utilisateurs */}
                   {users &&
                     users.map((user) => (
                       <option key={user.id} value={user.id}>
@@ -689,24 +592,7 @@ const ProduitList = () => {
                       </option>
                     ))}
                 </Form.Control>
-              </Form.Group>
-
-              <Form.Group className="col-4 m-2 mb-3" controlId="fournisseur_id">
-                <Form.Label>Sélectionnez un fournisseur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="fournisseur_id"
-                  value={produits.fournisseur_id}
-                  onChange={handleChange}
-                >
-                  <option value="">Sélectionnez un fournisseur</option>
-                  {fournisseurs.map((fournisseur) => (
-                    <option key={fournisseur.id} value={fournisseur.id}>
-                      {fournisseur.raison_sociale}
-                    </option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
+              </Form.Group> */}
 
               <Form.Group className="col-7 mt-5">
                 <Button className="col-5" variant="primary" type="submit">
@@ -783,23 +669,6 @@ const ProduitList = () => {
                 </Form.Control>
               </Form.Group>
 
-              <Form.Group className="col-4 m-2 mb-3" controlId="fournisseur_id">
-                <Form.Label>Sélectionnez un fournisseur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="fournisseur_id"
-                  value={formData.fournisseur_id}
-                  onChange={handleChange}
-                >
-                  <option value="">Sélectionnez un fournisseur</option>
-                  {fournisseurs &&
-                    fournisseurs.map((fournisseur) => (
-                      <option key={fournisseur.id} value={fournisseur.id}>
-                        {fournisseur.raison_sociale}
-                      </option>
-                    ))}
-                </Form.Control>
-              </Form.Group>
 
               <Form.Group className="col-7 mt-5">
                 <Button className="col-5" variant="primary" type="submit">
@@ -821,28 +690,18 @@ const ProduitList = () => {
                 />
               </th>
               <th>ID</th>
-<<<<<<< HEAD
               <th>Nom du Produit</th>
               <th>Type de Quantite</th>
-=======
-              <th>Nom</th>
-              <th>Type Quantité</th>
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
               <th>Calibre</th>
               <th>User</th>
-              <th>Fournisseur</th>
               <th>Actions</th>
             </tr>
           </thead>
-<<<<<<< HEAD
 
           <tbody>
             {filteredProducts
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((prod) => {
-                const selectedFournisseur = fournisseurs.find(
-                  (fournisseur) => fournisseur.id === prod.fournisseur_id
-                );
                 const selectedUser = users.find(
                   (user) => user.id === prod.user_id
                 );
@@ -866,13 +725,13 @@ const ProduitList = () => {
                         <div>No user found</div>
                       )}
                     </td>
-                    <td>
+                    {/* <td>
                       {selectedFournisseur ? (
                         <>{selectedFournisseur.raison_sociale}</>
                       ) : (
                         <div>No Fournisseur found</div>
                       )}
-                    </td>
+                    </td> */}
 
                     <td className="col-2 text-center">
                       <button
@@ -891,46 +750,6 @@ const ProduitList = () => {
                   </tr>
                 );
               })}
-=======
-          <tbody>
-            {produits.map((produit) => {
-              const fournisseur = fournisseurs.find(
-                
-                (fournisseur) => fournisseur.id === produit.fournisseur_id,
-
-              );
-
-              return (
-                <tr key={produit.id}>
-                  <td>{produit.id}</td>
-                  <td>{produit.nom}</td>
-                  <td>{produit.type_quantite}</td>
-                  <td>{produit.calibre}</td>
-                  <td>
-                    {fournisseur ? (
-                      <>{fournisseur.raison_sociale}</>
-                    ) : (
-                      <div>No Fournisseur found</div>
-                    )}
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-warning ms-2"
-                      onClick={() => handleEdit(produit.id)}
-                    >
-                      <i className="fas fa-edit"></i>
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleDelete(produit.id)}
-                    >
-                      <i className="fas fa-minus-circle"></i>
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
           </tbody>
         </table>
 
@@ -966,9 +785,9 @@ const ProduitList = () => {
               variant="secondary"
               onClick={() =>
                 printList(
-                  "fournisseursTable",
-                  "Liste des Fournisseurs",
-                  fournisseurs
+                  "ProduistTable",
+                  "Liste des produits",
+                  produits
                 )
               }
             >

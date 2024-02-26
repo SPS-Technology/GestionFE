@@ -109,10 +109,17 @@ const EditUser = () => {
     } catch (error) {
       if (error.response) {
         if (error.response.status === 422) {
-          // Erreurs de validation côté serveur
           setErrors(error.response.data.errors);
-        } else {
-          // Autres erreurs côté serveur
+        } 
+
+        else if (error.response.status === 403) {
+          Swal.fire({
+            icon: "error",
+            title: "Accès refusé",
+            text: "Vous n'avez pas l'autorisation d'ajouter un utilisateur.",
+          });
+        }
+         else {
           console.error(
             "Erreur de serveur:",
             error.response.status,

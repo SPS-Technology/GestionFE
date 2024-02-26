@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "../Acceuil/Navigation";
+import Swal from "sweetalert2";
 
 const Users = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
@@ -20,10 +21,17 @@ const Users = () => {
       const response = await axios.get("http://localhost:8000/api/users", {
         withCredentials: true,
       });
-      console.log("users", users.password);
+      console.log(response.data);
       setUsers(response.data);
     } catch (error) {
       console.error("Error fetching users:", error);
+      if (error.response && error.response.status === 403) {
+        Swal.fire({
+          icon: "error",
+          title: "Accès refusé",
+          text: "Vous n'avez pas l'autorisation de voir la liste des clients.",
+        });
+      }
     }
   };
 
@@ -42,6 +50,14 @@ const Users = () => {
       setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
     } catch (error) {
       console.error("Error deleting user:", error);
+      if (error.response && error.response.status === 403) {
+        // User doesn't have access to delete
+        Swal.fire({
+          icon: "error",
+          title: "Accès refusé",
+          text: "Vous n'avez pas l'autorisation de supprimer cet utilisateur.",
+        });
+      }
     }
   };
 
@@ -69,7 +85,9 @@ const Users = () => {
                 <tr key={user.id}>
                   <td style={tableCellStyle}>{user.name}</td>
                   <td style={tableCellStyle}>{user.email}</td>
-                  <td style={tableCellStyle}>{user.role}</td>
+                  <td style={tableCellStyle}>
+                    {user.roles.length > 0 ? user.roles[0].name : "No Role"}
+                  </td>
                   <td style={tableCellStyle}>
                     {user.photo && (
                       <img
@@ -83,7 +101,6 @@ const Users = () => {
                       />
                     )}
                   </td>
-
                   <td style={tableCellStyle}>{user.password}</td>
                   <td style={tableCellStyle}>
                     <Link

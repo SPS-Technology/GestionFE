@@ -40,7 +40,7 @@ const Dashboard = () => {
         <h3>Dashboard</h3>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={4}>
-            <Card>
+            <Card style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
               <CardContent>
                 <Typography variant="h6" component="div">
                   Nombre de clients
@@ -53,7 +53,7 @@ const Dashboard = () => {
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Card>
+            <Card style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
               <CardContent>
                 <Typography variant="h6" component="div">
                   Nombre de produits
@@ -66,7 +66,7 @@ const Dashboard = () => {
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
-            <Card>
+            <Card style={{ boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" }}>
               <CardContent>
                 <Typography variant="h6" component="div">
                   Nombre des fournisseurs

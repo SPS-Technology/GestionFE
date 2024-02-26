@@ -18,7 +18,6 @@ import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 const ClientList = () => {
-<<<<<<< HEAD
   const [existingClient, setExistingClient] = useState({});
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredclients, setFilteredclients] = useState([]);
@@ -39,14 +38,9 @@ const ClientList = () => {
     zone: "",
     user_id: "",
   });
-=======
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
 
   const fetchclients = async () => {
     try {
-<<<<<<< HEAD
       const response = await axios.get(
         "http://localhost:8000/api/clients"
       );
@@ -57,16 +51,6 @@ const ClientList = () => {
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
-=======
-      const response = await axios.get("http://localhost:8000/api/clients");
-
-      console.log("API Response:", response.data);
-
-      setClients(response.data.client);
-
-      const userResponse = await axios.get("http://localhost:8000/api/user");
-      setUsers(userResponse.data.users);
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -76,7 +60,6 @@ const ClientList = () => {
     fetchclients();
   }, []);
 
-<<<<<<< HEAD
   useEffect(() => {
     const filtered = clients.filter((client) =>
       client.raison_sociale
@@ -115,65 +98,6 @@ const ClientList = () => {
       if (isConfirmed) {
         axios
           .delete(`http://localhost:8000/api/clients/${id}`)
-=======
-  const handleEdit = (id) => {
-    const existingClient = clients.find(
-      (client) => client.id === id
-    );
-
-
-    Swal.fire({
-      title: "Modifier Client",
-      html: `
-        <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" value="${existingClient.raison_sociale
-        }">
-
-        <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" value="${existingClient.adresse
-        }">
-
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" value="${existingClient.tele
-        }">
-
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" value="${existingClient.ville
-        }">
-
-        <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" value="${existingClient.abreviation
-        }">
-
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" value="${existingClient.zone
-        }">
-
-        <label for="user_id">user</label>
-        <input type="text" id="user_id" class="swal2-input" value="${existingClient.user_id
-        }">
-
-      `,
-      confirmButtonText: "Modifer",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .put(`http://localhost:8000/api/clients/${id}`, result.value)
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
           .then(() => {
             fetchclients();
             Swal.fire({
@@ -184,11 +108,7 @@ const ClientList = () => {
           })
           .catch((error) => {
             console.error(
-<<<<<<< HEAD
               "Erreur lors de la suppression du client:",
-=======
-              "Erreur lors de la modification du client:",
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
               error
             );
             Swal.fire({
@@ -201,14 +121,10 @@ const ClientList = () => {
         console.log("Suppression annulée");
       }
     });
-<<<<<<< HEAD
     fetchclients();
 
     setSelectedItems([]);
   };
-=======
-  }
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -520,7 +436,6 @@ const ClientList = () => {
     }
   };
 
-<<<<<<< HEAD
   const handleAddclient = (e) => {
     e.preventDefault();
     axios
@@ -652,7 +567,18 @@ const ClientList = () => {
                   placeholder="Zone"
                 />
               </Form.Group>
-              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
+              <Form.Group className="col-4 m-2" controlId="user_id">
+                <Form.Label>User_id</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="user_id"
+                  value={clients.user_id}
+                  onChange={handleChange}
+                  placeholder="user_id"
+                />
+              </Form.Group>
+
+              {/* <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
                 <Form.Label>Sélectionnez un utilisateur</Form.Label>
                 <Form.Control
                   as="select"
@@ -660,10 +586,8 @@ const ClientList = () => {
                   value={clients.user_id}
                   onChange={handleChange}
                 >
-                  {/* Option par défaut avec une valeur nulle */}
                   <option value="">Sélectionnez un utilisateur</option>
 
-                  {/* Options pour les utilisateurs */}
                   {users &&
                     users.map((user) => (
                       <option key={user.id} value={user.id}>
@@ -671,7 +595,7 @@ const ClientList = () => {
                       </option>
                     ))}
                 </Form.Control>
-              </Form.Group>
+              </Form.Group> */}
 
               <Form.Group className="col-7 mt-5">
                 <Button className="col-5" variant="primary" type="submit">
@@ -784,90 +708,6 @@ const ClientList = () => {
           )}
         </div>
         <table className="table" id="clientsTable">
-=======
-  const handleAddClient = () => {
-    Swal.fire({
-      title: "Ajouter Client",
-      html: `
-        <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
-        
-        <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
-        
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
-        
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" placeholder="Ville">
-        
-        <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
-        
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" placeholder="Zone">
-        
-        <label for="user_id">user</label>
-        <input type="text" id="user_id" class="swal2-input" placeholder="user_id">
-    
-      `,
-      confirmButtonText: "Ajouter",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .post("http://localhost:8000/api/clients", result.value, {
-            withCredentials: true,
-            headers: {
-              "X-CSRF-TOKEN": document.head.querySelector(
-                'meta[name="csrf-token"]'
-              ).content,
-            },
-          })
-          .then(() => {
-            fetchClients();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Client ajouté avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de l'ajout du client:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de l'ajout du client.",
-            });
-          });
-      }
-    });
-  };
-  
-  return (
-    <div>
-      <Navigation />
-
-      <h2>Liste des Clients</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddClient}>
-        Ajouter Client
-      </button>
-      {clients && clients.length > 0 ? (
-        <table className="table">
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
           <thead>
             <tr>
               <th>
@@ -885,7 +725,6 @@ const ClientList = () => {
               <th>Abréviation</th>
               <th>Zone</th>
               <th>User</th>
-<<<<<<< HEAD
               <th>Actions</th>
             </tr>
           </thead>
@@ -939,38 +778,6 @@ const ClientList = () => {
                   </td>
                 </tr>
               ))}
-=======
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((client) => (
-              <tr key={client.id}>
-                <td>{client.id}</td>
-                <td>{client.raison_sociale}</td>
-                <td>{client.adresse}</td>
-                <td>{client.tele}</td>
-                <td>{client.ville}</td>
-                <td>{client.abreviation}</td>
-                <td>{client.zone}</td>
-                <td>{client.user_id}</td>
-                <td>
-                  <button
-                    className="btn btn-warning ms-2"
-                    onClick={() => handleEdit(client.id)}
-                  >
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDelete(client.id)}
-                  >
-                    <i className="fas fa-minus-circle"></i>
-                  </button>
-                </td>
-              </tr>
-            ))}
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
           </tbody>
         </table>
 

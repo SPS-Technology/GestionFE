@@ -19,6 +19,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import { Menu, MenuItem } from "@mui/material";
 
 const Navigation = () => {
   const [user, setUser] = useState(null);
@@ -36,18 +37,24 @@ const Navigation = () => {
   }, [isAuthenticated, navigate]);
 
   useEffect(() => {
-    fetchUserData();
-  }, []);
+    const fetchUserData = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/api/user", {
+          withCredentials: true,
+        });
+        console.log('user',user)
+        setUser(response.data);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
 
-  const fetchUserData = async () => {
-    try {
-      const response = await axios.get("http://localhost:8000/api/user", {
-        withCredentials: true,
-      });
-      setUser(response.data);
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    }
+    fetchUserData(); // Appel initial lors du montage du composant
+  }, [])
+const [showMenu, setShowMenu] = useState(false);
+
+  const handleToggleMenu = () => {
+    setShowMenu(!showMenu);
   };
 
   const handleLogoutClick = async () => {
@@ -81,7 +88,6 @@ const Navigation = () => {
 
   return (
     <>
-<<<<<<< HEAD
       <IconButton
         color="inherit"
         aria-label="open drawer"
@@ -102,56 +108,6 @@ const Navigation = () => {
           <IconButton onClick={handleDrawerClose}>
             <ChevronLeftIcon />
           </IconButton>
-=======
-      <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div className="container">
-          <a className="navbar-brand" href="/">
-            Gestion de Commandes
-          </a>
-          <button
-            className="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navbarNav"
-            aria-controls="navbarNav"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-          >
-            <span className="navbar-toggler-icon"></span>
-          </button>
-          <div className="collapse navbar-collapse" id="navbarNav">
-            <ul className="navbar-nav ml-auto">
-              
-              <Link to="/fournisseurs" className="navbar-brand">
-                Fournisseurs
-              </Link>
-              <Link to="/clients" className="navbar-brand">
-                Clients
-              </Link>
-              <Link to="/produits" className="navbar-brand">
-                Produits
-              </Link>
-              
-            </ul>
-            <div>
-            <button
-              style={{
-                background: "none",
-                textDecoration: "none",
-                border: 0,
-                color: "red",
-                fontFamily: "monospace",
-              }}
-              onClick={() => {
-                handleLogoutClick();
-                logout();
-              }}
-            >
-              <i className="fas fa-sign-out-alt" aria-hidden="true" /> Se déconnecter
-            </button>
-          </div>
-          </div>
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
         </div>
         <List>
           {user && (
@@ -206,18 +162,28 @@ const Navigation = () => {
             </ListItemIcon>
             <ListItemText primary="Produits" />
           </ListItem>
-          <ListItem
-            button
-            component={Link}
-            to="/commandes"
-            style={{ color: "blue" }}
-          >
-            <ListItemIcon>
-              <ShoppingBasketIcon />
-            </ListItemIcon>
-            <ListItemText primary="Commandes" />
-          </ListItem>
-          {user && user.role === "admin" && (
+          <ListItem button onClick={handleToggleMenu} style={{ color: "blue" }}>
+        <ListItemIcon>
+          <ShoppingBasketIcon />
+        </ListItemIcon>
+        <ListItemText primary="Gestion Commandes" />
+      </ListItem>
+      {showMenu && (
+        <div style={{ marginLeft: "30px" }}>
+          <Link to="/ajouter-commande" style={{ textDecoration: "none", color: "inherit" }}>
+            <div>
+              Ajouter Commande
+            </div>
+          </Link>
+          <Link to="/list-commandes" style={{ textDecoration: "none", color: "inherit" }}>
+            <div>
+              List Commandes
+            </div>
+          </Link>
+        </div>
+      )}
+         
+         {/* {user && user.roles && user.roles.some(role => role.name === "admin") && ( */}
             <>
               <ListItem
                 button
@@ -242,7 +208,7 @@ const Navigation = () => {
                 <ListItemText primary="Gestion utilisateurs" />
               </ListItem>
             </>
-          )}
+          {/* )} */}
         </List>
         <List>
           <ListItem

@@ -29,7 +29,7 @@ const FournisseurList = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     raison_sociale: "",
     adresse: "",
     tele: "",
@@ -94,48 +94,26 @@ const FournisseurList = () => {
   const handleDeleteSelected = () => {
     const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
 
-<<<<<<< HEAD
     selectedItems.forEach((id) => {
       if (isConfirmed) {
-=======
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" value="${
-          existingFournisseur.zone
-        }">
-
-        <label for="user_id">user_id</label>
-        <input type="text" id="user_id" class="swal2-input" value="${
-          existingFournisseur.user_id
-        }">
-
-      `,
-      confirmButtonText: "Modifer",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
         axios
           .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-          .then(() => {
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Fournisseur supprimé avec succès.",
-            });
+          .then((response) => {
+            if (response.data.status === "success") {
+              fetchFournisseurs();
+              Swal.fire({
+                icon: "success",
+                title: "Succès!",
+                text: response.data.message,
+              });
+            } else {
+              console.error(response.data.message);
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: response.data.message,
+              });
+            }
           })
           .catch((error) => {
             console.error(
@@ -152,7 +130,6 @@ const FournisseurList = () => {
         console.log("Suppression annulée");
       }
     });
-    fetchFournisseurs();
 
     setSelectedItems([]);
   };
@@ -439,35 +416,56 @@ const FournisseurList = () => {
       });
   };
 
-  
   const handleDelete = (id) => {
     const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
+  
     if (isConfirmed) {
       axios
         .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-        .then(() => {
-          fetchFournisseurs();
-          Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: "Fournisseur supprimé avec succès.",
-          });
+        .then((response) => {
+          if (response.data.message) {
+            // La suppression a réussi
+            fetchFournisseurs();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: response.data.message,
+            });
+          } else if (response.data.error) {
+            // Une erreur s'est produite
+            if (response.data.error.includes("Cannot delete or update a parent row: a foreign key constraint fails")) {
+              // Erreur de contrainte d'intégrité violée
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+              });
+            } else {
+              // Pour d'autres erreurs
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: response.data.error,
+              });
+            }
+          }
         })
         .catch((error) => {
+          // Erreur lors de la requête
           console.error("Erreur lors de la suppression du fournisseur:", error);
           Swal.fire({
             icon: "error",
             title: "Erreur!",
-            text: "Échec de la suppression du fournisseur.",
+            text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
           });
         });
     } else {
       console.log("Suppression annulée");
     }
   };
-
-<<<<<<< HEAD
+  
+  
+  
   const handleAddFournisseur = (e) => {
     e.preventDefault();
     axios
@@ -500,79 +498,6 @@ const FournisseurList = () => {
           text: "Échec de l'ajout du fournisseur.",
         });
       });
-=======
-  const handleAddFournisseur = () => {
-    
-    Swal.fire({
-      title: "Ajouter Fournisseur",
-      html: `
-        <label for="raison_sociale">Raison Sociale</label>
-        <input type="text" id="raison_sociale" class="swal2-input" placeholder="Raison Sociale">
-        
-        <label for="adresse">Adresse</label>
-        <input type="text" id="adresse" class="swal2-input" placeholder="Adresse">
-        
-        <label for="tele">Téléphone</label>
-        <input type="text" id="tele" class="swal2-input" placeholder="Téléphone">
-        
-        <label for="ville">Ville</label>
-        <input type="text" id="ville" class="swal2-input" placeholder="Ville">
-        
-        <label for="abreviation">Abréviation</label>
-        <input type="text" id="abreviation" class="swal2-input" placeholder="Abréviation">
-        
-        <label for="zone">Zone</label>
-        <input type="text" id="zone" class="swal2-input" placeholder="Zone">
-        
-        <label for="user_id">user_id</label>
-        <input type="text" id="user_id" class="swal2-input" placeholder="user_id">
-    
-      `,
-      confirmButtonText: "Ajouter",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          raison_sociale: document.getElementById("raison_sociale").value,
-          adresse: document.getElementById("adresse").value,
-          tele: document.getElementById("tele").value,
-          ville: document.getElementById("ville").value,
-          abreviation: document.getElementById("abreviation").value,
-          zone: document.getElementById("zone").value,
-          user_id: document.getElementById("user_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .post("http://localhost:8000/api/fournisseurs", result.value, {
-            withCredentials: true,
-            headers: {
-              "X-CSRF-TOKEN": document.head.querySelector(
-                'meta[name="csrf-token"]'
-              ).content,
-            },
-          })
-          .then(() => {
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Fournisseur ajouté avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de l'ajout du fournisseur:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de l'ajout du fournisseur.",
-            });
-          });
-      }
-    });
->>>>>>> 6409aaa26da41d57f404c09ab3e872573da9b7b9
   };
   // const handleCancel = () => {
   //   setShowForm(false);
@@ -672,6 +597,16 @@ const FournisseurList = () => {
                   placeholder="Zone"
                 />
               </Form.Group>
+              {/* <Form.Group className="col-4 m-2" controlId="user_id">
+                <Form.Label>user_id</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="user_id"
+                  value={fournisseurs.user_id}
+                  onChange={handleChange}
+                  placeholder="user_id"
+                />
+              </Form.Group> */}
               <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
                 <Form.Label>Sélectionnez un utilisateur</Form.Label>
                 <Form.Control
@@ -680,10 +615,10 @@ const FournisseurList = () => {
                   value={fournisseurs.user_id}
                   onChange={handleChange}
                 >
-                  {/* Option par défaut avec une valeur nulle */}
+                 
                   <option value="">Sélectionnez un utilisateur</option>
 
-                  {/* Options pour les utilisateurs */}
+                 
                   {users &&
                     users.map((user) => (
                       <option key={user.id} value={user.id}>
@@ -703,10 +638,7 @@ const FournisseurList = () => {
         </div>
         <div className="add-Ajout-form">
           {showEditForm && (
-            <Form
-              className="col-8 row "
-              onSubmit={handleEditSubmit}
-            >
+            <Form className="col-8 row " onSubmit={handleEditSubmit}>
               <Button
                 className="col-1"
                 variant="danger"
