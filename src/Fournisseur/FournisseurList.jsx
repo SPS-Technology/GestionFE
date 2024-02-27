@@ -11,6 +11,9 @@ import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-sol
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import { Toolbar } from "@mui/material";
 const FournisseurList = () => {
   // const [existingFournisseur, setExistingFournisseur] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -53,12 +56,11 @@ const FournisseurList = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = fournisseurs.filter((fournisseur) =>
+    const filtered = fournisseurs&& fournisseurs.filter((fournisseur) =>
       fournisseur.raison_sociale
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     );
-
     setFilteredFournisseurs(filtered);
   }, [fournisseurs, searchTerm]);
 
@@ -517,8 +519,12 @@ const FournisseurList = () => {
   };
 
   return (
-    <div>
-      <Navigation />
+    <ThemeProvider theme={createTheme()}>
+      <Box sx={{ display: 'flex' }}>
+        <Navigation />
+        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+          <Toolbar />
+     
       <div className="container">
         <h3>Liste des Fournisseurs</h3>
         <div className="search-container d-flex flex-row-reverse mb-3">
@@ -643,8 +649,9 @@ const FournisseurList = () => {
           />
         </div>
       </div>
-
-    </div>
+      </Box>
+      </Box>
+    </ThemeProvider>
 
   );
 };

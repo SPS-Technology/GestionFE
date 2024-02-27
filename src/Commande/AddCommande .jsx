@@ -6,13 +6,7 @@ import swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus } from "@fortawesome/free-solid-svg-icons";
 
-const AddCommande = ({
-  produits,
-  clients,
-  users,
-  csrfToken,
-  fetchCommandes,
-}) => {
+const AddCommande = ({produits,clients,users,csrfToken,fetchCommandes,}) => {
   const [open, setOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
 
@@ -44,8 +38,10 @@ const AddCommande = ({
         headers: {
           "X-CSRF-TOKEN": csrfToken,
         },
+        
       });
-console.log(userResponse);
+      
+
       const authenticatedUserId = userResponse.data[0].id;
       const commandeResponse = await axios.post(
         "http://localhost:8000/api/commandes",
@@ -140,11 +136,10 @@ console.log(userResponse);
       </Button>
       <Drawer anchor="right" open={open} onClose={handleDrawerClose}>
         <div style={{ padding: "20px" }}>
-          <table id="selectedProduitTable" className="swal2-input">
+          <table id="selectedProduitTable" className="swal2-input table table-hover">
             <thead>
               <tr>
                 <th>Select</th>
-
                 <th>Product</th>
                 <th>Type Quantite</th>
                 <th>Calibre</th>
@@ -164,39 +159,27 @@ console.log(userResponse);
                       onChange={() => handleProductCheckboxChange(produit.id)}
                     />
                   </td>
-
                   <td>{produit.nom}</td>
                   <td>{produit.type_quantite}</td>
                   <td>{produit.calibre}</td>
                   <td>
-                    <input
-                      type="text"
-                      id={`quantite_${produit.id}`}
-                      className="quantiteInput"
-                      placeholder="Quantite"
-                    />
+                    <input type="text" id={`quantite_${produit.id}`} className="quantiteInput" placeholder="Quantite" />
                   </td>
                   <td>
-                    <input
-                      type="text"
-                      id={`prix_${produit.id}`}
-                      className="prixInput"
-                      placeholder="Prix"
-                    />
+                    <input type="text" id={`prix_${produit.id}`} className="prixInput" placeholder="Prix"/>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <table className="swal2-input" style={{ marginBottom: "20px" }}>
+          <table className="swal2-input">
             <thead>
               <tr>
-                <th>Client</th>
-                {/* <th>User</th> */}
+                <th>Client : </th>
               </tr>
               <tr>
                 <td>
-                  <select id="client_id" className="swal2-input">
+                  <select id="client_id" className="form-select col-2">
                     <option disabled selected>
                       Client
                     </option>
@@ -205,21 +188,11 @@ console.log(userResponse);
                     ))}
                   </select>
                 </td>
-                {/* <td>
-                  <select id="user_id" className="swal2-input">
-                    <option disabled selected>
-                      User
-                    </option>
-                    {users.map((user) => (
-                      <option key={user.id}>{user.name}</option>
-                    ))}
-                  </select>
-                </td> */}
               </tr>
             </thead>
           </table>
-          <div style={{ marginTop: "10px" }}>
-            <Button variant="contained" onClick={handleAddCommande}>
+          <div className="text-center">
+            <Button variant="contained" className="col-3" onClick={handleAddCommande}>
               Ajouter
             </Button>
           </div>

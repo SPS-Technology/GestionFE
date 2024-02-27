@@ -3,22 +3,24 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import TablePagination from "@mui/material/TablePagination";
 import Search from "../Acceuil/Search";
+import Navigation from "../Acceuil/Navigation";
+
 import "./commande.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faTrash,
-  faFilePdf,
-  faFileExcel,
-  faPrint,
-} from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFilePdf, faFileExcel, faPrint, faCircleInfo }
+  from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import CommandeDetails from "./CommandeDetails ";
 import Modal from "react-modal"; // Import the Modal component
 import AddCommande from "./AddCommande ";
 import EditCommande from "./EditCommande ";
-import CommandeDetails from "./CommandeDetails ";
-import Navigation from "../Acceuil/Navigation";
+import "../style.css"
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import { Toolbar } from "@mui/material";
+
 const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
@@ -42,6 +44,8 @@ const CommandeList = () => {
   const [isEditCommandeDrawerOpen, setIsEditCommandeDrawerOpen] =
     useState(false);
   const mainContentClasses = `main-content ${drawerOpen ? "collapsed" : ""}`;
+  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
+  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
 
   const [expandedRows, setExpandedRows] = useState([]);
   const toggleDetails = (index) => {
@@ -203,12 +207,6 @@ const CommandeList = () => {
     setSelectedItems([]);
   };
 
-  // const handleShowDetails = (id) => {
-  //   // Find the selected commande by ID
-  //   const selected = commandes.find((commande) => commande.id === id);
-  //   setSelectedCommande(selected);
-  //   setModalIsOpen(true); // Open the modal
-  // };
   const handleShowDetails = (commande) => {
     setExpandedRows((prevRows) =>
       prevRows.includes(commande)
@@ -259,6 +257,8 @@ const CommandeList = () => {
       setSelectedItems(commandes.map((commande) => commande.id));
     }
   };
+  //------------Print List----------//
+
   const printList = (tableId, title, commandeList) => {
     const printWindow = window.open(" ", "_blank", " ");
 
@@ -338,6 +338,9 @@ const CommandeList = () => {
                     display: none;
                   }
                 }
+                .no-print {
+                  display: none;
+                }
   
                 .content-wrapper {
                   margin-bottom: 100px;
@@ -349,18 +352,9 @@ const CommandeList = () => {
               </style>
             </head>
             <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${
-                  Array.isArray(commandeList)
-                    ? commandeList.map((item) => <li>${item}</li>).join("")
-                    : ""
-                }
-              </ul>
               <div class="content-wrapper">
                 ${tableToPrint.outerHTML}
               </div>
-              
               <script>
                 setTimeout(() => {
                   window.print();
@@ -381,33 +375,30 @@ const CommandeList = () => {
       console.error("Error opening print window.");
     }
   };
+  //------------exportToPdf----------//
 
   const exportToPdf = () => {
     const pdf = new jsPDF();
 
     // Define the columns and rows for the table
     const columns = [
-      "ID",
       "Raison Sociale",
       "Adresse",
       "Téléphone",
       "Ville",
       "Abréviation",
       "Zone",
-      "User",
     ];
     const selectedCommandes = commandes.filter((commande) =>
       selectedItems.includes(commande.id)
     );
     const rows = selectedCommandes.map((commande) => [
-      commande.id,
       commande.raison_sociale,
       commande.adresse,
       commande.tele,
       commande.ville,
       commande.abreviation,
       commande.zone,
-      commande.user_id,
     ]);
 
     // Set the margin and padding
@@ -447,8 +438,6 @@ const CommandeList = () => {
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
         5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
@@ -465,14 +454,13 @@ const CommandeList = () => {
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
         5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
     // Save the PDF
     pdf.save("commandes.pdf");
   };
+  //------------exportToExcel----------//
 
   const exportToExcel = () => {
     const selectedCommandes = commandes.filter((commande) =>
@@ -489,123 +477,107 @@ const CommandeList = () => {
     const client = clients.find((c) => c.id === clientId);
     return client ? client.raison_sociale : "... loading";
   };
+  //------------formatDate----------//
+  function formatDate(dateString) {
+    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+    return new Date(dateString).toLocaleDateString('fr-FR', options);
+  }
+
   return (
-    <div className="container" style={{ marginTop: "40px" }}>
-<Navigation/>
+    <ThemeProvider theme={createTheme()}>
+      <Box sx={{ display: 'flex' }}>
+        <Navigation />
+        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+          <Toolbar />
+    <div className="container">
+      <div>
+        <h3>Liste des Commandes</h3>
+      </div>
       {filteredCommandes && filteredCommandes.length > 0 ? (
         <div className="table-container">
           <div style={{ display: "flex", justifyContent: "space-between" }}>
             <div>
-              <AddCommande
-                produits={produits}
-                clients={clients}
-                users={users}
-                csrfToken={csrfToken}
-                fetchCommandes={fetchCommandes}
-                open={isAddCommandeDrawerOpen}
-                onClose={handleCloseAddCommandeDrawer}
-              />
+              <AddCommande produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} open={isAddCommandeDrawerOpen} onClose={handleCloseAddCommandeDrawer} />
             </div>
             <div className="search-container mb-1">
               <Search onSearch={handleSearch} />
             </div>
           </div>
-          <table className="table" id="commande">
-            {/* Table headers */}
-            <thead>
-              <tr>
-                <th className="no-print">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAllChange}
-                  />
-                </th>
-
-                <th>Reference</th>
-                <th>Date Commande</th>
-                <th>Status</th>
-                <th>Client</th>
-
-                <th className="no-print">Action</th>
-              </tr>
-            </thead>
-            {/* Table body */}
-            <tbody>
-              {filteredCommandes
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((filteredCommandes, index) => (
-                  <React.Fragment key={filteredCommandes.id}>
-                    <tr key={filteredCommandes.id}>
-                      <td className="no-print">
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(filteredCommandes.id)}
-                          onChange={() =>
-                            handleCheckboxChange(filteredCommandes.id)
-                          }
-                        />
-                      </td>
-
-                      <td>{filteredCommandes.reference}</td>
-                      <td>{filteredCommandes.dateCommande}</td>
-                      <td>{filteredCommandes.status}</td>
-                      <td>{getClientNameById(filteredCommandes.client_id)}</td>
-
-                      <td className="no-print" style={{ display: "flex" }}>
-                        <EditCommande
-                          produits={produits}
-                          clients={clients}
-                          users={users}
-                          csrfToken={csrfToken}
-                          fetchCommandes={fetchCommandes}
-                          editCommandeId={filteredCommandes.id}
-                          open={isEditCommandeDrawerOpen}
-                          onClose={handleCloseEditCommandeDrawer}
-                        />
-                        <button
-                          className="btn btn-danger"
-                          style={{ marginRight: "8px" }}
-                          onClick={() => handleDelete(filteredCommandes.id)}
-                        >
-                          <FontAwesomeIcon icon={faTrash} />{" "}
-                        </button>
-
-                        <button
-                          className="btn btn-info"
-                          style={{ marginRight: "8px" }}
-                          onClick={() =>
-                            handleShowDetails(filteredCommandes.id)
-                          }
-                        >
-                          Details
-                        </button>
-                      </td>
-                    </tr>
-                    {expandedRows.includes(filteredCommandes.id) && (
-                      <tr>
-                        <td colSpan="8">
-                          <div>
-                            <CommandeDetails
-                              produits={produits}
-                              commande={filteredCommandes}
-                              ligneCommandes={ligneCommandes}
-                              statusCommandes={statusCommandes}
-                              fetchLigneCommandes={fetchLigneCommandes}
-                              fetchStatusCommandes={fetchStatusCommandes}
-                              onBackToList={() =>
-                                handleShowDetails(filteredCommandes.id)
+          <div className="">
+            <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
+              <table className="table table-hover">
+                {/* Table headers */}
+                <thead className="text-center">
+                  <tr>
+                    <th className="no-print">
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={handleSelectAllChange}
+                      />
+                    </th>
+                    <th>Reference</th>
+                    <th>Date Commande</th>
+                    <th>Status</th>
+                    <th>Client</th>
+                    <th className="no-print">Action</th>
+                  </tr>
+                </thead>
+                {/* Table body */}
+                <tbody className="text-center">
+                  {filteredCommandes
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((filteredCommandes, index) => (
+                      <React.Fragment key={filteredCommandes.id}>
+                        <tr key={filteredCommandes.id}>
+                          <td className="no-print">
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(filteredCommandes.id)}
+                              onChange={() =>
+                                handleCheckboxChange(filteredCommandes.id)
                               }
                             />
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
-                ))}
-            </tbody>
-          </table>
-
+                          </td>
+                          <td>{filteredCommandes.reference}</td>
+                          <td>{formatDate(filteredCommandes.dateCommande)}</td>
+                          <td>{filteredCommandes.status}</td>
+                          <td>{getClientNameById(filteredCommandes.client_id)}</td>
+                          <td className="d-inline-flex no-print">
+                            <EditCommande className="no-print m-1" produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} editCommandeId={filteredCommandes.id} open={isEditCommandeDrawerOpen} onClose={handleCloseEditCommandeDrawer} />
+                            <button className="btn btn-danger m-1 no-print" onClick={() => handleDelete(filteredCommandes.id)}>
+                              <FontAwesomeIcon icon={faTrash} />{" "}
+                            </button>
+                            <button className="btn btn-info m-1 no-print" onClick={() => handleShowDetails(filteredCommandes.id)}>
+                              <FontAwesomeIcon icon={faCircleInfo} />
+                            </button>
+                          </td>
+                        </tr>
+                        {expandedRows.includes(filteredCommandes.id) && (
+                          <tr>
+                            <td colSpan="8">
+                              <div>
+                                <CommandeDetails
+                                  produits={produits}
+                                  commande={filteredCommandes}
+                                  ligneCommandes={ligneCommandes}
+                                  statusCommandes={statusCommandes}
+                                  fetchLigneCommandes={fetchLigneCommandes}
+                                  fetchStatusCommandes={fetchStatusCommandes}
+                                  onBackToList={() =>
+                                    handleShowDetails(filteredCommandes.id)
+                                  }
+                                />
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
@@ -615,41 +587,25 @@ const CommandeList = () => {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
           />
-
-          <button
-            className="btn btn-danger"
-            style={{ marginRight: "8px" }}
-            onClick={handleDeleteSelected}
-          >
-            <FontAwesomeIcon icon={faTrash} />{" "}
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ marginRight: "8px" }}
-            onClick={() => printList("commande", "commandes Liste")}
-          >
-            <FontAwesomeIcon icon={faPrint} />
-          </button>
-          <button
-            className="btn btn-primary"
-            style={{ marginRight: "8px" }}
-            onClick={exportToPdf}
-          >
-            <FontAwesomeIcon icon={faFilePdf} />{" "}
-          </button>
-          <button
-            className="btn btn-success"
-            style={{ marginRight: "8px" }}
-            onClick={exportToExcel}
-          >
-            <FontAwesomeIcon icon={faFileExcel} />{" "}
-          </button>
+          <div className="d-flex flex-row">
+            <div className="btn-group col-2">
+              <button className="btn btn-danger" onClick={handleDeleteSelected}>
+                <FontAwesomeIcon icon={faTrash} />{" "}
+              </button>
+              <button
+                className="btn btn-secondary" onClick={() => printList("commande","commandes Liste","commandes Liste")} >
+                <FontAwesomeIcon icon={faPrint} />
+              </button>
+              <button className="btn btn-danger" onClick={exportToPdf}>
+                <FontAwesomeIcon icon={faFilePdf} />{" "}
+              </button>
+              <button className="btn btn-success" onClick={exportToExcel} >
+                <FontAwesomeIcon icon={faFileExcel} />{" "}
+              </button>
+            </div>
+          </div>
           {/* Render the Modal component */}
-          <Modal
-            isOpen={modalIsOpen}
-            onRequestClose={handleModalClose}
-            contentLabel="Commande Details"
-          >
+          <Modal isOpen={modalIsOpen} onRequestClose={handleModalClose} contentLabel="Commande Details">
             {selectedCommande && (
               <CommandeDetails
                 commande={selectedCommande}
@@ -688,13 +644,11 @@ const CommandeList = () => {
                     onChange={handleSelectAllChange}
                   />
                 </th>
-                <th>ID</th>
                 <th>Reference</th>
                 <th>Date Commande</th>
                 <th>Status</th>
                 <th>Client</th>
                 <th>User</th>
-
                 <th className="no-print">Action</th>
               </tr>
             </thead>
@@ -702,6 +656,9 @@ const CommandeList = () => {
         </div>
       )}
     </div>
+    </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 export default CommandeList;

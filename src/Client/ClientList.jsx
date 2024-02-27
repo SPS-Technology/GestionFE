@@ -12,7 +12,9 @@ import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-sol
 import * as XLSX from "xlsx";
 import "./exportToPdf";
 import "../style.css"
-
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import { Toolbar } from "@mui/material";  
 //------------------------- CLIENT LIST---------------------//
 const ClientList = () => {
   const [clients, setClients] = useState([]);
@@ -294,8 +296,12 @@ const ClientList = () => {
   };
 
   return (
-    <div>
+    <ThemeProvider theme={createTheme()}>
+    <Box sx={{ display: 'flex' }}>
       <Navigation />
+      <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+        <Toolbar />
+    
       <div className="container">
         <h3>Liste des Clients</h3>
         <div className="search-container d-flex flex-row-reverse " role="search">
@@ -479,7 +485,9 @@ const ClientList = () => {
           </div>
         </div>
       </div>
-    </div>
+      </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
 

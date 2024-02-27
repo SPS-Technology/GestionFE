@@ -3,26 +3,12 @@ import Drawer from "@mui/material/Drawer";
 import Button from "@mui/material/Button";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import swal from "sweetalert2";
-const EditCommande = ({
-  produits,
-  clients,
-  users,
-  csrfToken,
-  fetchCommandes,
-  editCommandeId,
-}) => {
+const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editCommandeId,}) => {
   const [open, setOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [commandeData, setCommandeData] = useState({
-    client_id: "",
-    user_id: "",
-    status: "",
-    reference: "",
-    dateCommande: "",
-    // Add other properties as needed
-  });
+  const [commandeData, setCommandeData] = useState({client_id: "",user_id: "",status: "",reference: "",dateCommande: "",});
   const [existingLigneCommandes, setExistingLigneCommandes] = useState([]);
   const [modifiedPrixValues, setModifiedPrixValues] = useState({});
   const [modifiedQuantiteValues, setModifiedQuantiteValues] = useState({});
@@ -218,7 +204,6 @@ const EditCommande = ({
     if (existingLigneCommande) {
       return existingLigneCommande[inputType];
     }
-
     return "";
   };
 
@@ -235,7 +220,6 @@ const EditCommande = ({
             onChange={() => handleProductCheckboxChange(produit.id)}
           />
         </td>
-        <td>{produit.id}</td>
         <td>{produit.nom}</td>
         <td>{produit.type_quantite}</td>
         <td>{produit.calibre}</td>
@@ -276,14 +260,15 @@ const EditCommande = ({
   return (
     <div>
       <Button
-        //variant="contained"
+        variant="info"
         onClick={handleDrawerOpen}
-        startIcon={<FontAwesomeIcon icon={faPencilAlt}></FontAwesomeIcon>}
+        startIcon={<FontAwesomeIcon icon={faPenToSquare}></FontAwesomeIcon>}
       ></Button>
       <Drawer anchor="right" open={open} onClose={handleDrawerClose}>
         <div style={{ padding: "20px" }}>
-          <table className="swal2-input" style={{ marginBottom: "20px" }}>
-            <thead>
+          <h3 className="text-center mb-5">Edit Commande</h3>
+          <table className="table table-hover mb-5" >
+            <thead className="text-center">
               <tr>
                 <th>Reference</th>
                 <th>Status</th>
@@ -292,12 +277,12 @@ const EditCommande = ({
                 <th>Date Commande</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="text-center">
               <td>{commandeData.reference}</td>
               <td>
                 <select
                   id="status"
-                  className="swal2-input"
+                  className="form-select"
                   value={commandeData.status}
                 >
                   <option disabled>Status</option>
@@ -310,7 +295,7 @@ const EditCommande = ({
               <td>
                 <select
                   id="client_id"
-                  className="swal2-input"
+                  className="form-select"
                   value={commandeData.client_id}
                 >
                   <option disabled selected>
@@ -320,12 +305,11 @@ const EditCommande = ({
                     <option key={client.id}>{client.raison_sociale}</option>
                   ))}
                 </select>
-                {/* {commandeData.client_id} */}
               </td>
               <td>
                 <select
                   id="user_id"
-                  className="swal2-input"
+                  className="form-select"
                   value={commandeData.user_id}
                 >
                   <option disabled selected>
@@ -335,16 +319,14 @@ const EditCommande = ({
                     <option key={user.id}>{user.name}</option>
                   ))}
                 </select>
-                {/* {commandeData.user_id} */}
               </td>
               <td>{commandeData.dateCommande}</td>
             </tbody>
           </table>
-          <table id="selectedProduitTable" className="swal2-input">
-            <thead>
+          <table id="selectedProduitTable" className="table table-hover">
+            <thead className="text-center">
               <tr>
                 <th>Select</th>
-                <th>id</th>
                 <th>Product</th>
                 <th>Type Quantite</th>
                 <th>Calibre</th>
@@ -352,15 +334,12 @@ const EditCommande = ({
                 <th>Prix</th>
               </tr>
             </thead>
-            <tbody>{renderProductInputs()}</tbody>
+            <tbody className="text-center">{renderProductInputs()}</tbody>
           </table>
-
           <div>
-            <p></p>
           </div>
-
-          <div style={{ marginTop: "10px" }}>
-            <Button variant="contained" onClick={handleEditCommande}>
+          <div className="text-center">
+            <Button variant="contained" className="col-3" onClick={handleEditCommande}>
               modifier
             </Button>
           </div>

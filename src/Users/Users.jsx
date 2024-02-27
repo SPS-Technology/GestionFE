@@ -4,7 +4,9 @@ import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import Navigation from "../Acceuil/Navigation";
 import Swal from "sweetalert2";
-
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import { Toolbar } from "@mui/material";
 const Users = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
   const token = localStorage.getItem("API_TOKEN");
@@ -62,9 +64,12 @@ const Users = () => {
   };
 
   return (
-    <div>
+    <ThemeProvider theme={createTheme()}>
+    <Box sx={{ display: 'flex' }}>
       <Navigation />
-      <div style={{ padding: "20px" }}>
+      <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+        <Toolbar />
+      <div className="container">
         <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
           Gestion des utilisateurs
         </h2>
@@ -124,7 +129,9 @@ const Users = () => {
           </tbody>
         </table>
       </div>
-    </div>
+      </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

@@ -9,9 +9,12 @@ import ExportToPdfButton from './exportToPdf';
 import PrintList from './PrintList';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash, faFilePdf, faFileExcel, faPrint, faEdit } from "@fortawesome/free-solid-svg-icons";
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
+import { Toolbar } from "@mui/material";
 
 const ProduitList = () => {
   const [produits, setProduits] = useState([]);
@@ -274,8 +277,11 @@ const ProduitList = () => {
   };
 
   return (
-    <div>
-      <Navigation />
+    <ThemeProvider theme={createTheme()}>
+      <Box sx={{ display: 'flex' }}>
+        <Navigation />
+        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+          <Toolbar />
       <div className="container">
         <h3>Liste des Produits</h3>
         <div className="search-container d-flex flex-row-reverse " role="search">
@@ -422,7 +428,9 @@ const ProduitList = () => {
           </div>
         </div>
       </div>
-    </div>
+      </Box>
+      </Box>
+    </ThemeProvider>
   );
 
 };

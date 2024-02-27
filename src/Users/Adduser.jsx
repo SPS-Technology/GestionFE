@@ -3,7 +3,9 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../Acceuil/Navigation";
-
+import { createTheme, ThemeProvider } from "@mui/material/styles";
+import Box from "@mui/material/Box";
+import { Toolbar } from "@mui/material";
 const AddUser = () => {
   const token = localStorage.getItem("API_TOKEN");
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -149,8 +151,11 @@ const AddUser = () => {
   };
 
   return (
-    <div>
-      <Navigation />
+    <ThemeProvider theme={createTheme()}>
+      <Box sx={{ display: 'flex' }}>
+        <Navigation />
+        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+          <Toolbar />
       <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
         <i className="fas fa-user-plus" aria-hidden="true"></i>
         <h2 style={{ marginBottom: "20px" }}>Ajouter un utilisateur</h2>
@@ -250,7 +255,9 @@ const AddUser = () => {
           </button>
         </form>
       </div>
-    </div>
+      </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 
