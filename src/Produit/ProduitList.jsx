@@ -384,9 +384,9 @@ const ProduitList = () => {
                       <td>{produit.nom}</td>
                       <td>{produit.type_quantite}</td>
                       <td>{produit.calibre}</td>
-                      <td className="d-inline-flex">
+                      <td className="d-inline-flex no-print text-center">
                         <button
-                          className="btn btn-sm btn-warning m-1"
+                          className="btn btn-sm btn-info m-1"
                           onClick={() => handleEdit(produit)}
                         >
                           <i className="fas fa-edit"></i>
@@ -432,7 +432,6 @@ const ProduitList = () => {
       </div>
     </div>
   );
-
 };
 
 export default ProduitList;

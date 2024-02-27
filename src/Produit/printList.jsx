@@ -72,6 +72,9 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
                   display: none;
                 }
               }
+              .no-print {
+                display: none;
+              }
               .content-wrapper {
                 margin-bottom: 100px;
               }
@@ -83,7 +86,7 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
           <body>
     <div class="page-header print-no-date">${title}</div>
     <div class="content-wrapper">
-      <table>
+      <table class="table">
         <thead>
           <tr>
             <th>Nom</th>
@@ -126,7 +129,7 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
   
   return (
     <button className="btn btn-secondary btn btn-sm" onClick={handlePrint}>
-      <FontAwesomeIcon icon={faPrint} className="me-2" />
+      <FontAwesomeIcon icon={faPrint}  />
     </button>
   );
 };

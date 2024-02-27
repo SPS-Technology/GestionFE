@@ -6,7 +6,7 @@ import Search from "../layouts/Search";
 import Navigation from "../layouts/Navigation";
 import "./commande.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faFileExcel, faPrint, faCircleInfo}
+import { faTrash, faFilePdf, faFileExcel, faPrint, faCircleInfo }
   from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -254,7 +254,8 @@ const CommandeList = () => {
       setSelectedItems(commandes.map((commande) => commande.id));
     }
   };
-  
+  //------------Print List----------//
+
   const printList = (tableId, title, commandeList) => {
     const printWindow = window.open(" ", "_blank", " ");
 
@@ -334,6 +335,9 @@ const CommandeList = () => {
                     display: none;
                   }
                 }
+                .no-print {
+                  display: none;
+                }
   
                 .content-wrapper {
                   margin-bottom: 100px;
@@ -345,17 +349,9 @@ const CommandeList = () => {
               </style>
             </head>
             <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${Array.isArray(commandeList)
-            ? commandeList.map((item) => <li>${item}</li>).join("")
-            : ""
-          }
-              </ul>
               <div class="content-wrapper">
                 ${tableToPrint.outerHTML}
               </div>
-              
               <script>
                 setTimeout(() => {
                   window.print();
@@ -383,27 +379,23 @@ const CommandeList = () => {
 
     // Define the columns and rows for the table
     const columns = [
-      "ID",
       "Raison Sociale",
       "Adresse",
       "Téléphone",
       "Ville",
       "Abréviation",
       "Zone",
-      "User",
     ];
     const selectedCommandes = commandes.filter((commande) =>
       selectedItems.includes(commande.id)
     );
     const rows = selectedCommandes.map((commande) => [
-      commande.id,
       commande.raison_sociale,
       commande.adresse,
       commande.tele,
       commande.ville,
       commande.abreviation,
       commande.zone,
-      commande.user_id,
     ]);
 
     // Set the margin and padding
@@ -443,8 +435,6 @@ const CommandeList = () => {
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
         5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
@@ -461,8 +451,6 @@ const CommandeList = () => {
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
         5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
@@ -495,6 +483,9 @@ const CommandeList = () => {
   return (
     <div className="container">
       <Navigation />
+      <div>
+        <h3>Liste des Commandes</h3>
+      </div>
       {filteredCommandes && filteredCommandes.length > 0 ? (
         <div className="table-container">
           <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -507,7 +498,7 @@ const CommandeList = () => {
           </div>
           <div className="">
             <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-              <table className="table table-hover" id="clientsTable">
+              <table className="table table-hover">
                 {/* Table headers */}
                 <thead className="text-center">
                   <tr>
@@ -518,12 +509,10 @@ const CommandeList = () => {
                         onChange={handleSelectAllChange}
                       />
                     </th>
-
                     <th>Reference</th>
                     <th>Date Commande</th>
                     <th>Status</th>
                     <th>Client</th>
-
                     <th className="no-print">Action</th>
                   </tr>
                 </thead>
@@ -547,13 +536,13 @@ const CommandeList = () => {
                           <td>{formatDate(filteredCommandes.dateCommande)}</td>
                           <td>{filteredCommandes.status}</td>
                           <td>{getClientNameById(filteredCommandes.client_id)}</td>
-                          <td className="d-inline-flex">
-                            <EditCommande produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} editCommandeId={filteredCommandes.id} open={isEditCommandeDrawerOpen} onClose={handleCloseEditCommandeDrawer}/>
-                            <button className="btn btn-danger" style={{ marginRight: "8px" }} onClick={() => handleDelete(filteredCommandes.id)}>
+                          <td className="d-inline-flex no-print">
+                            <EditCommande className="no-print m-1" produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} editCommandeId={filteredCommandes.id} open={isEditCommandeDrawerOpen} onClose={handleCloseEditCommandeDrawer} />
+                            <button className="btn btn-danger m-1 no-print" onClick={() => handleDelete(filteredCommandes.id)}>
                               <FontAwesomeIcon icon={faTrash} />{" "}
                             </button>
-                            <button className="btn btn-info" style={{ marginRight: "8px" }} onClick={() => handleShowDetails(filteredCommandes.id)}>
-                            <FontAwesomeIcon icon={faCircleInfo}/>
+                            <button className="btn btn-info m-1 no-print" onClick={() => handleShowDetails(filteredCommandes.id)}>
+                              <FontAwesomeIcon icon={faCircleInfo} />
                             </button>
                           </td>
                         </tr>
@@ -582,8 +571,6 @@ const CommandeList = () => {
               </table>
             </div>
           </div>
-
-
           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
@@ -599,7 +586,7 @@ const CommandeList = () => {
                 <FontAwesomeIcon icon={faTrash} />{" "}
               </button>
               <button
-                className="btn btn-primary" onClick={() => printList("commande", "commandes Liste")} >
+                className="btn btn-secondary" onClick={() => printList("commande","commandes Liste","commandes Liste")} >
                 <FontAwesomeIcon icon={faPrint} />
               </button>
               <button className="btn btn-danger" onClick={exportToPdf}>

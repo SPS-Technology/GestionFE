@@ -220,7 +220,6 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
             onChange={() => handleProductCheckboxChange(produit.id)}
           />
         </td>
-        <td>{produit.id}</td>
         <td>{produit.nom}</td>
         <td>{produit.type_quantite}</td>
         <td>{produit.calibre}</td>
@@ -306,7 +305,6 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
                     <option key={client.id}>{client.raison_sociale}</option>
                   ))}
                 </select>
-                {/* {commandeData.client_id} */}
               </td>
               <td>
                 <select
@@ -321,7 +319,6 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
                     <option key={user.id}>{user.name}</option>
                   ))}
                 </select>
-                {/* {commandeData.user_id} */}
               </td>
               <td>{commandeData.dateCommande}</td>
             </tbody>
@@ -330,7 +327,6 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
             <thead className="text-center">
               <tr>
                 <th>Select</th>
-                <th>id</th>
                 <th>Product</th>
                 <th>Type Quantite</th>
                 <th>Calibre</th>

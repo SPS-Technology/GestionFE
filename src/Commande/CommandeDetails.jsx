@@ -105,9 +105,9 @@ const CommandeDetails = ({ produits, commande }) => {
 
   return (
     <div style={{ backgroundColor: "#E1E1E1" }}>
-      <div className="details-container col row">
+      <div className="details-container col row"  id="commande">
         <div className="ligne-commande-table col-5 text-center mt-2 mx-5">
-        <Search onSearch={handleSearch} />
+            {/* <Search  onSearch={handleSearch}/> */}
           <table className="table table-hover mt-2" style={{ backgroundColor: "#F1F1F1" }}>
             <thead>
               <tr>
@@ -122,22 +122,16 @@ const CommandeDetails = ({ produits, commande }) => {
                   <td>{produitLookup(ligneCommande.produit_id)}</td>
                   <td>{ligneCommande.quantite}</td>
                   <td>{ligneCommande.prix_unitaire}</td>
-                  <td>
-                    <button
-                      className="btn btn-danger"
-                      style={{ marginRight: "8px" }}
-                      onClick={() =>
-                        handleDeleteLigneCommande(ligneCommande.id)
-                      }
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
+                  <td className="no-print">
+                    <button className="btn btn-danger" onClick={() => handleDeleteLigneCommande(ligneCommande.id)}>                     
+                      <FontAwesomeIcon icon={faTrash}/>                
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-           {/* <TablePagination
+           <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
             count={commande.ligne_commandes.length}
@@ -145,9 +139,9 @@ const CommandeDetails = ({ produits, commande }) => {
             page={page}
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
-          /> */}
+            className="no-print"
+          /> 
         </div>
-
         <div className="status-commande-table col-5 text-center mt-5">
           <table className="table table-hover" style={{ backgroundColor: "#F1F1F1" }}>
             <thead>

@@ -296,8 +296,8 @@ const ClientList = () => {
   return (
     <div>
       <Navigation />
-      <div className="container">
-        <h3>Liste des Clients</h3>
+      <h3>Liste des Clients</h3>
+      <div className="container">    
         <div className="search-container d-flex flex-row-reverse " role="search">
           <Search onSearch={handleSearch} type="search" />
         </div>

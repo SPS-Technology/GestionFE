@@ -77,7 +77,7 @@ const exportToPdf = (produits, selectedItems) => {
 
 const ExportPdfButton = ({ produits, selectedItems }) => (
     <Button onClick={() => exportToPdf(produits, selectedItems)} className="btn btn-danger btn btn-sm">
-      <FontAwesomeIcon icon={faFilePdf} className="me-2" />
+      <FontAwesomeIcon icon={faFilePdf} />
     </Button>
 );
 
