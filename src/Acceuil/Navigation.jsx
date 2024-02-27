@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
@@ -19,7 +18,8 @@ import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
-import { Menu, MenuItem } from "@mui/material";
+import { Link } from "react-router-dom";
+import "../style.css";
 
 const Navigation = () => {
   const [user, setUser] = useState(null);
@@ -28,7 +28,7 @@ const Navigation = () => {
   const token = localStorage.getItem("API_TOKEN");
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const { logout } = useAuth();
-  const [openDrawer, setOpenDrawer] = useState(true);
+  const [openDrawer, setOpenDrawer] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -42,20 +42,14 @@ const Navigation = () => {
         const response = await axios.get("http://localhost:8000/api/user", {
           withCredentials: true,
         });
-        console.log('user',user)
         setUser(response.data);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
 
-    fetchUserData(); // Appel initial lors du montage du composant
-  }, [])
-const [showMenu, setShowMenu] = useState(false);
-
-  const handleToggleMenu = () => {
-    setShowMenu(!showMenu);
-  };
+    fetchUserData();
+  }, []);
 
   const handleLogoutClick = async () => {
     try {
@@ -101,7 +95,7 @@ const [showMenu, setShowMenu] = useState(false);
         open={openDrawer}
         onClose={handleDrawerClose}
         classes={{
-          paper: "custom-drawer-paper",
+          paper: `custom-drawer-paper ${openDrawer ? 'nav-open' : ''}`,
         }}
       >
         <div className="drawer-header">
@@ -116,13 +110,12 @@ const [showMenu, setShowMenu] = useState(false);
                 <Avatar
                   alt={user.name}
                   src={user.photo}
-                  style={{ width: "40px", height: "40px" }} // Ajoutez ces styles
+                  style={{ width: "40px", height: "40px" }}
                 />
               </ListItemIcon>
               <ListItemText primary={`Hello, ${user.name}`} />
             </ListItem>
           )}
-
           <ListItem button component={Link} to="/" style={{ color: "blue" }}>
             <ListItemIcon>
               <ShoppingBasketIcon />
@@ -162,53 +155,39 @@ const [showMenu, setShowMenu] = useState(false);
             </ListItemIcon>
             <ListItemText primary="Produits" />
           </ListItem>
-          <ListItem button onClick={handleToggleMenu} style={{ color: "blue" }}>
-        <ListItemIcon>
-          <ShoppingBasketIcon />
-        </ListItemIcon>
-        <ListItemText primary="Gestion Commandes" />
-      </ListItem>
-      {showMenu && (
-        <div style={{ marginLeft: "30px" }}>
-          <Link to="/ajouter-commande" style={{ textDecoration: "none", color: "inherit" }}>
-            <div>
-              Ajouter Commande
-            </div>
-          </Link>
-          <Link to="/list-commandes" style={{ textDecoration: "none", color: "inherit" }}>
-            <div>
-              List Commandes
-            </div>
-          </Link>
-        </div>
-      )}
-         
-         {/* {user && user.roles && user.roles.some(role => role.name === "admin") && ( */}
-            <>
-              <ListItem
-                button
-                component={Link}
-                to="/add-user"
-                style={{ color: "blue" }}
-              >
-                <ListItemIcon>
-                  <AddCircleIcon />
-                </ListItemIcon>
-                <ListItemText primary="Ajouter utilisateur" />
-              </ListItem>
-              <ListItem
-                button
-                component={Link}
-                to="/users"
-                style={{ color: "blue" }}
-              >
-                <ListItemIcon>
-                  <SupervisorAccountIcon />
-                </ListItemIcon>
-                <ListItemText primary="Gestion utilisateurs" />
-              </ListItem>
-            </>
-          {/* )} */}
+          <ListItem
+            button
+            component={Link}
+            to="/commandes"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <ShoppingBasketIcon />
+            </ListItemIcon>
+            <ListItemText primary="Gestion Commandes" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/add-user"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <AddCircleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Ajouter utilisateur" />
+          </ListItem>
+          <ListItem
+            button
+            component={Link}
+            to="/users"
+            style={{ color: "blue" }}
+          >
+            <ListItemIcon>
+              <SupervisorAccountIcon />
+            </ListItemIcon>
+            <ListItemText primary="Gestion utilisateurs" />
+          </ListItem>
         </List>
         <List>
           <ListItem
@@ -228,3 +207,4 @@ const [showMenu, setShowMenu] = useState(false);
 };
 
 export default Navigation;
+ 

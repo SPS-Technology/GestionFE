@@ -2,33 +2,39 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Form, Button } from "react-bootstrap";
-import "../style.css";
 import Navigation from "../Acceuil/Navigation";
-import TablePagination from "@mui/material/TablePagination";
 import Search from "../Acceuil/Search";
+import TablePagination from '@mui/material/TablePagination';
+import ExportToPdfButton from './exportToPdf';
+import PrintList from './PrintList';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faTrash,
-  faFilePdf,
-  faFileExcel,
-  faPrint,
-} from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFilePdf, faFileExcel, faPrint, faEdit } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 const ProduitList = () => {
-  const [existingProduct, setExistingProduct] = useState({});
   const [produits, setProduits] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [fournisseurs, setFournisseurs] = useState([]);
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredProducts, setFilteredProducts] = useState([]);
+  const [filteredProduits, setFilteredProduits] = useState([]);
+
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [users, setUsers] = useState([]);
+
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
+
+  const [editingProduit, setEditingProduit] = useState(null);
+  const [editingProduitId, setEditingProduitId] = useState(null);
+
+
+  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
+  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
+  const [showForm, setShowForm] = useState(false);
+
   const [formData, setFormData] = useState({
     nom: "",
     type_quantite: "",
@@ -36,12 +42,18 @@ const ProduitList = () => {
     user_id: "",
   });
 
+  useEffect(() => {
+    fetchProduits();
+  }, []);
+
   const fetchProduits = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/produits");
-      console.log("API Response:", response.data);
       setProduits(response.data.produit);
-
+      const fournisseursResponse = await axios.get(
+        "http://localhost:8000/api/fournisseurs"
+      );
+      setFournisseurs(fournisseursResponse.data.fournisseur);
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
       console.log("users", users);
@@ -51,51 +63,25 @@ const ProduitList = () => {
   };
 
   useEffect(() => {
-    fetchProduits();
-  }, []);
-
-  useEffect(() => {
-    // Filter fournisseurs based on the search term
-    const filtered = produits.filter((prod) =>
-      prod.nom.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    setFilteredProducts(filtered);
+    if (produits) {
+      const filtered = produits.filter((produit) =>
+        produit.nom.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredProduits(filtered);
+    }
   }, [produits, searchTerm]);
 
   const handleSearch = (term) => {
-    //setCurrentPage(1); // Reset to the first page when searching
     setSearchTerm(term);
   };
 
-  const handleDelete = (id) => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
-    if (isConfirmed) {
-      axios
-        .delete(`http://localhost:8000/api/produits/${id}`)
-        .then(() => {
-          fetchProduits();
-          Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: "Fournisseur supprimé avec succès.",
-          });
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la suppression du produit:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la suppression du produit.",
-          });
-        });
-    } else {
-      console.log("Suppression annulée");
-    }
-  };
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
   };
 
   const handleCheckboxChange = (itemId) => {
@@ -106,294 +92,180 @@ const ProduitList = () => {
     }
   };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (selectAll) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(produits.map((produit) => produit.id));
+    }
   };
 
   const handleDeleteSelected = () => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        selectedItems.forEach((id) => {
+          axios.delete(`http://localhost:8000/api/produits/${id}`)
+            .then((response) => {
+              fetchProduits();
+              Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: 'produit supprimé avec succès.',
+              });
+            })
+            .catch((error) => {
+              console.error("Error deleting product:", error);
+              Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: 'Échec de la suppression du produit.',
+              });
+            });
+        });
+      }
+    });
+    setSelectedItems([]);
+  }
 
-    selectedItems.forEach((id) => {
-      if (isConfirmed) {
-        axios
-          .delete(`http://localhost:8000/api/produits/${id}`)
-          .then(() => {
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce produit ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios.delete(`http://localhost:8000/api/produits/${id}`)
+          .then((response) => {
             fetchProduits();
             Swal.fire({
               icon: "success",
               title: "Succès!",
-              text: "Produits supprimé avec succès.",
+              text: "Produit supprimé avec succès.",
             });
           })
           .catch((error) => {
-            console.error(
-              "Erreur lors de la suppression du fournisseur:",
-              error
-            );
+            console.error("Error deleting product:", error);
             Swal.fire({
               icon: "error",
               title: "Erreur!",
-              text: "Échec de la suppression du fournisseur.",
+              text: "Échec de la suppression du produit.",
             });
           });
       } else {
         console.log("Suppression annulée");
       }
     });
-    fetchProduits();
-
-    setSelectedItems([]);
   };
+  const handleShowFormButtonClick = () => {
+    if (formContainerStyle.right === '-500px') {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
+    } else {
+      closeForm();
+    }
+  };
+
+  const closeForm = () => {
+    setFormContainerStyle({ right: '-500px' });
+    setTableContainerStyle({ marginRight: '0' });
+    setShowForm(false); // Hide the form
+    setFormData({ // Clear form data
+      nom: "",
+      type_quantite: "",
+      calibre: "",
+      user_id: "",
+    });
+    setEditingProduit(null); // Clear editing client
+  };
+
+
+  const handleEdit = (produit) => {
+    setEditingProduit(produit);
+    setFormData({
+      nom: produit.nom,
+      type_quantite: produit.type_quantite,
+      calibre: produit.calibre,
+      user_id: produit.user_id,
+
+    });
+    if (formContainerStyle.right === '-500px') {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
+    } else {
+      closeForm();
+    }
+  };
+  useEffect(() => {
+    if (editingProduitId !== null) {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
+    }
+  }, [editingProduitId]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleEdit = (id) => {
-    const foundProduits = produits.find((prod) => prod.id === id);
-
-    setExistingProduct(foundProduits);
-    setFormData({
-      nom: foundProduits.nom,
-      type_quantite: foundProduits.type_quantite,
-      calibre: foundProduits.calibre,
-      user_id: foundProduits.user_id,
-    });
-
-    setShowEditForm(true); // Show the edit form
-  };
-
-  const handleEditSubmit = (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-
-    axios
-      .put(`http://localhost:8000/api/produits/${existingProduct.id}`, formData)
-      .then(() => {
-        fetchProduits();
-        setShowEditForm(false); // Close the edit form after submission
-        Swal.fire({
-          icon: "success",
-          title: "Succès!",
-          text: "Produit modifié avec succès.",
-        });
-      })
-      .catch((error) => {
-        console.error("Erreur lors de la modification du produit:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Erreur!",
-          text: "Échec de la modification du produit.",
-        });
+    const url = editingProduit ? `http://localhost:8000/api/produits/${editingProduit.id}` : 'http://localhost:8000/api/produits';
+    const method = editingProduit ? 'put' : 'post';
+    axios({
+      method: method,
+      url: url,
+      data: formData,
+    }).then(() => {
+      fetchProduits();
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: `Product ${editingProduit ? 'updated' : 'added'} successfully.`,
       });
-  };
-
-  const handleSelectAllChange = () => {
-    setSelectAll(!selectAll);
-    if (selectAll) {
-      setSelectedItems([]);
+      setFormData({ nom: '', type_quantite: '', calibre: '', user_id: '' });
+      setEditingProduit(null);
+    }).catch((error) => {
+      console.error(`Error ${editingProduit ? 'updating' : 'adding'} product:`, error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: `Failed to ${editingProduit ? 'update' : 'add'} product.`,
+      });
+    });
+    if (formContainerStyle.right === '-500px') {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
     } else {
-      setSelectedItems(produits.map((prod) => prod.id));
+      closeForm();
     }
   };
 
-  const printList = (tableId, title, ProduitsList) => {
-    const printWindow = window.open(" ", "_blank", " ");
-
-    if (printWindow) {
-      const tableToPrint = document.getElementById(tableId);
-
-      if (tableToPrint) {
-        const newWindowDocument = printWindow.document;
-        newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <h1 class="h1"> Gestion Commandes </h1>
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-              <style>
-  
-                body {
-                  font-family: 'Arial', sans-serif;
-                  margin-bottom: 60px;
-                }
-  
-                .page-header {
-                  text-align: center;
-                  font-size: 24px;
-                  margin-bottom: 20px;
-                }
-  
-                .h1 {
-                  text-align: center;
-                }
-  
-                .list-title {
-                  font-size: 18px;
-                  margin-bottom: 10px;
-                }
-  
-                .header {
-                  font-size: 16px;
-                  margin-bottom: 10px;
-                }
-  
-                table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-bottom: 20px;
-                }
-  
-                th, td {
-                  border: 1px solid #ddd;
-                  padding: 8px;
-                  text-align: left;
-                }
-  
-                .footer {
-                  position: fixed;
-                  bottom: 0;
-                  width: 100%;
-                  text-align: center;
-                  font-size: 14px;
-                  margin-top: 30px;
-                  background-color: #fff;
-                }
-  
-                @media print {
-                  .footer {
-                    position: fixed;
-                    bottom: 0;
-                  }
-  
-                  body {
-                    margin-bottom: 0;
-                  }
-                  .no-print {
-                    display: none;
-                  }
-                }
-  
-                .content-wrapper {
-                  margin-bottom: 100px;
-                }
-  
-                .extra-space {
-                  margin-bottom: 30px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${
-                  Array.isArray(ProduitsList)
-                    ? ProduitsList.map((item) => `<li>${item}</li>`).join("")
-                    : ""
-                }
-              </ul>
-              <div class="content-wrapper">
-                ${tableToPrint.outerHTML}
-              </div>
-              <script>
-                setTimeout(() => {
-                  window.print();
-                  window.onafterprint = function () {
-                    window.close();
-                  };
-                }, 1000);
-              </script>
-            </body>
-            </html>
-          `);
-
-        newWindowDocument.close();
-      } else {
-        console.error(`Table with ID '${tableId}' not found.`);
-      }
-    } else {
-      console.error("Error opening print window.");
-    }
-  };
-
-  const exportToPdf = () => {
-    const pdf = new jsPDF();
-
-    // Define the columns and rows for the table
-    const columns = ["ID", "nom", "type_quantite", "calibre"];
-    const selectedProduits = produits.filter((prod) =>
-      selectedItems.includes(prod.id)
-    );
-    const rows = selectedProduits.map((prod) => [
-      prod.id,
-      prod.nom,
-      prod.type_quantite,
-      prod.calibre,
-    ]);
-
-    // Set the margin and padding
-    const margin = 10;
-    const padding = 5;
-
-    // Calculate the width of the columns
-    const columnWidths = columns.map(
-      (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
-    );
-    const tableWidth = columnWidths.reduce((total, width) => total + width, 0);
-
-    // Calculate the height of the rows
-    const rowHeight = 10;
-    const tableHeight = rows.length * rowHeight;
-
-    // Set the table position
-    const startX = (pdf.internal.pageSize.width - tableWidth) / 2;
-    const startY = margin;
-
-    // Add the table headers
-    pdf.setFont("helvetica", "bold");
-    pdf.setFillColor(200, 220, 255);
-    pdf.rect(startX, startY, tableWidth, rowHeight, "F");
-    pdf.autoTable({
-      head: [columns],
-      startY: startY + padding,
-      styles: {
-        fillColor: [200, 220, 255],
-        textColor: [0, 0, 0],
-        fontSize: 10,
-      },
-      columnStyles: {
-        0: { cellWidth: columnWidths[0] },
-        1: { cellWidth: columnWidths[1] },
-        2: { cellWidth: columnWidths[2] },
-        3: { cellWidth: columnWidths[3] },
-        4: { cellWidth: columnWidths[4] },
-      },
-    });
-
-    // Add the table rows
-    pdf.setFont("helvetica", "");
-    pdf.autoTable({
-      body: rows,
-      startY: startY + rowHeight + padding * 2,
-      styles: { fontSize: 8 },
-      columnStyles: {
-        0: { cellWidth: columnWidths[0] },
-        1: { cellWidth: columnWidths[1] },
-        2: { cellWidth: columnWidths[2] },
-        3: { cellWidth: columnWidths[3] },
-        4: { cellWidth: columnWidths[4] },
-      },
-    });
-
-    // Save the PDF
-    pdf.save("produits.pdf");
-  };
+  //------------------------- fournisseur export to excel ---------------------//
 
   const exportToExcel = () => {
-    const selectedProduits = produits.filter((prod) =>
-      selectedItems.includes(prod.id)
+    const selectedProduits = produits.filter((produit) =>
+      selectedItems.includes(produit.id)
     );
     const ws = XLSX.utils.json_to_sheet(selectedProduits);
     const wb = XLSX.utils.book_new();
@@ -401,404 +273,158 @@ const ProduitList = () => {
     XLSX.writeFile(wb, "produits.xlsx");
   };
 
-  //   const handleEdit = (id) => {
-  //     const existingProduit = produits.find((produit) => produit.id === id);
-
-  //     const fournisseurOptions = fournisseurs.map((fournisseur) => ({
-  //       value: fournisseur.id,
-  //       label: fournisseur.raison_sociale,
-  //     }));
-
-  //     Swal.fire({
-  //       title: "Modifier Produit",
-  //       html:
-  //         `<label for="nom">Nom</label>` +
-  //         `<input type="text" id="nom" class="swal2-input" value="${existingProduit.nom}">` +
-  //         `<label for="type_quantite">Type Quantité</label>` +
-  //         `<input type="text" id="type_quantite" class="swal2-input" value="${existingProduit.type_quantite}">` +
-  //         `<label for="calibre">Calibre</label>` +
-  //         `<input type="text" id="calibre" class="swal2-input" value="${existingProduit.calibre}">` +
-  //         `<label for="user_id">User</label>` +
-  //         `<input type="text" id="user_id" class="swal2-input" value="${existingProduit.user_id}">` +
-  //         `<label for="fournisseur">Fournisseur</label>` +
-  //         `<select id="fournisseur" class="swal2-input">
-  //   <option value="">Aucun</option>
-  //   ${fournisseurOptions.map(
-  //     (option) => `<option value="${option.value}">${option.label}</option>`
-  //   )}
-  // </select>`,
-
-  //       confirmButtonText: "modifier",
-  //       focusConfirm: false,
-  //       showCancelButton: true,
-  //       cancelButtonText: "Annuler",
-  //       preConfirm: () => {
-  //         return {
-  //           nom: document.getElementById("nom").value,
-  //           type_quantite: document.getElementById("type_quantite").value,
-  //           calibre: document.getElementById("calibre").value,
-  //           fournisseur_id: document.getElementById("fournisseur").value,
-  //           user_id: document.getElementById("user_id").value,
-  //         };
-  //       },
-  //     }).then((result) => {
-  //       if (result.isConfirmed) {
-  //         axios
-  //           .put(`http://localhost:8000/api/produits/${id}`, result.value)
-  //           .then(() => {
-  //             fetchProduits();
-  //             Swal.fire({
-  //               icon: "success",
-  //               title: "Succès!",
-  //               text: "Produit modifié avec succès.",
-  //             });
-  //           })
-  //           .catch((error) => {
-  //             console.error("Erreur lors de la modification du produit:", error);
-  //             Swal.fire({
-  //               icon: "error",
-  //               title: "Erreur!",
-  //               text: "Échec de la modification du produit.",
-  //             });
-  //           });
-  //       }
-  //     });
-  //   };
-
-  const handleAddProduit = (e) => {
-    e.preventDefault();
-    axios
-      .post("http://localhost:8000/api/produits", formData)
-      .then(() => {
-        fetchProduits();
-        Swal.fire({
-          icon: "success",
-          title: "Succès!",
-          text: "Produits ajouté avec succès.",
-        });
-        setFormData({
-          nom: "",
-          type_quantite: "",
-          calibre: "",
-
-          user_id: "",
-        });
-        setShowAddForm(false);
-      })
-      .catch((error) => {
-        console.error("Erreur lors de l'ajout du produit:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Erreur!",
-          text: "Échec de l'ajout du produit.",
-        });
-      });
-  };
-
-  // const handleCancel = () => {
-  //   setShowForm(false);
-  //   setFormData({
-  //     nom: "",
-  //     type_quantite: "",
-  //     calibre: "",
-  //     fournisseur_id: "",
-  //     user_id: "",
-  //   });
-  // };
-
   return (
     <div>
       <Navigation />
       <div className="container">
-        <h1 className="my-4">Liste des Produits</h1>
-        <div className="search-container mb-3">
-          <Search onSearch={handleSearch} />
+        <h3>Liste des Produits</h3>
+        <div className="search-container d-flex flex-row-reverse " role="search">
+          <Search onSearch={handleSearch} type="search" />
         </div>
-        <div className="add-Ajout-form">
-          {!showAddForm && (
-            <Button variant="primary" onClick={() => setShowAddForm(true)}>
-              Ajouter un Produit
-            </Button>
-          )}
-          {showAddForm && (
-            <Form className="col-8 row " onSubmit={handleAddProduit}>
-              <Button
-                className="col-1"
-                variant="danger"
-                onClick={() => setShowAddForm(false)}
-              >
-                X
+        <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
+          {showForm ? 'Modifier le formulaire' : 'Ajouter un Produit'}
+        </Button>
+        <div id="formContainer" className="mt-3" style={formContainerStyle}>
+          <Form className="col row" onSubmit={handleSubmit}>
+            <Form.Label className="text-center m-2"><h4>{editingProduit ? 'Modifier' : 'Ajouter'} un Produit</h4></Form.Label>
+            <Form.Group className="col-sm-5 m-2 " controlId="nom">
+              <Form.Label>Nom</Form.Label>
+              <Form.Control
+                type="text"
+                name="nom"
+                value={formData.nom}
+                onChange={handleChange}
+                placeholder="Nom"
+                className="form-control-sm"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="col-sm-5 m-2 " controlId="type_quantite">
+              <Form.Label>Type de Quantité</Form.Label>
+              <Form.Control
+                type="text"
+                name="type_quantite"
+                value={formData.type_quantite}
+                onChange={handleChange}
+                placeholder="Type de Quantité"
+                className="form-control-sm"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="col-sm-5 m-2 " controlId="calibre">
+              <Form.Label>Calibre</Form.Label>
+              <Form.Control
+                type="text"
+                name="calibre"
+                value={formData.calibre}
+                onChange={handleChange}
+                placeholder="Calibre"
+                className="form-control-sm"
+                required
+              />
+            </Form.Group>
+            <Form.Group className="col-sm-5 m-2 " controlId="user_id">
+              <Form.Label>User</Form.Label>
+              <Form.Control
+                type="text"
+                name="user_id"
+                value={formData.user_id}
+                onChange={handleChange}
+                placeholder="Utilisateur"
+                className="form-control-sm"
+                required
+              />
+            </Form.Group>
+      
+            <Form.Group className="col-7 m-3">
+              <Button className="col-6" variant="primary" type="submit">
+                {editingProduit ? 'Modifier' : 'Ajouter'}
               </Button>
-              <h4 className="text-center">Ajouter un Produit</h4>
-              <Form.Group className="col-6 m-2" controlId="nom">
-                <Form.Label>Nom du Produit</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="nom"
-                  value={produits.nom}
-                  onChange={handleChange}
-                  placeholder="Nom du Produit"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="type_quantite">
-                <Form.Label>Type de Quantité</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="type_quantite"
-                  value={produits.type_quantite}
-                  onChange={handleChange}
-                >
-                  <option value="">Sélectionnez un type de quantite</option>
-                  <option value="kg">kg</option>
-                  <option value="unitaire">unitaire</option>
-                </Form.Control>
-              </Form.Group>
-
-              <Form.Group className="col-4 m-2" controlId="calibre">
-                <Form.Label>calibre</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="calibre"
-                  value={produits.calibre}
-                  onChange={handleChange}
-                  placeholder="calibre"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="user_id">
-                <Form.Label>user_id</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="user_id"
-                  value={produits.user_id}
-                  onChange={handleChange}
-                  placeholder="user_id"
-                />
-              </Form.Group>
-              {/* <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
-                <Form.Label>Sélectionnez un utilisateur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="user_id"
-                  value={produits.user_id}
-                  onChange={handleChange}
-                >
-                 
-                  <option value="">Sélectionnez un utilisateur</option>
-
-                  {users &&
-                    users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                </Form.Control>
-              </Form.Group> */}
-
-              <Form.Group className="col-7 mt-5">
-                <Button className="col-5" variant="primary" type="submit">
-                  Ajouter
-                </Button>
-              </Form.Group>
-            </Form>
-          )}
+            </Form.Group>
+          </Form>
         </div>
 
-        <div className="add-Ajout-form">
-          {showEditForm && (
-            <Form className="col-8 row " onSubmit={handleEditSubmit}>
-              <Button
-                className="col-1"
-                variant="danger"
-                onClick={() => setShowEditForm(false)}
-              >
-                X
-              </Button>
-              <h4 className="text-center">Modifier un Produit</h4>
-              <Form.Group className="col-6 m-2" controlId="nom">
-                <Form.Label>Nom du Produit</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="nom"
-                  value={formData.nom}
-                  onChange={handleChange}
-                  placeholder="Nom du Produit"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="type_quantite">
-                <Form.Label>Type de Quantité</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="type_quantite"
-                  value={formData.type_quantite}
-                  onChange={handleChange}
-                >
-                  <option value="">Sélectionnez un type de quantite</option>
-                  <option value="kg">kg</option>
-                  <option value="unitaire">unitaire</option>
-                </Form.Control>
-              </Form.Group>
-
-              <Form.Group className="col-4 m-2" controlId="calibre">
-                <Form.Label>calibre</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="calibre"
-                  value={formData.calibre}
-                  onChange={handleChange}
-                  placeholder="calibre"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
-                <Form.Label>Sélectionnez un utilisateur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="user_id"
-                  value={formData.user_id}
-                  onChange={handleChange}
-                >
-                  {/* Option par défaut avec une valeur nulle */}
-                  <option value="">Sélectionnez un utilisateur</option>
-
-                  {/* Options pour les utilisateurs */}
-                  {users &&
-                    users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                </Form.Control>
-              </Form.Group>
-
-
-              <Form.Group className="col-7 mt-5">
-                <Button className="col-5" variant="primary" type="submit">
-                  Modifier
-                </Button>
-              </Form.Group>
-            </Form>
-          )}
-        </div>
-
-        <table className="table" id="ProduitsTable">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={handleSelectAllChange}
-                />
-              </th>
-              <th>ID</th>
-              <th>Nom du Produit</th>
-              <th>Type de Quantite</th>
-              <th>Calibre</th>
-              <th>User</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filteredProducts
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((prod) => {
-                const selectedUser = users.find(
-                  (user) => user.id === prod.user_id
-                );
-                return (
-                  <tr key={prod.id}>
-                    <td>
+        <div className="">
+          <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
+            {produits && produits.length > 0 ? (
+              <table className="table table-hover" id="produitsTable">
+                <thead className="text-center">
+                  <tr>
+                    <th>
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(prod.id)}
-                        onChange={() => handleCheckboxChange(prod.id)}
+                        checked={selectAll}
+                        onChange={handleSelectAllChange}
                       />
-                    </td>
-                    <td>{prod.id}</td>
-                    <td>{prod.nom}</td>
-                    <td>{prod.type_quantite}</td>
-                    <td>{prod.calibre}</td>
-                    <td>
-                      {selectedUser ? (
-                        <>{selectedUser.name}</>
-                      ) : (
-                        <div>No user found</div>
-                      )}
-                    </td>
-                    {/* <td>
-                      {selectedFournisseur ? (
-                        <>{selectedFournisseur.raison_sociale}</>
-                      ) : (
-                        <div>No Fournisseur found</div>
-                      )}
-                    </td> */}
-
-                    <td className="col-2 text-center">
-                      <button
-                        className="col-3 btn btn-warning mx-2"
-                        onClick={() => handleEdit(prod.id)}
-                      >
-                        <i className="fas fa-edit"></i>
-                      </button>
-                      <button
-                        className="col-3 btn btn-danger mx-2"
-                        onClick={() => handleDelete(prod.id)}
-                      >
-                        <i className="fas fa-minus-circle"></i>
-                      </button>
-                    </td>
+                    </th>
+                    <th>Nom</th>
+                    <th>Type de Quantité</th>
+                    <th>Calibre</th>
+                    <th className="text-center">Action</th>
                   </tr>
-                );
-              })}
-          </tbody>
-        </table>
-
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredProducts.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <div className="d-flex justify-content-between">
-          <div>
-            <Button
-              variant="danger"
-              disabled={selectedItems.length === 0}
-              onClick={handleDeleteSelected}
-              className="me-2"
-            >
-              <FontAwesomeIcon icon={faTrash} className="me-2" />
-              Supprimer sélection
-            </Button>
-            <Button variant="info" onClick={exportToPdf} className="me-2">
-              <FontAwesomeIcon icon={faFilePdf} className="me-2" />
-              Export PDF
-            </Button>
-            <Button variant="success" onClick={exportToExcel} className="me-2">
-              <FontAwesomeIcon icon={faFileExcel} className="me-2" />
-              Export Excel
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                printList(
-                  "ProduistTable",
-                  "Liste des produits",
-                  produits
-                )
-              }
-            >
-              <FontAwesomeIcon icon={faPrint} className="me-2" />
-              Imprimer
-            </Button>
+                </thead>
+                <tbody className="text-center">
+                  {filteredProduits.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((produit) => (
+                    <tr key={produit.id}>
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(produit.id)}
+                          onChange={() => handleCheckboxChange(produit.id)}
+                        />
+                      </td>
+                      <td>{produit.nom}</td>
+                      <td>{produit.type_quantite}</td>
+                      <td>{produit.calibre}</td>
+                      <td className="d-inline-flex">
+                        <button
+                          className="btn btn-sm btn-warning m-1"
+                          onClick={() => handleEdit(produit)}
+                        >
+                          <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                          className="btn btn-danger btn-sm m-1"
+                          onClick={() => handleDelete(produit.id)}
+                        >
+                          <i className="fas fa-minus-circle"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="text-center">
+                <h5>Aucun Produit</h5>
+              </div>
+            )}
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredProduits.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+            <div className="d-flex flex-row">
+              <div className="btn-group col-2">
+                <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                  <FontAwesomeIcon icon={faTrash} /></Button>
+                <PrintList tableId="produitsTable" title="Liste des produits" produitList={produits} filteredProduits={filteredProduits} />
+                <ExportToPdfButton produits={produits} selectedItems={selectedItems} />
+                <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
+                  <FontAwesomeIcon icon={faFileExcel} />
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
+
 };
 
 export default ProduitList;

@@ -24,63 +24,87 @@ const AddUser = () => {
     password: "",
   });
   const [selectedPermissions, setSelectedPermissions] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState("products");
 
   const handleChange = (e) => {
     setUser({
       ...user,
-      [e.target.name]:
-        e.target.type === "file" ? e.target.files[0] : e.target.value,
+      [e.target.name]: e.target.type === "file" ? e.target.files[0] : e.target.value,
     });
   };
 
-  const handlePermissionChange = (e) => {
-    const permission = e.target.value;
-    if (selectedPermissions.includes(permission)) {
-      setSelectedPermissions(
-        selectedPermissions.filter((p) => p !== permission)
-      );
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+  };
+
+  const getPermissionsForCategory = () => {
+    switch (selectedCategory) {
+      case "products":
+        return ["view_all_products", "create_product", "edit_product", "delete_product"];
+      case "fournisseurs":
+        return ["view_all_fournisseurs", "create_fournisseurs", "update_fournisseurs", "delete_fournisseurs"];
+      case "clients":
+        return ["view_all_clients", "create_clients", "update_clients", "delete_clients"];
+      case "users":
+        return ["view_all_users", "create_user", "edit_user", "delete_user"];
+      default:
+        return [];
+    }
+  };
+
+  const handlePermissionChange = (event) => {
+    const permissionsForCategory = getPermissionsForCategory();
+    const permission = event.target.value;
+
+    if (permissionsForCategory.includes(permission)) {
+      if (selectedPermissions.includes(permission)) {
+        setSelectedPermissions(selectedPermissions.filter((p) => p !== permission));
+      } else {
+        setSelectedPermissions([...selectedPermissions, permission]);
+      }
     } else {
-      setSelectedPermissions([...selectedPermissions, permission]);
+      // Handle the case where the permission is not valid for the selected category
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
-      // Créez un objet FormData pour envoyer les données du formulaire
       const formData = new FormData();
       formData.append("name", user.name);
       formData.append("email", user.email);
       formData.append("role", user.role);
       formData.append("password", user.password);
-      formData.append("photo", user.photo); // Assurez-vous que user.photo est un objet File
-      selectedPermissions.forEach(permission => {
+      formData.append("photo", user.photo);
+
+      selectedPermissions.forEach((permission) => {
         formData.append("permissions[]", permission);
-      }); 
-      // Obtenez le jeton CSRF depuis la balise meta dans votre HTML
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  
-      // Effectuez une requête POST vers votre endpoint d'enregistrement
-      const response = await axios.post("http://localhost:8000/api/register", formData, {
-        headers: {
-          "X-CSRF-TOKEN": csrfToken,
-          "Content-Type": "multipart/form-data",
-        },
-        withCredentials: true,
       });
-  
-      // Si la requête est réussie, affichez une notification et redirigez l'utilisateur
+
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+      const response = await axios.post(
+        "http://localhost:8000/api/register",
+        formData,
+        {
+          headers: {
+            "X-CSRF-TOKEN": csrfToken,
+            "Content-Type": "multipart/form-data",
+          },
+          withCredentials: true,
+        }
+      );
+
       Swal.fire({
         icon: "success",
         title: "Utilisateur ajouté avec succès!",
         showConfirmButton: false,
         timer: 1500,
       });
-  
+
       navigate("/users");
-  
-      // Réinitialisez le formulaire et les erreurs
+
       setUser({
         name: "",
         email: "",
@@ -97,22 +121,17 @@ const AddUser = () => {
       });
       setSelectedPermissions([]);
     } catch (error) {
-      // En cas d'erreur, gérez les différentes situations
       if (error.response) {
         const serverErrors = error.response.data.errors;
-  
+
         if (error.response.status === 403) {
-          // Gérez spécifiquement les erreurs 403
           Swal.fire({
             icon: "error",
             title: "Accès refusé",
             text: "Vous n'avez pas l'autorisation d'ajouter un utilisateur.",
           });
         } else {
-          // Affichez les erreurs de validation côté serveur dans la console (à des fins de débogage)
           console.log("Server Validation Errors:", serverErrors);
-  
-          // Mettez à jour l'état des erreurs pour les afficher dans votre formulaire
           setErrors({
             name: serverErrors?.name?.[0] || "",
             email: serverErrors?.email?.[0] || "",
@@ -122,15 +141,13 @@ const AddUser = () => {
           });
         }
       } else if (error.request) {
-        // En cas d'absence de réponse du serveur
         console.error("Erreur lors de la communication avec le serveur :", error.request);
       } else {
-        // En cas d'autres types d'erreurs
         console.error("Erreur lors de la configuration de la requête :", error.message);
       }
     }
   };
-  
+
   return (
     <div>
       <Navigation />
@@ -194,154 +211,28 @@ const AddUser = () => {
             <span style={{ color: "red" }}>{errors.password}</span>
           </div>
           <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Permissions:</label>
+            <label style={{ marginRight: "10px" }}>Catégorie:</label>
+            <select value={selectedCategory} onChange={handleCategoryChange}>
+              <option value="products">Produits</option>
+              <option value="fournisseurs">Fournisseurs</option>
+              <option value="clients">Clients</option>
+              <option value="users">Utilisateurs</option>
+            </select>
             <div>
-              <label>
-                <input
-                  type="checkbox"
-                  value="view_all_products"
-                  checked={selectedPermissions.includes("view_all_products")}
-                  onChange={handlePermissionChange}
-                />
-                View All Products
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="create_product"
-                  checked={selectedPermissions.includes("create_product")}
-                  onChange={handlePermissionChange}
-                />
-                Create Product
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="edit_product"
-                  checked={selectedPermissions.includes("edit_product")}
-                  onChange={handlePermissionChange}
-                />
-                Edit Product
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="delete_product"
-                  checked={selectedPermissions.includes("delete_product")}
-                  onChange={handlePermissionChange}
-                />
-                Delete Product
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="view_all_fournisseurs"
-                  checked={selectedPermissions.includes(
-                    "view_all_fournisseurs"
-                  )}
-                  onChange={handlePermissionChange}
-                />
-                View All Fournisseur
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="create_fournisseurs"
-                  checked={selectedPermissions.includes("create_fournisseurs")}
-                  onChange={handlePermissionChange}
-                />
-                Create Fournisseur
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="update_fournisseurs"
-                  checked={selectedPermissions.includes("update_fournisseurs")}
-                  onChange={handlePermissionChange}
-                />
-                Edit Fournisseur
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="delete_fournisseurs"
-                  checked={selectedPermissions.includes("delete_fournisseurs")}
-                  onChange={handlePermissionChange}
-                />
-                Delete Fournisseur
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="view_all_clients"
-                  checked={selectedPermissions.includes("view_all_clients")}
-                  onChange={handlePermissionChange}
-                />
-                View All Clients
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="create_clients"
-                  checked={selectedPermissions.includes("create_clients")}
-                  onChange={handlePermissionChange}
-                />
-                Create Clients
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="update_clients"
-                  checked={selectedPermissions.includes("update_clients")}
-                  onChange={handlePermissionChange}
-                />
-                Edit Clients
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="delete_clients"
-                  checked={selectedPermissions.includes("delete_clients")}
-                  onChange={handlePermissionChange}
-                />
-                Delete Clients
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="view_all_users"
-                  checked={selectedPermissions.includes("view_all_users")}
-                  onChange={handlePermissionChange}
-                />
-                View All Users
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="create_user"
-                  checked={selectedPermissions.includes("create_user")}
-                  onChange={handlePermissionChange}
-                />
-                Create User
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="edit_user"
-                  checked={selectedPermissions.includes("edit_user")}
-                  onChange={handlePermissionChange}
-                />
-                Edit User
-              </label>
-              <label>
-                <input
-                  type="checkbox"
-                  value="delete_user"
-                  checked={selectedPermissions.includes("delete_user")}
-                  onChange={handlePermissionChange}
-                />
-                Delete User
-              </label>
+              {getPermissionsForCategory().map((permission) => (
+                <label key={permission}>
+                  <input
+                    type="checkbox"
+                    value={permission}
+                    checked={selectedPermissions.includes(permission)}
+                    onChange={handlePermissionChange}
+                  />
+                  {permission
+                    .split("_")
+                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+                    .join(" ")}
+                </label>
+              ))}
             </div>
           </div>
           <button

@@ -4,21 +4,15 @@ import Swal from "sweetalert2";
 import { Form, Button } from "react-bootstrap";
 import "../style.css";
 import Navigation from "../Acceuil/Navigation";
-import TablePagination from "@mui/material/TablePagination";
 import Search from "../Acceuil/Search";
+import TablePagination from '@mui/material/TablePagination';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faTrash,
-  faFilePdf,
-  faFileExcel,
-  faPrint,
-} from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
-
 const FournisseurList = () => {
-  const [existingFournisseur, setExistingFournisseur] = useState({});
+  // const [existingFournisseur, setExistingFournisseur] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredFournisseurs, setFilteredFournisseurs] = useState([]);
   const [page, setPage] = useState(0);
@@ -27,17 +21,15 @@ const FournisseurList = () => {
   const [users, setUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [showEditForm, setShowEditForm] = useState(false);
-  const [formData, setFormData] = useState({
-    raison_sociale: "",
-    adresse: "",
-    tele: "",
-    ville: "",
-    abreviation: "",
-    zone: "",
-    user_id: "",
-  });
+  //-------------------edit-----------------------//
+  const [editingFournisseur, setEditingFournisseur] = useState(null); // State to hold the fournisseur being edited
+  const [editingFournisseurId, setEditingFournisseurId] = useState(null);
+
+  //---------------form-------------------//
+  const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({ raison_sociale: "", abreviation: "", adresse: "", tele: "", ville: "", zone: "", user_id: "", });
+  const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
+  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px", });
 
   const fetchFournisseurs = async () => {
     try {
@@ -90,44 +82,44 @@ const FournisseurList = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
+  //------------------------- fournisseur Delete Selected ---------------------//
 
   const handleDeleteSelected = () => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-
-    selectedItems.forEach((id) => {
-      if (isConfirmed) {
-        axios
-          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-          .then((response) => {
-            if (response.data.status === "success") {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        selectedItems.forEach((id) => {
+          axios
+            .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+            .then((response) => {
               fetchFournisseurs();
               Swal.fire({
                 icon: "success",
                 title: "Succès!",
-                text: response.data.message,
+                text: 'fournisseur supprimé avec succès.',
               });
-            } else {
-              console.error(response.data.message);
+            })
+            .catch((error) => {
+              console.error(
+                "Erreur lors de la suppression du fournisseur:", error);
               Swal.fire({
                 icon: "error",
                 title: "Erreur!",
-                text: response.data.message,
+                text: 'Échec de la suppression du fournisseur.',
               });
-            }
-          })
-          .catch((error) => {
-            console.error(
-              "Erreur lors de la suppression du fournisseur:",
-              error
-            );
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la suppression du fournisseur.",
             });
-          });
-      } else {
-        console.log("Suppression annulée");
+        });
       }
     });
 
@@ -146,6 +138,7 @@ const FournisseurList = () => {
       setSelectedItems(fournisseurs.map((fournisseur) => fournisseur.id));
     }
   };
+  //------------------------- fournisseur print ---------------------//
 
   const printList = (tableId, title, fournisseurList) => {
     const printWindow = window.open(" ", "_blank", " ");
@@ -238,11 +231,10 @@ const FournisseurList = () => {
             <body>
               <div class="page-header print-no-date">${title}</div>
               <ul>
-                ${
-                  Array.isArray(fournisseurList)
-                    ? fournisseurList.map((item) => `<li>${item}</li>`).join("")
-                    : ""
-                }
+                ${Array.isArray(fournisseurList)
+            ? fournisseurList.map((item) => `<li>${item}</li>`).join("")
+            : ""
+          }
               </ul>
               <div class="content-wrapper">
                 ${tableToPrint.outerHTML}
@@ -267,6 +259,7 @@ const FournisseurList = () => {
       console.error("Error opening print window.");
     }
   };
+  //------------------------- fournisseur export to pdf ---------------------//
 
   const exportToPdf = () => {
     const pdf = new jsPDF();
@@ -359,6 +352,7 @@ const FournisseurList = () => {
     // Save the PDF
     pdf.save("fournisseurs.pdf");
   };
+  //------------------------- fournisseur export to excel ---------------------//
 
   const exportToExcel = () => {
     const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
@@ -370,490 +364,289 @@ const FournisseurList = () => {
     XLSX.writeFile(wb, "fournisseurs.xlsx");
   };
 
-  const handleEdit = (id) => {
-    const foundFournisseur = fournisseurs.find(
-      (fournisseur) => fournisseur.id === id
-    );
-
-    setExistingFournisseur(foundFournisseur);
-    setFormData({
-      raison_sociale: foundFournisseur.raison_sociale,
-      adresse: foundFournisseur.adresse,
-      tele: foundFournisseur.tele,
-      ville: foundFournisseur.ville,
-      abreviation: foundFournisseur.abreviation,
-      zone: foundFournisseur.zone,
-      user_id: foundFournisseur.user_id,
-    });
-
-    setShowEditForm(true); // Show the edit form
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-
-    axios
-      .put(
-        `http://localhost:8000/api/fournisseurs/${existingFournisseur.id}`,
-        formData
-      )
-      .then(() => {
-        fetchFournisseurs();
-        setShowEditForm(false); // Close the edit form after submission
-        Swal.fire({
-          icon: "success",
-          title: "Succès!",
-          text: "Fournisseur modifié avec succès.",
-        });
-      })
-      .catch((error) => {
-        console.error("Erreur lors de la modification du fournisseur:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Erreur!",
-          text: "Échec de la modification du fournisseur.",
-        });
-      });
-  };
-
+  //------------------------- fournisseur Delete---------------------//
   const handleDelete = (id) => {
-    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer ?");
-  
-    if (isConfirmed) {
-      axios
-        .delete(`http://localhost:8000/api/fournisseurs/${id}`)
-        .then((response) => {
-          if (response.data.message) {
-            // La suppression a réussi
-            fetchFournisseurs();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: response.data.message,
-            });
-          } else if (response.data.error) {
-            // Une erreur s'est produite
-            if (response.data.error.includes("Cannot delete or update a parent row: a foreign key constraint fails")) {
-              // Erreur de contrainte d'intégrité violée
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce fournisseur ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+          .then((response) => {
+            if (response.data.message) {
+              // Successful deletion
+              fetchFournisseurs();
               Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+                icon: 'success',
+                title: 'Succès!',
+                text: "fournisseur supprimé avec succès",
               });
-            } else {
-              // Pour d'autres erreurs
-              Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: response.data.error,
-              });
+            } else if (response.data.error) {
+              // Error occurred
+              if (response.data.error.includes("Impossible de supprimer ou de mettre à jour une ligne parent : une contrainte de clé étrangère échoue")) {
+                // Violated integrity constraint error
+                Swal.fire({
+                  icon: 'error',
+                  title: 'Erreur!',
+                  text: "Impossible de supprimer le fournisseur car il a des produits associés.",
+                });
+              }
             }
-          }
-        })
-        .catch((error) => {
-          // Erreur lors de la requête
-          console.error("Erreur lors de la suppression du fournisseur:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
+          })
+          .catch((error) => {
+            // Request error
+            console.error("Erreur lors de la suppression du fournisseur:", error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Erreur!',
+              text: `Échec de la suppression du fournisseur. Veuillez consulter la console pour plus d'informations.`,
+            });
           });
-        });
+      } else {
+        console.log("Suppression annulée");
+      }
+    });
+  }
+  //------------------------- fournisseur EDIT---------------------//
+
+  const handleEdit = (fournisseurs) => {
+    setEditingFournisseur(fournisseurs); // Set the fournisseurs to be edited
+    // Populate form data with fournisseurs details
+    setFormData({
+      raison_sociale: fournisseurs.raison_sociale,
+      abreviation: fournisseurs.abreviation,
+      adresse: fournisseurs.adresse,
+      tele: fournisseurs.tele,
+      ville: fournisseurs.ville,
+      zone: fournisseurs.zone,
+      user_id: fournisseurs.user_id,
+    });
+    if (formContainerStyle.right === '-500px') {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
     } else {
-      console.log("Suppression annulée");
+      closeForm();
+    }
+    // Show form
+    // setShowForm(true);
+  };
+  useEffect(() => {
+    if (editingFournisseurId !== null) {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
+    }
+  }, [editingFournisseurId]);
+
+  //------------------------- fournisseur SUBMIT---------------------//
+
+  useEffect(() => {
+    fetchFournisseurs();
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const url = editingFournisseur ? `http://localhost:8000/api/fournisseurs/${editingFournisseur.id}` : 'http://localhost:8000/api/fournisseurs';
+    const method = editingFournisseur ? 'put' : 'post';
+    axios({
+      method: method,
+      url: url,
+      data: formData,
+    }).then(() => {
+      fetchFournisseurs();
+      Swal.fire({
+        icon: 'success',
+        title: 'Succès!',
+        text: `fournisseur ${editingFournisseur ? 'modifié' : 'ajouté'} avec succès.`,
+      });
+      setFormData({
+        raison_sociale: '',
+        abreviation: '',
+        adresse: '',
+        tele: '',
+        ville: '',
+        zone: '',
+        user_id: '',
+      });
+      setEditingFournisseur(null); // Clear editing fournisseur
+      closeForm();
+    }).catch((error) => {
+      console.error(`Erreur lors de ${editingFournisseur ? 'la modification' : "l'ajout"} du fournisseur:`, error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Erreur!',
+        text: `Échec de ${editingFournisseur ? 'la modification' : "l'ajout"} du fournisseur.`,
+      });
+    });
+  };
+
+  //------------------------- fournisseur FORM---------------------//
+
+  const handleShowFormButtonClick = () => {
+    if (formContainerStyle.right === '-500px') {
+      setFormContainerStyle({ right: '0' });
+      setTableContainerStyle({ marginRight: '500px' });
+    } else {
+      closeForm();
     }
   };
-  
-  
-  
-  const handleAddFournisseur = (e) => {
-    e.preventDefault();
-    axios
-      .post("http://localhost:8000/api/fournisseurs", formData)
-      .then(() => {
-        fetchFournisseurs();
-        Swal.fire({
-          icon: "success",
-          title: "Succès!",
-          text: "Fournisseur ajouté avec succès.",
-        });
 
-        setFormData({
-          raison_sociale: "",
-          adresse: "",
-          tele: "",
-          ville: "",
-          abreviation: "",
-          zone: "",
-          user_id: "",
-        });
-
-        setShowAddForm(false); // Close the add form after submission
-      })
-      .catch((error) => {
-        console.error("Erreur lors de l'ajout du fournisseur:", error);
-        Swal.fire({
-          icon: "error",
-          title: "Erreur!",
-          text: "Échec de l'ajout du fournisseur.",
-        });
-      });
+  const closeForm = () => {
+    setFormContainerStyle({ right: '-500px' });
+    setTableContainerStyle({ marginRight: '0' });
+    setShowForm(false); // Hide the form
+    setFormData({ // Clear form data
+      raison_sociale: '',
+      abreviation: '',
+      adresse: '',
+      tele: '',
+      ville: '',
+      zone: '',
+      user_id: '',
+    });
+    setEditingFournisseur(null); // Clear editing fournisseur
   };
-  // const handleCancel = () => {
-  //   setShowForm(false);
-  //   setFormData({
-  //     raison_sociale: "",
-  //     adresse: "",
-  //     tele: "",
-  //     ville: "",
-  //     abreviation: "",
-  //     zone: "",
-  //     user_id: "",
-  //   });
-  // };
 
   return (
     <div>
       <Navigation />
       <div className="container">
-        <h1 className="my-4">Liste des Fournisseurs</h1>
-        <div className="search-container mb-3">
+        <h3>Liste des Fournisseurs</h3>
+        <div className="search-container d-flex flex-row-reverse mb-3">
           <Search onSearch={handleSearch} />
         </div>
         <div className="add-Ajout-form">
-          {!showAddForm && (
-            <Button variant="primary" onClick={() => setShowAddForm(true)}>
-              Ajouter un fournisseur
-            </Button>
-          )}
-          {showAddForm && (
-            <Form className="col-8 row " onSubmit={handleAddFournisseur}>
-              <Button
-                className="col-1"
-                variant="danger"
-                onClick={() => setShowAddForm(false)}
-              >
-                X
-              </Button>
-              <h4 className="text-center">Ajouter un fournisseur</h4>
-              <Form.Group className="col-6 m-2" controlId="raison_sociale">
+          <Button variant="primary" className="col-3 btn btn-sm" id="showFormButton" onClick={handleShowFormButtonClick}>
+            {showForm ? 'Modifier le formulaire' : 'Ajouter un fournisseur'}
+          </Button>
+          <div id="formContainer" className="mt-2" style={formContainerStyle}>
+            <Form className="col row" onSubmit={handleSubmit}>
+              <Form.Label className="text-center m-2"><h5>{editingFournisseur ? 'Modifier Fournisseur' : 'Ajouter un Fournisseur'}</h5></Form.Label>
+              <Form.Group className="col-sm-5 m-2 ">
                 <Form.Label>Raison Sociale</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="raison_sociale"
-                  value={fournisseurs.raison_sociale}
-                  onChange={handleChange}
-                  placeholder="Raison Sociale"
-                />
+                <Form.Control type="text" placeholder="Raison Sociale" name="raison_sociale" value={formData.raison_sociale} onChange={handleChange} />
               </Form.Group>
-              <Form.Group className="col-10 m-2" controlId="adresse">
+              <Form.Group className="col-sm-5 m-2 ">
+                <Form.Label>abreviation</Form.Label>
+                <Form.Control type="text" placeholder="Abréviation" name="abreviation" value={formData.abreviation} onChange={handleChange} />
+              </Form.Group>
+              <Form.Group className="col-sm-10 m-2">
                 <Form.Label>Adresse</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="adresse"
-                  value={fournisseurs.adresse}
-                  onChange={handleChange}
-                  placeholder="Adresse"
-                />
+                <Form.Control type="text" placeholder="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} />
               </Form.Group>
-              <Form.Group className="col-6 m-2" controlId="tele">
+              <Form.Group className="col-sm-5 m-2">
                 <Form.Label>Téléphone</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="tele"
-                  value={fournisseurs.tele}
-                  onChange={handleChange}
-                  placeholder="06XXXXXXXX"
-                />
+                <Form.Control type="text" placeholder="Téléphone" name="tele" value={formData.tele} onChange={handleChange} />
               </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="ville">
+              <Form.Group className="col-sm-5 m-2">
                 <Form.Label>Ville</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="ville"
-                  value={fournisseurs.ville}
-                  onChange={handleChange}
-                  placeholder="Ville"
-                />
+                <Form.Control type="text" placeholder="Ville" name="ville" value={formData.ville} onChange={handleChange} />
               </Form.Group>
-              <Form.Group className="col-6 m-2" controlId="abreviation">
-                <Form.Label>Abréviation</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="abreviation"
-                  value={fournisseurs.abreviation}
-                  onChange={handleChange}
-                  placeholder="Abréviation"
-                />
-              </Form.Group>
-
-              <Form.Group className="col-4 m-2" controlId="zone">
+              <Form.Group className="col-sm-4 m-2">
                 <Form.Label>Zone</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="zone"
-                  value={fournisseurs.zone}
-                  onChange={handleChange}
-                  placeholder="Zone"
-                />
+                <Form.Control type="text" placeholder="Zone" name="zone" value={formData.zone} onChange={handleChange} />
               </Form.Group>
-              {/* <Form.Group className="col-4 m-2" controlId="user_id">
-                <Form.Label>user_id</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="user_id"
-                  value={fournisseurs.user_id}
-                  onChange={handleChange}
-                  placeholder="user_id"
-                />
-              </Form.Group> */}
-              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
-                <Form.Label>Sélectionnez un utilisateur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="user_id"
-                  value={fournisseurs.user_id}
-                  onChange={handleChange}
-                >
-                 
-                  <option value="">Sélectionnez un utilisateur</option>
-
-                 
-                  {users &&
-                    users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
+              <Form.Group className="col-sm-4 m-2">
+                <Form.Label>Utilisateur</Form.Label>
+                <Form.Control as="select" name="user_id" value={formData.user_id} onChange={handleChange}>
+                  <option value="">Sélectionner l'utilisateur</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>{user.name}</option>
+                  ))}
                 </Form.Control>
               </Form.Group>
-
-              <Form.Group className="col-7 mt-5">
-                <Button className="col-5" variant="primary" type="submit">
-                  Ajouter
+              <Form.Group className="col m-3 text-center">
+                <Button type="submit" className="btn btn-success col-6">
+                  {editingFournisseur ? 'Modifier' : 'Ajouter'}
                 </Button>
+                <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
               </Form.Group>
             </Form>
-          )}
+          </div>
         </div>
-        <div className="add-Ajout-form">
-          {showEditForm && (
-            <Form className="col-8 row " onSubmit={handleEditSubmit}>
-              <Button
-                className="col-1"
-                variant="danger"
-                onClick={() => setShowEditForm(false)}
-              >
-                X
-              </Button>
-              <h4 className="text-center">Modifier un fournisseur</h4>
-              <Form.Group className="col-6 m-2" controlId="raison_sociale">
-                <Form.Label>Raison Sociale</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="raison_sociale"
-                  value={formData.raison_sociale}
-                  onChange={handleChange}
-                  placeholder="Raison Sociale"
-                />
-              </Form.Group>
-              <Form.Group className="col-10 m-2" controlId="adresse">
-                <Form.Label>Adresse</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="adresse"
-                  value={formData.adresse}
-                  onChange={handleChange}
-                  placeholder="Adresse"
-                />
-              </Form.Group>
-              <Form.Group className="col-6 m-2" controlId="tele">
-                <Form.Label>Téléphone</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="tele"
-                  value={formData.tele}
-                  onChange={handleChange}
-                  placeholder="06XXXXXXXX"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="ville">
-                <Form.Label>Ville</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="ville"
-                  value={formData.ville}
-                  onChange={handleChange}
-                  placeholder="Ville"
-                />
-              </Form.Group>
-              <Form.Group className="col-6 m-2" controlId="abreviation">
-                <Form.Label>Abréviation</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="abreviation"
-                  value={formData.abreviation}
-                  onChange={handleChange}
-                  placeholder="Abréviation"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2" controlId="zone">
-                <Form.Label>Zone</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="zone"
-                  value={formData.zone}
-                  onChange={handleChange}
-                  placeholder="Zone"
-                />
-              </Form.Group>
-              <Form.Group className="col-4 m-2 mb-3" controlId="user_id">
-                <Form.Label>Sélectionnez un utilisateur</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="user_id"
-                  value={formData.user_id}
-                  onChange={handleChange}
-                >
-                  {/* Option par défaut avec une valeur nulle */}
-                  <option value="">Sélectionnez un utilisateur</option>
-
-                  {/* Options pour les utilisateurs */}
-                  {users &&
-                    users.map((user) => (
-                      <option key={user.id} value={user.id}>
-                        {user.name}
-                      </option>
-                    ))}
-                </Form.Control>
-              </Form.Group>
-              <Form.Group className="col-7 mt-5">
-                <Button className="col-5" variant="primary" type="submit">
-                  Modifier
-                </Button>
-              </Form.Group>
-            </Form>
-          )}
-        </div>
-        <table className="table" id="fournisseursTable">
-          <thead>
-            <tr>
-              <th>
-                <input
-                  type="checkbox"
-                  checked={selectAll}
-                  onChange={handleSelectAllChange}
-                />
-              </th>
-              <th>ID</th>
-              <th>Raison Sociale</th>
-              <th>Adresse</th>
-              <th>Téléphone</th>
-              <th>Ville</th>
-              <th>Abréviation</th>
-              <th>Zone</th>
-              <th>User</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredFournisseurs
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((fournisseur) => (
-                <tr key={fournisseur.id}>
+        <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
+          <table className="table" id="fournisseurTable">
+            <thead>
+              <tr>
+                <th scope="col">
+                  <input type="checkbox" onChange={handleSelectAllChange} />
+                </th>
+                <th scope="col">ID</th>
+                <th scope="col">Raison Sociale</th>
+                <th scope="col">Adresse</th>
+                <th scope="col">Téléphone</th>
+                <th scope="col">Ville</th>
+                <th scope="col">Abréviation</th>
+                <th scope="col">Zone</th>
+                <th scope="col">User</th>
+                <th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredFournisseurs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((fournisseurs) => (
+                <tr key={fournisseurs.id}>
                   <td>
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(fournisseur.id)}
-                      onChange={() => handleCheckboxChange(fournisseur.id)}
-                    />
+                    <input type="checkbox" onChange={() => handleCheckboxChange(fournisseurs.id)} checked={selectedItems.includes(fournisseurs.id)} />
                   </td>
-                  <td>{fournisseur.id}</td>
-                  <td>{fournisseur.raison_sociale}</td>
-                  <td>{fournisseur.adresse}</td>
-                  <td>{fournisseur.tele}</td>
-                  <td>{fournisseur.ville}</td>
-                  <td>{fournisseur.abreviation}</td>
-                  <td>{fournisseur.zone}</td>
-                  <td>{fournisseur.user.name}</td>
-                  {/* <td>
-                  {fournisseur.user.photo && (
-                      <img
-                        src={fournisseur.user.photo}
-                        alt="Photo de l'utilisateur"
-                        style={{
-                          width: "70px",
-                          height: "70px",
-                          borderRadius: "70%",
-                        }}
-                      />
-                    )}
-                    </td> */}
-                  <td className="col-2 text-center">
-                    <button
-                      className="col-3 btn btn-warning mx-2"
-                      onClick={() => handleEdit(fournisseur.id)}
-                    >
+                  <td>{fournisseurs.id}</td>
+                  <td>{fournisseurs.raison_sociale}</td>
+                  <td>{fournisseurs.adresse}</td>
+                  <td>{fournisseurs.tele}</td>
+                  <td>{fournisseurs.ville}</td>
+                  <td>{fournisseurs.abreviation}</td>
+                  <td>{fournisseurs.zone}</td>
+                  <td>{fournisseurs.user_id}</td>
+                  <td className="d-inline-flex">
+                    <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(fournisseurs)}>
                       <i className="fas fa-edit"></i>
-                    </button>
-
-                    <button
-                      className="col-3 btn btn-danger mx-2"
-                      onClick={() => handleDelete(fournisseur.id)}
-                    >
-                      <i className="fas fa-minus-circle"></i>
-                    </button>
+                    </Button>
+                    <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(fournisseurs.id)}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
                   </td>
                 </tr>
               ))}
-          </tbody>
-        </table>
-
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={filteredFournisseurs.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <div className="d-flex justify-content-between">
-          <div>
-            <Button
-              variant="danger"
-              disabled={selectedItems.length === 0}
-              onClick={handleDeleteSelected}
-              className="me-2"
-            >
-              <FontAwesomeIcon icon={faTrash} className="me-2" />
-              Supprimer sélection
-            </Button>
-            <Button variant="info" onClick={exportToPdf} className="me-2">
-              <FontAwesomeIcon icon={faFilePdf} className="me-2" />
-              Export PDF
-            </Button>
-            <Button variant="success" onClick={exportToExcel} className="me-2">
-              <FontAwesomeIcon icon={faFileExcel} className="me-2" />
-              Export Excel
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                printList(
-                  "fournisseursTable",
-                  "Liste des Fournisseurs",
-                  fournisseurs
-                )
-              }
-            >
-              <FontAwesomeIcon icon={faPrint} className="me-2" />
-              Imprimer
-            </Button>
+            </tbody>
+          </table>
+          <div className="d-flex flex-row">
+            <div className="btn-group col-2">
+              <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                <FontAwesomeIcon icon={faTrash} /></Button>
+              <Button className="btn btn-secondary btn-sm" onClick={() => printList('fournisseurTable', 'Liste des Fournisseurs', fournisseurs)}>
+                <FontAwesomeIcon icon={faPrint} />
+              </Button>
+              <Button className="btn btn-danger btn-sm ml-2" onClick={exportToPdf}>
+                <FontAwesomeIcon icon={faFilePdf} />
+              </Button>
+              <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
+            </div>
           </div>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredFournisseurs.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
         </div>
       </div>
+
     </div>
+
   );
 };
+
 export default FournisseurList;

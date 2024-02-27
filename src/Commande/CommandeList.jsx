@@ -1,45 +1,137 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
+import TablePagination from "@mui/material/TablePagination";
+import Search from "../Acceuil/Search";
+import "./commande.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faTrash,
+  faFilePdf,
+  faFileExcel,
+  faPrint,
+} from "@fortawesome/free-solid-svg-icons";
+import * as XLSX from "xlsx";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
+import Modal from "react-modal"; // Import the Modal component
+import AddCommande from "./AddCommande ";
+import EditCommande from "./EditCommande ";
+import CommandeDetails from "./CommandeDetails ";
 import Navigation from "../Acceuil/Navigation";
-
 const CommandeList = () => {
+  const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
+  //const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredCommandes, setFilteredCommandes] = useState([]);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
   const [commandes, setCommandes] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [ligne_commandes, setLigne] = useState([]);
-  const [produits, setproduits] = useState([]);
+  const [ligneCommandes, setLigneCommandes] = useState([]);
   const [statusCommandes, setStatusCommandes] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [produits, setProduits] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [selectedCommande, setSelectedCommande] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isAddCommandeDrawerOpen, setIsAddCommandeDrawerOpen] = useState(false);
+  const [isEditCommandeDrawerOpen, setIsEditCommandeDrawerOpen] =
+    useState(false);
+  const mainContentClasses = `main-content ${drawerOpen ? "collapsed" : ""}`;
 
+  const [expandedRows, setExpandedRows] = useState([]);
+  const toggleDetails = (index) => {
+    const updatedRows = [...expandedRows];
+    if (updatedRows.includes(index)) {
+      updatedRows.splice(updatedRows.indexOf(index), 1);
+    } else {
+      updatedRows.push(index);
+    }
+    setExpandedRows(updatedRows);
+  };
+  const handleDrawerOpen = () => {
+    setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+  };
+  const handleToggleRow = (index) => {
+    if (expandedRows.includes(index)) {
+      setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
+    } else {
+      setExpandedRows([...expandedRows, index]);
+    }
+  };
+  const handleOpenAddCommandeDrawer = () => {
+    setIsEditCommandeDrawerOpen(true);
+  };
+
+  const handleCloseAddCommandeDrawer = () => {
+    setIsEditCommandeDrawerOpen(false);
+  };
+  const handleOpenEditCommandeDrawer = () => {
+    setIsEditCommandeDrawerOpen(true);
+  };
+
+  const handleCloseEditCommandeDrawer = () => {
+    setIsEditCommandeDrawerOpen(false);
+  };
   const fetchCommandes = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/commandes");
-      console.log("API Response:", response.data);
+
+      console.log("API Response for Commandes:", response.data.commandes);
+
       setCommandes(response.data.commandes);
 
-      const clientsResponse = await axios.get(
-        "http://localhost:8000/api/clients"
-      );
-      setClients(clientsResponse.data.client);
+      const userResponse = await axios.get("http://localhost:8000/api/users");
+      console.log("API Response for Users:", userResponse.data);
+      setUsers(userResponse.data);
 
-      const ligneCommandesResponse = await axios.get(
-        "http://localhost:8000/api/ligne_commandes"
-      );
-      setLigne(ligneCommandesResponse.data.ligne_commandes);
-
-      const statusCommandesResponse = await axios.get(
-        "http://localhost:8000/api/status_commandes"
-      );
-      setStatusCommandes(statusCommandesResponse.data.status_commandes);
-
-      const ProduitsResponse = await axios.get(
+      const produitResponse = await axios.get(
         "http://localhost:8000/api/produits"
       );
-      console.log("Produits", ProduitsResponse);
-      setproduits(ProduitsResponse.data.produit);
 
-      const userResponse = await axios.get("http://localhost:8000/api/user");
-      setUsers(userResponse.data.users);
+      console.log("API Response for Produits:", produitResponse.data.produit);
+
+      setProduits(produitResponse.data.produit);
+
+      const clientResponse = await axios.get(
+        "http://localhost:8000/api/clients"
+      );
+      console.log("API Response for Clients:", clientResponse.data.client);
+      setClients(clientResponse.data.client);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  const fetchLigneCommandes = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8000/api/ligneCommandes"
+      );
+
+      console.log("API Response for ligneCommandes:", response.data);
+
+      setLigneCommandes(response.data.ligneCommande);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  const fetchStatusCommandes = async () => {
+    try {
+      const response = await axios.get(
+        "http://localhost:8000/api/statusCommande"
+      );
+
+      console.log("API Response for ligneCommandes:", response.data);
+
+      setStatusCommandes(response.data.statusCommande);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -49,120 +141,90 @@ const CommandeList = () => {
     fetchCommandes();
   }, []);
 
-  const handleEditCommande = (id) => {
-    const existingCommande = commandes.find((cmd) => cmd.id === id);
+  useEffect(() => {
+    // Filter commandes based on the search term
+    const filtered = commandes.filter((commande) =>
+      commande.reference.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-    const ClientsOptions = clients.map((client) => ({
-      value: client.id,
-      label: client.raison_sociale,
-    }));
+    setFilteredCommandes(filtered);
+  }, [commandes, searchTerm]);
 
-    Swal.fire({
-      title: "Modifier Commande",
-      html: `
-            <label for="dateCommande">Date Commande</label>
-            <input type="text" id="dateCommande" class="swal2-input" value="${
-              existingCommande.dateCommande
-            }" disabled>
+  const handleSearch = (term) => {
+    //setCurrentPage(1); // Reset to the first page when searching
+    setSearchTerm(term);
+  };
 
-            <label for="client_id">Clients</label>
-            <select id="client_id" class="swal2-input">${ClientsOptions.map(
-              (option) =>
-                `<option value="${option.value}" ${
-                  existingCommande.client_id === option.value ? "selected" : ""
-                }>${option.label}</option>`
-            )}</select>
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
-            <label for="user_id">User</label>
-            <input type="text" id="user_id" class="swal2-input" value="${
-              existingCommande.user_id
-            }">
+  const handleCheckboxChange = (itemId) => {
+    if (selectedItems.includes(itemId)) {
+      setSelectedItems(selectedItems.filter((id) => id !== itemId));
+    } else {
+      setSelectedItems([...selectedItems, itemId]);
+    }
+  };
 
-            <label for="status">Statut</label>
-            <input type="text" id="status" class="swal2-input" value="${
-              existingCommande.status
-            }">
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const handleDeleteSelected = () => {
+    const isConfirmed = window.confirm("Êtes-vous sûr de vouloir supprimer  ?");
 
-            <label for="quantite">Quantité</label>
-            <input type="text" id="quantite" class="swal2-input" value="${
-              existingCommande.ligne_commandes
-                ? existingCommande.ligne_commandes.quantite
-                : ""
-            }">
-
-            <label for="prix_unitaire">Prix unitaire</label>
-            <input type="text" id="prix_unitaire" class="swal2-input" value="${
-              existingCommande.ligne_commandes
-                ? existingCommande.ligne_commandes.prix_unitaire
-                : ""
-            }">
-
-            <label for="status_commande">Statut Commande</label>
-            <input type="text" id="status_commande" class="swal2-input" value="${
-              existingCommande.status_commandes
-                ? existingCommande.status_commandes.status
-                : ""
-            }">
-
-            <label for="date_status">Date Status</label>
-            <input type="text" id="date_status" class="swal2-input" value="${
-              existingCommande.status_commandes
-                ? existingCommande.status_commandes.date_status
-                : ""
-            }">
-        `,
-      confirmButtonText: "Modifier",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          dateCommande: document.getElementById("dateCommande").value,
-          client_id: document.getElementById("client_id").value,
-          user_id: document.getElementById("user_id").value,
-          status: document.getElementById("status").value,
-          ligne_commandes: {
-            quantite: document.getElementById("quantite").value,
-            prix_unitaire: document.getElementById("prix_unitaire").value,
-          },
-          status_commandes: {
-            status: document.getElementById("status_commande").value,
-            date_status: document.getElementById("date_status").value,
-          },
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
+    selectedItems.forEach((id) => {
+      if (isConfirmed) {
         axios
-          .put(`http://localhost:8000/api/commandes/${id}`, result.value)
+          .delete(`http://localhost:8000/api/commandes/${id}`)
           .then(() => {
             fetchCommandes();
             Swal.fire({
               icon: "success",
               title: "Succès!",
-              text: "Commande modifiée avec succès.",
+              text: "Commande supprimé avec succès.",
             });
           })
           .catch((error) => {
-            console.error(
-              "Erreur lors de la modification de la commande:",
-              error
-            );
+            console.error("Erreur lors de la suppression du commande:", error);
             Swal.fire({
               icon: "error",
               title: "Erreur!",
-              text: "Échec de la modification de la commande.",
+              text: "Échec de la suppression du commande.",
             });
           });
       } else {
-        console.log("Modification annulée");
+        console.log("Suppression annulée");
       }
     });
+    fetchCommandes();
+
+    setSelectedItems([]);
   };
 
-  const handleDeleteCommande = (id) => {
+  // const handleShowDetails = (id) => {
+  //   // Find the selected commande by ID
+  //   const selected = commandes.find((commande) => commande.id === id);
+  //   setSelectedCommande(selected);
+  //   setModalIsOpen(true); // Open the modal
+  // };
+  const handleShowDetails = (commande) => {
+    setExpandedRows((prevRows) =>
+      prevRows.includes(commande)
+        ? prevRows.filter((row) => row !== commande)
+        : [...prevRows, commande]
+    );
+  };
+
+  const handleModalClose = () => {
+    setModalIsOpen(false); // Close the modal
+    setSelectedCommande(null);
+  };
+
+  const handleDelete = (id) => {
     const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer cette commande ?"
+      "Êtes-vous sûr de vouloir supprimer ce commande ?"
     );
 
     if (isConfirmed) {
@@ -173,15 +235,15 @@ const CommandeList = () => {
           Swal.fire({
             icon: "success",
             title: "Succès!",
-            text: "Commande supprimée avec succès.",
+            text: "Commande supprimé avec succès.",
           });
         })
         .catch((error) => {
-          console.error("Erreur lors de la suppression de la commande:", error);
+          console.error("Erreur lors de la suppression du commande:", error);
           Swal.fire({
             icon: "error",
             title: "Erreur!",
-            text: "Échec de la suppression de la commande.",
+            text: "Échec de la suppression du commande.",
           });
         });
     } else {
@@ -189,196 +251,457 @@ const CommandeList = () => {
     }
   };
 
-  const handleAddCommande = () => {
-    const ClientsOptions = clients.map((client) => ({
-      value: client.id,
-      label: client.raison_sociale,
-    }));
-    const ProduitsOptions = produits.map((produit) => ({
-      value: produit.id,
-      label: produit.nom,
-    }));
-    Swal.fire({
-      title: "Ajouter Commande",
-      html: `
-            <label for="dateCommande">Date Commande</label>
-            <input type="date" id="dateCommande" class="swal2-input" placeholder="Date Commande">
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (selectAll) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(commandes.map((commande) => commande.id));
+    }
+  };
+  const printList = (tableId, title, commandeList) => {
+    const printWindow = window.open(" ", "_blank", " ");
 
-            <label for="client_id">Clients</label>
-            <select id="client_id" class="swal2-input">${ClientsOptions.map(
-              (option) =>
-                `<option value="${option.value}">${option.label}</option>`
-            )}</select>
+    if (printWindow) {
+      const tableToPrint = document.getElementById(tableId);
 
-            <label for="user_id">User</label>
-            <input type="text" id="user_id" class="swal2-input" placeholder="User">
+      if (tableToPrint) {
+        const newWindowDocument = printWindow.document;
+        newWindowDocument.write(`
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <h1 class="h1"> Gestion Commandes </h1>
+              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+              <style>
 
-            <label for="produits_id">Produits</label>
-      <select id="produits_id" class="swal2-input">${ProduitsOptions.map(
-        (option) => `<option value="${option.value}">${option.label}</option>`
-      )}</select>
+  
+                body {
+                  font-family: 'Arial', sans-serif;
+                  margin-bottom: 60px;
+                }
+  
+                .page-header {
+                  text-align: center;
+                  font-size: 24px;
+                  margin-bottom: 20px;
+                }
+  
+                .h1 {
+                  text-align: center;
+                }
+  
+                .list-title {
+                  font-size: 18px;
+                  margin-bottom: 10px;
+                }
+  
+                .header {
+                  font-size: 16px;
+                  margin-bottom: 10px;
+                }
+  
+                table {
+                  width: 100%;
+                  border-collapse: collapse;
+                  margin-bottom: 20px;
+                }
+  
+                th, td {
+                  border: 1px solid #ddd;
+                  padding: 8px;
+                  text-align: left;
+                }
+  
+                .footer {
+                  position: fixed;
+                  bottom: 0;
+                  width: 100%;
+                  text-align: center;
+                  font-size: 14px;
+                  margin-top: 30px;
+                  background-color: #fff;
+                }
+  
+                @media print {
+                  .footer {
+                    position: fixed;
+                    bottom: 0;
+                  }
+  
+                  body {
+                    margin-bottom: 0;
+                  }
+                  .no-print {
+                    display: none;
+                  }
+                }
+  
+                .content-wrapper {
+                  margin-bottom: 100px;
+                }
+  
+                .extra-space {
+                  margin-bottom: 30px;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="page-header print-no-date">${title}</div>
+              <ul>
+                ${
+                  Array.isArray(commandeList)
+                    ? commandeList.map((item) => <li>${item}</li>).join("")
+                    : ""
+                }
+              </ul>
+              <div class="content-wrapper">
+                ${tableToPrint.outerHTML}
+              </div>
+              
+              <script>
+                setTimeout(() => {
+                  window.print();
+                  window.onafterprint = function () {
+                    window.close();
+                  };
+                }, 1000);
+              </script>
+            </body>
+            </html>
+          `);
 
-            <label for="status">Statut</label>
-            <input type="text" id="status" class="swal2-input" placeholder="Statut">
-
-            <label for="quantite">Quantité</label>
-            <input type="text" id="quantite" class="swal2-input" placeholder="Quantité">
-
-            <label for="prix_unitaire">Prix unitaire</label>
-            <input type="text" id="prix_unitaire" class="swal2-input" placeholder="Prix unitaire">
-
-            <label for="status_commande">Statut Commande</label>
-            <input type="text" id="status_commande" class="swal2-input" placeholder="Statut Commande">
-
-            <label for="date_status">Date Status</label>
-            <input type="date" id="date_status" class="swal2-input" placeholder="Date Status">
-
-           
-        `,
-      confirmButtonText: "Ajouter",
-      focusConfirm: false,
-      showCancelButton: true,
-      cancelButtonText: "Annuler",
-      preConfirm: () => {
-        return {
-          dateCommande: document.getElementById("dateCommande").value,
-          client_id: document.getElementById("client_id").value,
-          user_id: document.getElementById("user_id").value,
-          status: document.getElementById("status").value,
-          quantite: document.getElementById("quantite").value,
-          prix_unitaire: document.getElementById("prix_unitaire").value,
-          status_commande: document.getElementById("status_commande").value,
-          date_status: document.getElementById("date_status").value,
-          produits_id: document.getElementById("produits_id").value,
-        };
-      },
-    }).then((result) => {
-      if (result.isConfirmed) {
-        axios
-          .post("http://localhost:8000/api/commandes", result.value)
-          .then(() => {
-            fetchCommandes();
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Commande ajoutée avec succès.",
-            });
-          })
-          .catch((error) => {
-            console.error("Erreur lors de l'ajout de la commande:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de l'ajout de la commande.",
-            });
-          });
+        newWindowDocument.close();
+      } else {
+        console.error(`Table with ID '${tableId}' not found.`);
       }
-    });
+    } else {
+      console.error("Error opening print window.");
+    }
   };
 
+  const exportToPdf = () => {
+    const pdf = new jsPDF();
+
+    // Define the columns and rows for the table
+    const columns = [
+      "ID",
+      "Raison Sociale",
+      "Adresse",
+      "Téléphone",
+      "Ville",
+      "Abréviation",
+      "Zone",
+      "User",
+    ];
+    const selectedCommandes = commandes.filter((commande) =>
+      selectedItems.includes(commande.id)
+    );
+    const rows = selectedCommandes.map((commande) => [
+      commande.id,
+      commande.raison_sociale,
+      commande.adresse,
+      commande.tele,
+      commande.ville,
+      commande.abreviation,
+      commande.zone,
+      commande.user_id,
+    ]);
+
+    // Set the margin and padding
+    const margin = 10;
+    const padding = 5;
+
+    // Calculate the width of the columns
+    const columnWidths = columns.map(
+      (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
+    );
+    const tableWidth = columnWidths.reduce((total, width) => total + width, 0);
+
+    // Calculate the height of the rows
+    const rowHeight = 10;
+    const tableHeight = rows.length * rowHeight;
+
+    // Set the table position
+    const startX = (pdf.internal.pageSize.width - tableWidth) / 2;
+    const startY = margin;
+
+    // Add the table headers
+    pdf.setFont("helvetica", "bold");
+    pdf.setFillColor(200, 220, 255);
+    pdf.rect(startX, startY, tableWidth, rowHeight, "F");
+    pdf.autoTable({
+      head: [columns],
+      startY: startY + padding,
+      styles: {
+        fillColor: [200, 220, 255],
+        textColor: [0, 0, 0],
+        fontSize: 10,
+      },
+      columnStyles: {
+        0: { cellWidth: columnWidths[0] },
+        1: { cellWidth: columnWidths[1] },
+        2: { cellWidth: columnWidths[2] },
+        3: { cellWidth: columnWidths[3] },
+        4: { cellWidth: columnWidths[4] },
+        5: { cellWidth: columnWidths[5] },
+        6: { cellWidth: columnWidths[6] },
+        7: { cellWidth: columnWidths[7] },
+      },
+    });
+
+    // Add the table rows
+    pdf.setFont("helvetica", "");
+    pdf.autoTable({
+      body: rows,
+      startY: startY + rowHeight + padding * 2,
+      styles: { fontSize: 8 },
+      columnStyles: {
+        0: { cellWidth: columnWidths[0] },
+        1: { cellWidth: columnWidths[1] },
+        2: { cellWidth: columnWidths[2] },
+        3: { cellWidth: columnWidths[3] },
+        4: { cellWidth: columnWidths[4] },
+        5: { cellWidth: columnWidths[5] },
+        6: { cellWidth: columnWidths[6] },
+        7: { cellWidth: columnWidths[7] },
+      },
+    });
+
+    // Save the PDF
+    pdf.save("commandes.pdf");
+  };
+
+  const exportToExcel = () => {
+    const selectedCommandes = commandes.filter((commande) =>
+      selectedItems.includes(commande.id)
+    );
+    const ws = XLSX.utils.json_to_sheet(selectedCommandes);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Commandes");
+    XLSX.writeFile(wb, "commandes.xlsx");
+  };
+
+  const getClientNameById = (clientId) => {
+    console.log("clients", clients);
+    const client = clients.find((c) => c.id === clientId);
+    return client ? client.raison_sociale : "... loading";
+  };
   return (
-    <div>
-      <Navigation />
-      <h2>Liste des Commandes</h2>
-      <button className="btn btn-primary mb-3" onClick={handleAddCommande}>
-        Ajouter Commande
-      </button>
-      {commandes && commandes.length > 0 ? (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Date Commande</th>
-              <th>User</th>
-              <th>Client</th>
-              <th>Status</th>
-              <th>Quantite</th>
-              <th>Prix unitaire</th>
-              <th>Product name</th>
-              <th>Status Commande</th>
-              <th>Status Date</th>
+    <div className="container" style={{ marginTop: "40px" }}>
+<Navigation/>
+      {filteredCommandes && filteredCommandes.length > 0 ? (
+        <div className="table-container">
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div>
+              <AddCommande
+                produits={produits}
+                clients={clients}
+                users={users}
+                csrfToken={csrfToken}
+                fetchCommandes={fetchCommandes}
+                open={isAddCommandeDrawerOpen}
+                onClose={handleCloseAddCommandeDrawer}
+              />
+            </div>
+            <div className="search-container mb-1">
+              <Search onSearch={handleSearch} />
+            </div>
+          </div>
+          <table className="table" id="commande">
+            {/* Table headers */}
+            <thead>
+              <tr>
+                <th className="no-print">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAllChange}
+                  />
+                </th>
 
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {commandes.map((cmd) => (
-              <tr key={cmd.id}>
-                <td>{cmd.id}</td>
-                <td>{cmd.dateCommande}</td>
-                <td>{cmd.user.name}</td>
-                <td>{cmd.client.raison_sociale}</td>
-                <td>{cmd.status}</td>
-                <td>
-                  {cmd.lignes_commandes && cmd.lignes_commandes.length > 0 ? (
-                    cmd.lignes_commandes.map((ligne) => (
-                      <div key={ligne.id}>{ligne.quantite}</div>
-                    ))
-                  ) : (
-                    <p></p>
-                  )}
-                </td>
-                <td>
-                  {cmd.lignes_commandes && cmd.lignes_commandes.length > 0 ? (
-                    cmd.lignes_commandes.map((ligne) => (
-                      <div key={ligne.id}>{ligne.prix_unitaire}</div>
-                    ))
-                  ) : (
-                    <p></p>
-                  )}
-                </td>
-                <td>
-                  {cmd.lignes_commandes && cmd.lignes_commandes.length > 0 ? (
-                    cmd.lignes_commandes.map((ligne) => {
-                      // Find the product based on produit_id
-                      const produit = produits.find(
-                        (prod) => prod.id === ligne.produit_id
-                      );
+                <th>Reference</th>
+                <th>Date Commande</th>
+                <th>Status</th>
+                <th>Client</th>
 
-                      return (
-                        <div key={ligne.id}>
-                          {produit ? produit.nom : "Produit non trouvé"}
-                        </div>
-                      );
-                    })
-                  ) : (
-                    <p></p>
-                  )}
-                </td>
-
-                <td>
-                  {cmd.status_commande && (
-                    <div>{cmd.status_commande.status}</div>
-                  )}
-                </td>
-                <td>
-                  {cmd.status_commande && (
-                    <div>{cmd.status_commande.date_status}</div>
-                  )}
-                </td>
-                <td>
-                  <button
-                    className="btn btn-warning ms-2"
-                    onClick={() => handleEditCommande(cmd.id)}
-                  >
-                    <i className="fas fa-edit"></i>
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleDeleteCommande(cmd.id)}
-                  >
-                    <i className="fas fa-minus-circle"></i>
-                  </button>
-                </td>
+                <th className="no-print">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            {/* Table body */}
+            <tbody>
+              {filteredCommandes
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((filteredCommandes, index) => (
+                  <React.Fragment key={filteredCommandes.id}>
+                    <tr key={filteredCommandes.id}>
+                      <td className="no-print">
+                        <input
+                          type="checkbox"
+                          checked={selectedItems.includes(filteredCommandes.id)}
+                          onChange={() =>
+                            handleCheckboxChange(filteredCommandes.id)
+                          }
+                        />
+                      </td>
+
+                      <td>{filteredCommandes.reference}</td>
+                      <td>{filteredCommandes.dateCommande}</td>
+                      <td>{filteredCommandes.status}</td>
+                      <td>{getClientNameById(filteredCommandes.client_id)}</td>
+
+                      <td className="no-print" style={{ display: "flex" }}>
+                        <EditCommande
+                          produits={produits}
+                          clients={clients}
+                          users={users}
+                          csrfToken={csrfToken}
+                          fetchCommandes={fetchCommandes}
+                          editCommandeId={filteredCommandes.id}
+                          open={isEditCommandeDrawerOpen}
+                          onClose={handleCloseEditCommandeDrawer}
+                        />
+                        <button
+                          className="btn btn-danger"
+                          style={{ marginRight: "8px" }}
+                          onClick={() => handleDelete(filteredCommandes.id)}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />{" "}
+                        </button>
+
+                        <button
+                          className="btn btn-info"
+                          style={{ marginRight: "8px" }}
+                          onClick={() =>
+                            handleShowDetails(filteredCommandes.id)
+                          }
+                        >
+                          Details
+                        </button>
+                      </td>
+                    </tr>
+                    {expandedRows.includes(filteredCommandes.id) && (
+                      <tr>
+                        <td colSpan="8">
+                          <div>
+                            <CommandeDetails
+                              produits={produits}
+                              commande={filteredCommandes}
+                              ligneCommandes={ligneCommandes}
+                              statusCommandes={statusCommandes}
+                              fetchLigneCommandes={fetchLigneCommandes}
+                              fetchStatusCommandes={fetchStatusCommandes}
+                              onBackToList={() =>
+                                handleShowDetails(filteredCommandes.id)
+                              }
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                ))}
+            </tbody>
+          </table>
+
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={filteredCommandes.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+
+          <button
+            className="btn btn-danger"
+            style={{ marginRight: "8px" }}
+            onClick={handleDeleteSelected}
+          >
+            <FontAwesomeIcon icon={faTrash} />{" "}
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ marginRight: "8px" }}
+            onClick={() => printList("commande", "commandes Liste")}
+          >
+            <FontAwesomeIcon icon={faPrint} />
+          </button>
+          <button
+            className="btn btn-primary"
+            style={{ marginRight: "8px" }}
+            onClick={exportToPdf}
+          >
+            <FontAwesomeIcon icon={faFilePdf} />{" "}
+          </button>
+          <button
+            className="btn btn-success"
+            style={{ marginRight: "8px" }}
+            onClick={exportToExcel}
+          >
+            <FontAwesomeIcon icon={faFileExcel} />{" "}
+          </button>
+          {/* Render the Modal component */}
+          <Modal
+            isOpen={modalIsOpen}
+            onRequestClose={handleModalClose}
+            contentLabel="Commande Details"
+          >
+            {selectedCommande && (
+              <CommandeDetails
+                commande={selectedCommande}
+                produits={produits}
+                onBackToList={handleModalClose}
+              />
+            )}
+          </Modal>
+        </div>
       ) : (
-        <p>Aucune commande disponible</p>
+        <div className="table-container">
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <div>
+              <AddCommande
+                produits={produits}
+                clients={clients}
+                users={users}
+                csrfToken={csrfToken}
+                fetchCommandes={fetchCommandes}
+                open={isAddCommandeDrawerOpen}
+                onClose={handleCloseAddCommandeDrawer}
+              />
+            </div>
+            <div className="search-container mb-1">
+              <Search onSearch={handleSearch} />
+            </div>
+          </div>
+          <table className="table" id="commande">
+            {/* Table headers */}
+            <thead>
+              <tr>
+                <th className="no-print">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={handleSelectAllChange}
+                  />
+                </th>
+                <th>ID</th>
+                <th>Reference</th>
+                <th>Date Commande</th>
+                <th>Status</th>
+                <th>Client</th>
+                <th>User</th>
+
+                <th className="no-print">Action</th>
+              </tr>
+            </thead>
+          </table>
+        </div>
       )}
     </div>
   );
 };
-
 export default CommandeList;
