@@ -95,8 +95,7 @@ const ClientList = () => {
     } else {
       closeForm();
     }
-    // Show form
-    // setShowForm(true);
+
   };
   useEffect(() => {
     if (editingClientId !== null) {
@@ -310,7 +309,7 @@ const ClientList = () => {
         <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
           {showForm ? 'Modifier le formulaire' : 'Ajouter un Client'}
         </Button>
-        <div id="formContainer" className="mt-3" style={formContainerStyle}>
+        <div id="formContainer" className="" style={formContainerStyle}>
           <Form className="col row" onSubmit={handleSubmit}>
             <Form.Label className="text-center m-2"><h4>{editingClient ? 'Modifier' : 'Ajouter'} un Client</h4></Form.Label>
             <Form.Group className="col-sm-5 m-2 " controlId="raison_sociale">
