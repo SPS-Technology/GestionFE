@@ -30,7 +30,16 @@ const FournisseurList = () => {
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ raison_sociale: "", abreviation: "", adresse: "", tele: "", ville: "", zone: "", user_id: "", });
+  const [formData, setFormData] = useState({
+    raison_sociale: "",
+    abreviation: "",
+    adresse: "",
+    tele: "",
+    ville: "",
+    ice: "",
+    code_postal: "",
+    user_id: "",
+  });
   const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
   const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px", });
 
@@ -42,7 +51,7 @@ const FournisseurList = () => {
 
       console.log("API Response:", response.data);
 
-      setFournisseurs(response.data.fournisseur);
+      setFournisseurs(response.data.fournisseurs);
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
@@ -56,7 +65,7 @@ const FournisseurList = () => {
   }, []);
 
   useEffect(() => {
-    const filtered = fournisseurs&& fournisseurs.filter((fournisseur) =>
+    const filtered = fournisseurs && fournisseurs.filter((fournisseur) =>
       fournisseur.raison_sociale
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
@@ -274,7 +283,7 @@ const FournisseurList = () => {
       "Téléphone",
       "Ville",
       "Abréviation",
-      "Zone",
+      "ice",
       "User",
     ];
     const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
@@ -287,7 +296,7 @@ const FournisseurList = () => {
       fournisseur.tele,
       fournisseur.ville,
       fournisseur.abreviation,
-      fournisseur.zone,
+      fournisseur.ice,
       fournisseur.user_id,
     ]);
 
@@ -430,7 +439,8 @@ const FournisseurList = () => {
       adresse: fournisseurs.adresse,
       tele: fournisseurs.tele,
       ville: fournisseurs.ville,
-      zone: fournisseurs.zone,
+      ice: fournisseurs.ice,
+      code_postal: fournisseurs.code_postal,
       user_id: fournisseurs.user_id,
     });
     if (formContainerStyle.right === '-500px') {
@@ -476,7 +486,8 @@ const FournisseurList = () => {
         adresse: '',
         tele: '',
         ville: '',
-        zone: '',
+        ice: '',
+        code_postal: '',
         user_id: '',
       });
       setEditingFournisseur(null); // Clear editing fournisseur
@@ -512,7 +523,8 @@ const FournisseurList = () => {
       adresse: '',
       tele: '',
       ville: '',
-      zone: '',
+      ice: '',
+      code_postal: '',
       user_id: '',
     });
     setEditingFournisseur(null); // Clear editing fournisseur
@@ -522,134 +534,136 @@ const FournisseurList = () => {
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: 'flex' }}>
         <Navigation />
-        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-     
-      <div className="container">
-        <h3>Liste des Fournisseurs</h3>
-        <div className="search-container d-flex flex-row-reverse mb-3">
-          <Search onSearch={handleSearch} />
-        </div>
-        <div className="add-Ajout-form">
-          <Button variant="primary" className="col-3 btn btn-sm" id="showFormButton" onClick={handleShowFormButtonClick}>
-            {showForm ? 'Modifier le formulaire' : 'Ajouter un fournisseur'}
-          </Button>
-          <div id="formContainer" className="mt-2" style={formContainerStyle}>
-            <Form className="col row" onSubmit={handleSubmit}>
-              <Form.Label className="text-center m-2"><h5>{editingFournisseur ? 'Modifier Fournisseur' : 'Ajouter un Fournisseur'}</h5></Form.Label>
-              <Form.Group className="col-sm-5 m-2 ">
-                <Form.Label>Raison Sociale</Form.Label>
-                <Form.Control type="text" placeholder="Raison Sociale" name="raison_sociale" value={formData.raison_sociale} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-5 m-2 ">
-                <Form.Label>abreviation</Form.Label>
-                <Form.Control type="text" placeholder="Abréviation" name="abreviation" value={formData.abreviation} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-10 m-2">
-                <Form.Label>Adresse</Form.Label>
-                <Form.Control type="text" placeholder="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-5 m-2">
-                <Form.Label>Téléphone</Form.Label>
-                <Form.Control type="text" placeholder="Téléphone" name="tele" value={formData.tele} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-5 m-2">
-                <Form.Label>Ville</Form.Label>
-                <Form.Control type="text" placeholder="Ville" name="ville" value={formData.ville} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-4 m-2">
-                <Form.Label>Zone</Form.Label>
-                <Form.Control type="text" placeholder="Zone" name="zone" value={formData.zone} onChange={handleChange} />
-              </Form.Group>
-              <Form.Group className="col-sm-4 m-2">
-                <Form.Label>Utilisateur</Form.Label>
-                <Form.Control as="select" name="user_id" value={formData.user_id} onChange={handleChange}>
-                  <option value="">Sélectionner l'utilisateur</option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>{user.name}</option>
+
+          <div className="container">
+            <h3>Liste des Fournisseurs</h3>
+            <div className="search-container d-flex flex-row-reverse mb-3">
+              <Search onSearch={handleSearch} />
+            </div>
+            <div className="add-Ajout-form">
+              <Button variant="primary" className="col-3 btn btn-sm" id="showFormButton" onClick={handleShowFormButtonClick}>
+                {showForm ? 'Modifier le formulaire' : 'Ajouter un fournisseur'}
+              </Button>
+              <div id="formContainer" className="mt-2" style={formContainerStyle}>
+                <Form className="col row" onSubmit={handleSubmit}>
+                  <Form.Label className="text-center m-2"><h5>{editingFournisseur ? 'Modifier Fournisseur' : 'Ajouter un Fournisseur'}</h5></Form.Label>
+                  <Form.Group className="col-sm-5 m-2 ">
+                    <Form.Label>Raison Sociale</Form.Label>
+                    <Form.Control type="text" placeholder="Raison Sociale" name="raison_sociale" value={formData.raison_sociale} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-5 m-2 ">
+                    <Form.Label>abreviation</Form.Label>
+                    <Form.Control type="text" placeholder="Abréviation" name="abreviation" value={formData.abreviation} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-10 m-2">
+                    <Form.Label>Adresse</Form.Label>
+                    <Form.Control type="text" placeholder="Adresse" name="adresse" value={formData.adresse} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-5 m-2">
+                    <Form.Label>Téléphone</Form.Label>
+                    <Form.Control type="text" placeholder="Téléphone" name="tele" value={formData.tele} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-5 m-2">
+                    <Form.Label>Ville</Form.Label>
+                    <Form.Control type="text" placeholder="Ville" name="ville" value={formData.ville} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-4 m-2">
+                    <Form.Label>ice</Form.Label>
+                    <Form.Control type="text" placeholder="ice" name="ice" value={formData.ice} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-4 m-2">
+                    <Form.Label>Code Postal</Form.Label>
+                    <Form.Control type="text" placeholder="code_postal" name="code_postal" value={formData.code_postal} onChange={handleChange} />
+                  </Form.Group>
+                  <Form.Group className="col-sm-4 m-2">
+                    <Form.Label>Utilisateur</Form.Label>
+                    <Form.Control as="select" name="user_id" value={formData.user_id} onChange={handleChange}>
+                      <option value="">Sélectionner l'utilisateur</option>
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>{user.name}</option>
+                      ))}
+                    </Form.Control>
+                  </Form.Group>
+                  <Form.Group className="col m-3 text-center">
+                    <Button type="submit" className="btn btn-success col-6">
+                      {editingFournisseur ? 'Modifier' : 'Ajouter'}
+                    </Button>
+                    <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
+                  </Form.Group>
+                </Form>
+              </div>
+            </div>
+            <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
+              <table className="table" id="fournisseurTable">
+                <thead>
+                  <tr>
+                    <th scope="col">
+                      <input type="checkbox" onChange={handleSelectAllChange} />
+                    </th>
+                    <th scope="col">Raison Sociale</th>
+                    <th scope="col">Adresse</th>
+                    <th scope="col">Téléphone</th>
+                    <th scope="col">Ville</th>
+                    <th scope="col">Abréviation</th>
+                    <th scope="col">ice</th>
+                    <th scope="col">User</th>
+                    <th scope="col">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFournisseurs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((fournisseurs) => (
+                    <tr key={fournisseurs.id}>
+                      <td>
+                        <input type="checkbox" onChange={() => handleCheckboxChange(fournisseurs.id)} checked={selectedItems.includes(fournisseurs.id)} />
+                      </td>
+                      <td>{fournisseurs.raison_sociale}</td>
+                      <td>{fournisseurs.adresse}</td>
+                      <td>{fournisseurs.tele}</td>
+                      <td>{fournisseurs.ville}</td>
+                      <td>{fournisseurs.abreviation}</td>
+                      <td>{fournisseurs.ice}</td>
+                      <td>{fournisseurs.user_id}</td>
+                      <td className="d-inline-flex">
+                        <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(fournisseurs)}>
+                          <i className="fas fa-edit"></i>
+                        </Button>
+                        <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(fournisseurs.id)}>
+                          <FontAwesomeIcon icon={faTrash} />
+                        </Button>
+                      </td>
+                    </tr>
                   ))}
-                </Form.Control>
-              </Form.Group>
-              <Form.Group className="col m-3 text-center">
-                <Button type="submit" className="btn btn-success col-6">
-                  {editingFournisseur ? 'Modifier' : 'Ajouter'}
-                </Button>
-                <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
-              </Form.Group>
-            </Form>
-          </div>
-        </div>
-        <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-          <table className="table" id="fournisseurTable">
-            <thead>
-              <tr>
-                <th scope="col">
-                  <input type="checkbox" onChange={handleSelectAllChange} />
-                </th>
-                <th scope="col">ID</th>
-                <th scope="col">Raison Sociale</th>
-                <th scope="col">Adresse</th>
-                <th scope="col">Téléphone</th>
-                <th scope="col">Ville</th>
-                <th scope="col">Abréviation</th>
-                <th scope="col">Zone</th>
-                <th scope="col">User</th>
-                <th scope="col">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredFournisseurs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((fournisseurs) => (
-                <tr key={fournisseurs.id}>
-                  <td>
-                    <input type="checkbox" onChange={() => handleCheckboxChange(fournisseurs.id)} checked={selectedItems.includes(fournisseurs.id)} />
-                  </td>
-                  <td>{fournisseurs.id}</td>
-                  <td>{fournisseurs.raison_sociale}</td>
-                  <td>{fournisseurs.adresse}</td>
-                  <td>{fournisseurs.tele}</td>
-                  <td>{fournisseurs.ville}</td>
-                  <td>{fournisseurs.abreviation}</td>
-                  <td>{fournisseurs.zone}</td>
-                  <td>{fournisseurs.user_id}</td>
-                  <td className="d-inline-flex">
-                    <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(fournisseurs)}>
-                      <i className="fas fa-edit"></i>
-                    </Button>
-                    <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(fournisseurs.id)}>
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="d-flex flex-row">
-            <div className="btn-group col-2">
-              <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                <FontAwesomeIcon icon={faTrash} /></Button>
-              <Button className="btn btn-secondary btn-sm" onClick={() => printList('fournisseurTable', 'Liste des Fournisseurs', fournisseurs)}>
-                <FontAwesomeIcon icon={faPrint} />
-              </Button>
-              <Button className="btn btn-danger btn-sm ml-2" onClick={exportToPdf}>
-                <FontAwesomeIcon icon={faFilePdf} />
-              </Button>
-              <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
-                <FontAwesomeIcon icon={faFileExcel} />
-              </Button>
+                </tbody>
+              </table>
+              <div className="d-flex flex-row">
+                <div className="btn-group col-2">
+                  <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                    <FontAwesomeIcon icon={faTrash} /></Button>
+                  <Button className="btn btn-secondary btn-sm" onClick={() => printList('fournisseurTable', 'Liste des Fournisseurs', fournisseurs)}>
+                    <FontAwesomeIcon icon={faPrint} />
+                  </Button>
+                  <Button className="btn btn-danger btn-sm ml-2" onClick={exportToPdf}>
+                    <FontAwesomeIcon icon={faFilePdf} />
+                  </Button>
+                  <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
+                    <FontAwesomeIcon icon={faFileExcel} />
+                  </Button>
+                </div>
+              </div>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredFournisseurs.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </div>
           </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredFournisseurs.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-        </div>
-      </div>
-      </Box>
+        </Box>
       </Box>
     </ThemeProvider>
 

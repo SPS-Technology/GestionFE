@@ -1,7 +1,7 @@
 #formContainer {
   position: fixed;
   right: -900px; /* Débutera hors de l'écran */
-  width: 600px;
+  width: 400px;
   height: 100%;
   transition: right 0.3s ease; /* Effet de glissement du formulaire */
   border: 2px;
