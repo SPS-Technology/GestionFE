@@ -37,13 +37,13 @@ const EditUser = () => {
             withCredentials: true,
           }
         );
-  
+
         const userData = response.data.user;
-        
+
         setUser({
           name: userData.name,
           email: userData.email,
-          role: userData.roles[0].name,
+          role: userData.roles.length > 0 ? userData.roles[0].name : "", // Set role properly
           photo: userData.photo,
           password: userData.password,
         });
@@ -52,17 +52,23 @@ const EditUser = () => {
         console.error("Error fetching user:", error);
       }
     };
-  
+
     fetchUser();
   }, [id]);
-  const handleChange = (e) => {
-    setUser({
-      ...user,
-      [e.target.name]:
-        e.target.type === "file" ? e.target.files[0] : e.target.value,
-    });
 
-    
+  const handleChange = (e) => {
+    if (e.target.name === "role") {
+      setUser({
+        ...user,
+        role: e.target.value,
+      });
+    } else {
+      setUser({
+        ...user,
+        [e.target.name]:
+          e.target.type === "file" ? e.target.files[0] : e.target.value,
+      });
+    }
   };
 
   const handlePermissionChange = (e) => {
@@ -83,10 +89,7 @@ const EditUser = () => {
       const formData = new FormData();
       formData.append("name", user.name);
       formData.append("email", user.email);
-
-     
       formData.append("role", user.role);
-      
 
       if (user.password) {
         formData.append("password", user.password);
@@ -100,7 +103,6 @@ const EditUser = () => {
         formData.append("permissions[]", permission);
       });
 
-      console.log('user ::',formData);
       const csrfToken = document.querySelector(
         'meta[name="csrf-token"]'
       ).content;
@@ -152,7 +154,6 @@ const EditUser = () => {
       }
     }
   };
-
 
   return (
     <div>

@@ -107,11 +107,11 @@ const ClientList = () => {
 
 
   //------------------------- CLIENT SUBMIT---------------------//
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const url = editingClient ? `http://localhost:8000/api/clients/${editingClient.id}` : 'http://localhost:8000/api/clients';
     const method = editingClient ? 'put' : 'post';
+  
     axios({
       method: method,
       url: url,
@@ -136,13 +136,23 @@ const ClientList = () => {
       closeForm();
     }).catch((error) => {
       console.error(`Erreur lors de ${editingClient ? 'la modification' : "l'ajout"} du client:`, error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erreur!',
-        text: `Échec de ${editingClient ? 'la modification' : "l'ajout"} du client.`,
-      });
+  
+      if (error.response && error.response.status === 403) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Accès refusé',
+          text: `Vous n'avez pas l'autorisation de ${editingClient ? 'modifier' : 'ajouter'} un client.`,
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur!',
+          text: `Échec de ${editingClient ? 'la modification' : "l'ajout"} du client.`,
+        });
+      }
     });
   };
+  
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
@@ -418,7 +428,7 @@ const ClientList = () => {
                     <th>Téléphone</th>
                     <th>Ville</th>
                     <th>Zone</th>
-                    <th>User</th>
+                    {/* <th>User</th> */}
                     <th className="text-center">Action</th>
                   </tr>
                 </thead>
@@ -438,7 +448,7 @@ const ClientList = () => {
                       <td>{client.tele}</td>
                       <td>{client.ville}</td>
                       <td>{client.zone}</td>
-                      <td>{client.user_id}</td>
+                      {/* <td>{client.user_id}</td> */}
                       <td className="d-inline-flex">
                         <button
                           className="btn btn-sm btn-info m-1"

@@ -288,7 +288,10 @@ const Navigation = () => {
           <List>
             <ListItem
               button
-              onClick={handleLogoutClick}
+              onClick={() => {
+                handleLogoutClick();
+                logout();
+              }}
               style={{ color: "red", background: "white" }}
             >
               <ListItemIcon>

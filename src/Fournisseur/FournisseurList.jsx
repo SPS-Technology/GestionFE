@@ -42,7 +42,7 @@ const FournisseurList = () => {
 
       console.log("API Response:", response.data);
 
-      setFournisseurs(response.data.fournisseur);
+      setFournisseurs(response.data.fournisseurs);
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
@@ -459,6 +459,7 @@ const FournisseurList = () => {
     e.preventDefault();
     const url = editingFournisseur ? `http://localhost:8000/api/fournisseurs/${editingFournisseur.id}` : 'http://localhost:8000/api/fournisseurs';
     const method = editingFournisseur ? 'put' : 'post';
+  
     axios({
       method: method,
       url: url,
@@ -468,7 +469,7 @@ const FournisseurList = () => {
       Swal.fire({
         icon: 'success',
         title: 'Succès!',
-        text: `fournisseur ${editingFournisseur ? 'modifié' : 'ajouté'} avec succès.`,
+        text: `Fournisseur ${editingFournisseur ? 'modifié' : 'ajouté'} avec succès.`,
       });
       setFormData({
         raison_sociale: '',
@@ -483,14 +484,23 @@ const FournisseurList = () => {
       closeForm();
     }).catch((error) => {
       console.error(`Erreur lors de ${editingFournisseur ? 'la modification' : "l'ajout"} du fournisseur:`, error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erreur!',
-        text: `Échec de ${editingFournisseur ? 'la modification' : "l'ajout"} du fournisseur.`,
-      });
+  
+      if (error.response && error.response.status === 403) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Accès refusé',
+          text: `Vous n'avez pas l'autorisation de ${editingFournisseur ? 'modifier' : 'ajouter'} un fournisseur.`,
+        });
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur!',
+          text: `Échec de ${editingFournisseur ? 'la modification' : "l'ajout"} du fournisseur.`,
+        });
+      }
     });
   };
-
+  
   //------------------------- fournisseur FORM---------------------//
 
   const handleShowFormButtonClick = () => {
@@ -586,14 +596,14 @@ const FournisseurList = () => {
                 <th scope="col">
                   <input type="checkbox" onChange={handleSelectAllChange} />
                 </th>
-                <th scope="col">ID</th>
+                {/* <th scope="col">ID</th> */}
                 <th scope="col">Raison Sociale</th>
                 <th scope="col">Adresse</th>
                 <th scope="col">Téléphone</th>
                 <th scope="col">Ville</th>
                 <th scope="col">Abréviation</th>
                 <th scope="col">Zone</th>
-                <th scope="col">User</th>
+                {/* <th scope="col">User</th> */}
                 <th scope="col">Action</th>
               </tr>
             </thead>
@@ -603,14 +613,14 @@ const FournisseurList = () => {
                   <td>
                     <input type="checkbox" onChange={() => handleCheckboxChange(fournisseurs.id)} checked={selectedItems.includes(fournisseurs.id)} />
                   </td>
-                  <td>{fournisseurs.id}</td>
+                  {/* <td>{fournisseurs.id}</td> */}
                   <td>{fournisseurs.raison_sociale}</td>
                   <td>{fournisseurs.adresse}</td>
                   <td>{fournisseurs.tele}</td>
                   <td>{fournisseurs.ville}</td>
                   <td>{fournisseurs.abreviation}</td>
                   <td>{fournisseurs.zone}</td>
-                  <td>{fournisseurs.user_id}</td>
+                  {/* <td>{fournisseurs.user_id}</td> */}
                   <td className="d-inline-flex">
                     <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(fournisseurs)}>
                       <i className="fas fa-edit"></i>
