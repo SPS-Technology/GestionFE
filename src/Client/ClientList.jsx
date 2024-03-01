@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Form, Button } from 'react-bootstrap';
+import { Form, Button } from "react-bootstrap";
 import Navigation from "../Acceuil/Navigation";
 import TablePagination from "@mui/material/TablePagination";
 import PrintList from "./PrintList";
-import ExportToPdfButton from './exportToPdf';
+import ExportToPdfButton from "./exportToPdf";
 import "jspdf-autotable";
 import Search from "../Acceuil/Search";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faFilePdf,
+  faFileExcel,
+  faPrint,
+  faPlus,
+} from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
-import "../style.css"
+import "../style.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
@@ -23,9 +29,23 @@ const ClientList = () => {
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ raison_sociale: '', abreviation: '', adresse: '', tele: '', ville: '', zone_id: '', user_id: '',ice: '',code_postal: '', });
-  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
-  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
+  const [formData, setFormData] = useState({
+    raison_sociale: "",
+    abreviation: "",
+    adresse: "",
+    tele: "",
+    ville: "",
+    zone_id: "",
+    user_id: "",
+    ice: "",
+    code_postal: "",
+  });
+  const [formContainerStyle, setFormContainerStyle] = useState({
+    right: "-500px",
+  });
+  const [tableContainerStyle, setTableContainerStyle] = useState({
+    marginRight: "0px",
+  });
   //-------------------edit-----------------------//
   const [editingClient, setEditingClient] = useState(null); // State to hold the client being edited
   const [editingClientId, setEditingClientId] = useState(null);
@@ -41,12 +61,9 @@ const ClientList = () => {
 
   const [searchTerm, setSearchTerm] = useState("");
 
-
   useEffect(() => {
     const filtered = clients.filter((client) =>
-      client.raison_sociale
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      client.raison_sociale.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredclients(filtered);
@@ -66,8 +83,7 @@ const ClientList = () => {
       setUsers(userResponse.data.users);
 
       const zoneResponse = await axios.get("http://localhost:8000/api/zones");
-      setZones(zoneResponse.data.zone);
-
+      setZones(zoneResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -96,86 +112,96 @@ const ClientList = () => {
       ice: client.ice,
       code_postal: client.code_postal,
     });
-    if (formContainerStyle.right === '-500px') {
-      setFormContainerStyle({ right: '0' });
-      setTableContainerStyle({ marginRight: '500px' });
+    if (formContainerStyle.right === "-500px") {
+      setFormContainerStyle({ right: "0" });
+      setTableContainerStyle({ marginRight: "500px" });
     } else {
       closeForm();
     }
-
   };
   useEffect(() => {
     if (editingClientId !== null) {
-      setFormContainerStyle({ right: '0' });
-      setTableContainerStyle({ marginRight: '500px' });
+      setFormContainerStyle({ right: "0" });
+      setTableContainerStyle({ marginRight: "500px" });
     }
   }, [editingClientId]);
-
 
   //------------------------- CLIENT SUBMIT---------------------//
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const url = editingClient ? `http://localhost:8000/api/clients/${editingClient.id}` : 'http://localhost:8000/api/clients';
-    const method = editingClient ? 'put' : 'post';
+    const url = editingClient
+      ? `http://localhost:8000/api/clients/${editingClient.id}`
+      : "http://localhost:8000/api/clients";
+    const method = editingClient ? "put" : "post";
     axios({
       method: method,
       url: url,
       data: formData,
-    }).then(() => {
-      fetchClients();
-      Swal.fire({
-        icon: 'success',
-        title: 'Succès!',
-        text: `Client ${editingClient ? 'modifié' : 'ajouté'} avec succès.`,
+    })
+      .then(() => {
+        fetchClients();
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: `Client ${editingClient ? "modifié" : "ajouté"} avec succès.`,
+        });
+        setFormData({
+          raison_sociale: "",
+          abreviation: "",
+          adresse: "",
+          tele: "",
+          ville: "",
+          zone_id: "",
+          user_id: "",
+          ice: "",
+          code_postal: "",
+        });
+        setEditingClient(null); // Clear editing client
+        closeForm();
+      })
+      .catch((error) => {
+        console.error(
+          `Erreur lors de ${
+            editingClient ? "la modification" : "l'ajout"
+          } du client:`,
+          error
+        );
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: `Échec de ${
+            editingClient ? "la modification" : "l'ajout"
+          } du client.`,
+        });
       });
-      setFormData({
-        raison_sociale: '',
-        abreviation: '',
-        adresse: '',
-        tele: '',
-        ville: '',
-        zone_id: '',
-        user_id: '',
-        ice: '',
-        code_postal: '',
-      });
-      setEditingClient(null); // Clear editing client
-      closeForm();
-    }).catch((error) => {
-      console.error(`Erreur lors de ${editingClient ? 'la modification' : "l'ajout"} du client:`, error);
-      Swal.fire({
-        icon: 'error',
-        title: 'Erreur!',
-        text: `Échec de ${editingClient ? 'la modification' : "l'ajout"} du client.`,
-      });
-    });
   };
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
-    if (formContainerStyle.right === '-500px') {
-      setFormContainerStyle({ right: '0' });
-      setTableContainerStyle({ marginRight: '500px' });
+    if (formContainerStyle.right === "-500px") {
+      setFormContainerStyle({ right: "0" });
+      setTableContainerStyle({ marginRight: "500px" });
     } else {
       closeForm();
     }
   };
 
   const closeForm = () => {
-    setFormContainerStyle({ right: '-500px' });
-    setTableContainerStyle({ marginRight: '0' });
+    setFormContainerStyle({ right: "-500px" });
+    setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
-    setFormData({ // Clear form data
-      raison_sociale: '',
-      abreviation: '',
-      adresse: '',
-      tele: '',
-      ville: '',
-      zone_id: '',
-      user_id: '',
-      ice: '',
-      code_postal: '',
+    setFormData({
+      // Clear form data
+      raison_sociale: "",
+      abreviation: "",
+      adresse: "",
+      tele: "",
+      ville: "",
+      zone_id: "",
+      user_id: "",
+      ice: "",
+      code_postal: "",
     });
     setEditingClient(null); // Clear editing client
   };
@@ -200,16 +226,16 @@ const ClientList = () => {
 
   const handleDelete = (id) => {
     Swal.fire({
-      title: 'Êtes-vous sûr de vouloir supprimer ce client ?',
+      title: "Êtes-vous sûr de vouloir supprimer ce client ?",
       showDenyButton: true,
       showCancelButton: false,
-      confirmButtonText: 'Oui',
-      denyButtonText: 'Non',
+      confirmButtonText: "Oui",
+      denyButtonText: "Non",
       customClass: {
-        actions: 'my-actions',
-        cancelButton: 'order-1 right-gap',
-        confirmButton: 'order-2',
-        denyButton: 'order-3',
+        actions: "my-actions",
+        cancelButton: "order-1 right-gap",
+        confirmButton: "order-2",
+        denyButton: "order-3",
       },
     }).then((result) => {
       if (result.isConfirmed) {
@@ -239,16 +265,16 @@ const ClientList = () => {
   //-------------------------Select Delete --------------------//
   const handleDeleteSelected = () => {
     Swal.fire({
-      title: 'Êtes-vous sûr de vouloir supprimer ?',
+      title: "Êtes-vous sûr de vouloir supprimer ?",
       showDenyButton: true,
       showCancelButton: false,
-      confirmButtonText: 'Oui',
-      denyButtonText: 'Non',
+      confirmButtonText: "Oui",
+      denyButtonText: "Non",
       customClass: {
-        actions: 'my-actions',
-        cancelButton: 'order-1 right-gap',
-        confirmButton: 'order-2',
-        denyButton: 'order-3',
+        actions: "my-actions",
+        cancelButton: "order-1 right-gap",
+        confirmButton: "order-2",
+        denyButton: "order-3",
       },
     }).then((result) => {
       if (result.isConfirmed) {
@@ -258,17 +284,17 @@ const ClientList = () => {
             .then(() => {
               fetchClients();
               Swal.fire({
-                icon: 'success',
-                title: 'Succès!',
-                text: 'Client supprimé avec succès.',
+                icon: "success",
+                title: "Succès!",
+                text: "Client supprimé avec succès.",
               });
             })
             .catch((error) => {
               console.error("Erreur lors de la suppression du client:", error);
               Swal.fire({
-                icon: 'error',
-                title: 'Erreur!',
-                text: 'Échec de la suppression du client.',
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du client.",
               });
             });
         });
@@ -276,6 +302,47 @@ const ClientList = () => {
     });
 
     setSelectedItems([]);
+  };
+  const handleAddZone = async () => {
+    const { value: zoneData } = await Swal.fire({
+      title: "Ajouter une zone",
+      html: `
+        <form id="addCategoryForm">
+          <input id="swal-input1" class="swal2-input" placeholder="Zone" name="zone">
+         
+        </form>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Ajouter",
+      cancelButtonText: "Annuler",
+      preConfirm: () => {
+        const zone = Swal.getPopup().querySelector("#swal-input1").value;
+
+        return { zone };
+      },
+    });
+
+    if (zoneData) {
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/zones",
+          zoneData
+        );
+        console.log(response.data);
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Catégorie ajoutée avec succès.",
+        });
+      } catch (error) {
+        console.error("Error adding category:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de l'ajout de la catégorie.",
+        });
+      }
+    }
   };
 
   const handleSelectAllChange = () => {
@@ -306,23 +373,36 @@ const ClientList = () => {
 
   return (
     <ThemeProvider theme={createTheme()}>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
 
           <div className="container">
             <h3>Liste des Clients</h3>
-            <div className="search-container d-flex flex-row-reverse " role="search">
+            <div
+              className="search-container d-flex flex-row-reverse "
+              role="search"
+            >
               <Search onSearch={handleSearch} type="search" />
             </div>
-            <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
-              {showForm ? 'Modifier le formulaire' : 'Ajouter un Client'}
+            <Button
+              variant="primary"
+              className="col-2 btn btn-sm m-2"
+              id="showFormButton"
+              onClick={handleShowFormButtonClick}
+            >
+              {showForm ? "Modifier le formulaire" : "Ajouter un Client"}
             </Button>
             <div id="formContainer" className="" style={formContainerStyle}>
               <Form className="col row" onSubmit={handleSubmit}>
-                <Form.Label className="text-center m-2"><h4>{editingClient ? 'Modifier' : 'Ajouter'} un Client</h4></Form.Label>
-                <Form.Group className="col-sm-5 m-2 " controlId="raison_sociale">
+                <Form.Label className="text-center m-2">
+                  <h4>{editingClient ? "Modifier" : "Ajouter"} un Client</h4>
+                </Form.Label>
+                <Form.Group
+                  className="col-sm-5 m-2 "
+                  controlId="raison_sociale"
+                >
                   <Form.Label>Raison Sociale</Form.Label>
                   <Form.Control
                     type="text"
@@ -389,14 +469,28 @@ const ClientList = () => {
                   />
                 </Form.Group> */}
                 <Form.Group className="col-sm-4 m-2">
-                <Form.Label>Zone</Form.Label>
-                <Form.Control as="select" name="zone_id" value={formData.zone_id} onChange={handleChange}>
-                  <option value="">Sélectionner Zone</option>
-                  {zones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>{zone.zone}</option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
+                  <FontAwesomeIcon
+                    icon={faPlus}
+                    className="ml-2 text-primary"
+                    style={{ cursor: "pointer" }}
+                    onClick={handleAddZone}
+                  />
+                  <Form.Label>Zone</Form.Label>
+                  <Form.Control
+                    as="select"
+                    name="zone_id"
+                    value={formData.zone_id}
+                    onChange={handleChange}
+                  >
+                    <option value="">Sélectionner Zone</option>
+                    {zones &&
+                      zones.map((zone) => (
+                        <option key={zone.id} value={zone.id}>
+                          {zone.zone}
+                        </option>
+                      ))}
+                  </Form.Control>
+                </Form.Group>
                 <Form.Group className="col-sm-4 m-2" controlId="zone_id">
                   <Form.Label>Code Postal</Form.Label>
                   <Form.Control
@@ -407,8 +501,8 @@ const ClientList = () => {
                     placeholder="code_postal"
                     className="form-control-sm"
                   />
-                  </Form.Group>
-                  <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                </Form.Group>
+                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
                   <Form.Label>ICE</Form.Label>
                   <Form.Control
                     type="text"
@@ -418,7 +512,7 @@ const ClientList = () => {
                     placeholder="ice"
                     className="form-control-sm"
                   />
-                  </Form.Group>
+                </Form.Group>
                 <Form.Group className="col-sm-4 m-2" controlId="user_id">
                   <Form.Label>Utilisateur</Form.Label>
                   <Form.Control
@@ -432,15 +526,24 @@ const ClientList = () => {
                 </Form.Group>
                 <Form.Group className="col-7 m-3">
                   <Button className="col-6" variant="primary" type="submit">
-                    {editingClient ? 'Modifier' : 'Ajouter'}
+                    {editingClient ? "Modifier" : "Ajouter"}
                   </Button>
-                  <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
+                  <Button
+                    className="btn btn-secondary col-5 offset-1"
+                    onClick={closeForm}
+                  >
+                    Annuler
+                  </Button>
                 </Form.Group>
               </Form>
             </div>
 
             <div className="">
-              <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
+              <div
+                id="tableContainer"
+                className="table-responsive-sm"
+                style={tableContainerStyle}
+              >
                 {clients && clients.length > 0 ? (
                   <table className="table table-hover" id="clientsTable">
                     <thead className="text-center">
@@ -463,38 +566,43 @@ const ClientList = () => {
                       </tr>
                     </thead>
                     <tbody className="text-center">
-                      {filteredclients.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((client) => (
-                        <tr key={client.id}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              checked={selectedItems.includes(client.id)}
-                              onChange={() => handleCheckboxChange(client.id)}
-                            />
-                          </td>
-                          <td>{client.raison_sociale}</td>
-                          <td>{client.abreviation}</td>
-                          <td>{client.adresse}</td>
-                          <td>{client.tele}</td>
-                          <td>{client.ville}</td>
-                          <td>{client.zone.zone}</td>
-                          <td>{client.user_id}</td>
-                          <td className="d-inline-flex">
-                            <button
-                              className="btn btn-sm btn-info m-1"
-                              onClick={() => handleEdit(client)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm m-1"
-                              onClick={() => handleDelete(client.id)}
-                            >
-                              <i className="fas fa-minus-circle"></i>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredclients
+                        .slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage
+                        )
+                        .map((client) => (
+                          <tr key={client.id}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.includes(client.id)}
+                                onChange={() => handleCheckboxChange(client.id)}
+                              />
+                            </td>
+                            <td>{client.raison_sociale}</td>
+                            <td>{client.abreviation}</td>
+                            <td>{client.adresse}</td>
+                            <td>{client.tele}</td>
+                            <td>{client.ville}</td>
+                            <td>{client.zone.zone}</td>
+                            <td>{client.user_id}</td>
+                            <td className="d-inline-flex">
+                              <button
+                                className="btn btn-sm btn-info m-1"
+                                onClick={() => handleEdit(client)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm m-1"
+                                onClick={() => handleDelete(client.id)}
+                              >
+                                <i className="fas fa-minus-circle"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 ) : (
@@ -513,11 +621,26 @@ const ClientList = () => {
                 />
                 <div className="d-flex flex-row">
                   <div className="btn-group col-2">
-                    <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                      <FontAwesomeIcon icon={faTrash} /></Button>
-                    <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
-                    <ExportToPdfButton clients={clients} selectedItems={selectedItems} />
-                    <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
+                    <Button
+                      className="btn btn-danger btn-sm"
+                      onClick={handleDeleteSelected}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                    <PrintList
+                      tableId="clientsTable"
+                      title="Liste des clients"
+                      clientList={clients}
+                      filteredclients={filteredclients}
+                    />
+                    <ExportToPdfButton
+                      clients={clients}
+                      selectedItems={selectedItems}
+                    />
+                    <Button
+                      className="btn btn-success btn-sm ml-2"
+                      onClick={exportToExcel}
+                    >
                       <FontAwesomeIcon icon={faFileExcel} />
                     </Button>
                   </div>
@@ -529,6 +652,6 @@ const ClientList = () => {
       </Box>
     </ThemeProvider>
   );
-}
+};
 
 export default ClientList;

@@ -11,7 +11,9 @@ const CommandeDetails = ({ produits, commande }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [ligneCommandes, setLigneCommandes] = useState(commande.ligne_commandes);
+  const [ligneCommandes, setLigneCommandes] = useState(
+    commande.ligne_commandes
+  );
   const [filteredProduits, setFilteredProduits] = useState([]);
 
   const handleChangePage = (event, newPage) => {
@@ -28,14 +30,14 @@ const CommandeDetails = ({ produits, commande }) => {
     setPage(0);
   };
 
-  useEffect(() => {
-    // Filter commandes based on the search term
-    const filtered = produits.filter((commande) =>
-      commande.nom.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  // useEffect(() => {
+  //   // Filter commandes based on the search term
+  //   const filtered = produits.filter((commande) =>
+  //     commande.reference.toLowerCase().includes(searchTerm.toLowerCase())
+  //   );
 
-    setFilteredProduits(filtered);
-  }, [produits, searchTerm]);
+  //   setFilteredProduits(filtered);
+  // }, [produits, searchTerm]);
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -105,10 +107,13 @@ const CommandeDetails = ({ produits, commande }) => {
 
   return (
     <div style={{ backgroundColor: "#E1E1E1" }}>
-      <div className="details-container col row"  id="commande">
+      <div className="details-container col row" id="commande">
         <div className="ligne-commande-table col-5 text-center mt-2 mx-5">
-            {/* <Search  onSearch={handleSearch}/> */}
-          <table className="table table-hover mt-2" style={{ backgroundColor: "#F1F1F1" }}>
+          {/* <Search  onSearch={handleSearch}/> */}
+          <table
+            className="table table-hover mt-2"
+            style={{ backgroundColor: "#F1F1F1" }}
+          >
             <thead>
               <tr>
                 <th>Produit</th>
@@ -123,15 +128,20 @@ const CommandeDetails = ({ produits, commande }) => {
                   <td>{ligneCommande.quantite}</td>
                   <td>{ligneCommande.prix_unitaire}</td>
                   <td className="no-print">
-                    <button className="btn btn-danger" onClick={() => handleDeleteLigneCommande(ligneCommande.id)}>                     
-                      <FontAwesomeIcon icon={faTrash}/>                
+                    <button
+                      className="btn btn-danger"
+                      onClick={() =>
+                        handleDeleteLigneCommande(ligneCommande.id)
+                      }
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-           <TablePagination
+          <TablePagination
             rowsPerPageOptions={[5, 10, 25]}
             component="div"
             count={commande.ligne_commandes.length}
@@ -140,10 +150,13 @@ const CommandeDetails = ({ produits, commande }) => {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
             className="no-print"
-          /> 
+          />
         </div>
         <div className="status-commande-table col-5 text-center mt-5">
-          <table className="table table-hover" style={{ backgroundColor: "#F1F1F1" }}>
+          <table
+            className="table table-hover"
+            style={{ backgroundColor: "#F1F1F1" }}
+          >
             <thead>
               <tr>
                 <th colspan="2">{commande.reference}</th>
