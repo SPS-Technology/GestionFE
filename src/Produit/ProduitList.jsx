@@ -28,7 +28,7 @@ const ProduitList = () => {
   const [produits, setProduits] = useState([]);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
-
+  let isEdit = false;
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredProduits, setFilteredProduits] = useState([]);
 
@@ -326,14 +326,66 @@ const ProduitList = () => {
     XLSX.utils.book_append_sheet(wb, ws, "Produits");
     XLSX.writeFile(wb, "produits.xlsx");
   };
+
+  const handleDeletecatgeorie = async (categorieId) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:8000/api/categories/${categorieId}`
+      );
+      console.log(response.data);
+      Swal.fire({
+        icon: "success",
+        title: "Succès!",
+        text: "Categorie supprimé avec succès.",
+      });
+    } catch (error) {
+      console.error("Error deleting categorie:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur!",
+        text: "Échec de la suppression de la categorie.",
+      });
+    }
+  };
   const handleAddCategory = async () => {
     const { value: categoryData } = await Swal.fire({
       title: "Ajouter une catégorie",
       html: `
-        <form id="addCategoryForm">
-          <input id="swal-input1" class="swal2-input" placeholder="Catégorie" name="categorie">
-          <input id="swal-input2" class="swal2-input" placeholder="Description" name="description">
-        </form>
+          <form id="addCategoryForm">
+              <input id="swal-input1" class="swal2-input" placeholder="Catégorie" name="categorie">
+              <input id="swal-input2" class="swal2-input" placeholder="Description" name="description">
+              <div class="form-group mt-3">
+                  <table class="table table-hover">
+                      <thead>
+                          <tr>
+                              <th>Id</th>
+                              <th>Catégorie</th>
+                              <th>Description</th>
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${categories
+                            .map(
+                              (categ) => `
+                              <tr key=${categ.id}>
+                                  <td>${categ.id}</td>
+                                  <td>${categ.categorie}</td>
+                                  <td>${categ.description}</td>
+                                  <td>
+                                      <select id="actionDropdown_${categ.id}" class="form-control">
+                                          <option value="">Select Action</option>
+                                          <option value="modify_${categ.id}">Modifier</option>
+                                          <option value="delete_${categ.id}">Supprimer</option>
+                                      </select>
+                                  </td>
+                              </tr>
+                          `
+                            )
+                            .join("")}
+                      </tbody>
+                  </table>
+              </div>
+          </form>
       `,
       showCancelButton: true,
       confirmButtonText: "Ajouter",
@@ -368,6 +420,92 @@ const ProduitList = () => {
       }
     }
   };
+
+  document.addEventListener("change", async function (event) {
+    if (event.target && event.target.id.startsWith("actionDropdown_")) {
+      const [action, categoryId] = event.target.value.split("_");
+      if (action === "delete") {
+        // Delete action
+        handleDeletecatgeorie(categoryId);
+      } else if (action === "modify") {
+        // Modify action
+        try {
+          const response = await axios.get(
+            `http://localhost:8000/api/categories/${categoryId}`
+          );
+          const categoryToModify = response.data;
+
+          if (!categoryToModify) {
+            console.error("Category not found or data is missing");
+            return;
+          }
+
+          const categorieValue =
+            categoryToModify && categoryToModify.categorie
+              ? categoryToModify.categorie
+              : "";
+
+          const descriptionValue =
+            categoryToModify && categoryToModify.description
+              ? categoryToModify.description
+              : "";
+
+          const { value: modifiedData } = await Swal.fire({
+            title: "Modifier une catégorie",
+            html: `
+                    <form id="modifyCategoryForm">
+                        <input id="swal-modify-input1" class="swal2-input" placeholder="Catégorie" name="categorie" value="${categorieValue}">
+                        <input id="swal-modify-input2" class="swal2-input" placeholder="Description" name="description" value="${descriptionValue}">
+                    </form>
+                `,
+            showCancelButton: true,
+            confirmButtonText: "Modifier",
+            cancelButtonText: "Annuler",
+            preConfirm: () => {
+              const modifiedCategorie = Swal.getPopup().querySelector(
+                "#swal-modify-input1"
+              ).value;
+              const modifiedDescription = Swal.getPopup().querySelector(
+                "#swal-modify-input2"
+              ).value;
+
+              return {
+                categorie: modifiedCategorie,
+                description: modifiedDescription,
+              };
+            },
+          });
+
+          if (modifiedData) {
+            const modifyResponse = await axios.put(
+              `http://localhost:8000/api/categories/${categoryId}`,
+              modifiedData
+            );
+            console.log(modifyResponse.data);
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Catégorie modifiée avec succès.",
+            });
+          }
+        } catch (error) {
+          console.error(
+            "Erreur lors de la modification de la catégorie:",
+            error
+          );
+          Swal.fire({
+            icon: "error",
+            title: "Erreur!",
+            text: "Échec de la modification de la catégorie.",
+          });
+        }
+      }
+
+      // Clear selection after action
+      event.target.value = "";
+    }
+  });
+
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
@@ -477,7 +615,7 @@ const ProduitList = () => {
                     value={formData.categorie_id}
                     onChange={handleChange}
                     className="form-select form-select-sm"
-                    required
+                    
                   >
                     <option value="">Sélectionner une catégorie</option>
                     {categories.map((category) => (
@@ -516,62 +654,101 @@ const ProduitList = () => {
                 style={tableContainerStyle}
               >
                 {produits && produits.length > 0 && (
-              <table className="table" id="produitsTable">
-              <thead className="text-center">
-                <tr>
-                  <th style={Object.assign({}, tableHeaderStyle, { textAlign: 'left' })}>
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAllChange}
-                    />
-                  </th>
-                  <th style={tableHeaderStyle}>Code_produit</th>
-                  <th style={tableHeaderStyle}>designation</th>
-                  <th style={tableHeaderStyle}>Type de Quantité</th>
-                  <th style={tableHeaderStyle}>Calibre</th>
-                  <th style={tableHeaderStyle}>categorie</th>
-                  <th style={tableHeaderStyle}>description</th>
-                  <th className="text-center" style={Object.assign({}, tableHeaderStyle, { textAlign: 'left' })}>Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-center">
-                {filteredProduits
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((produit) => (
-                    <tr key={produit.id}>
-                      <td style={Object.assign({}, tableCellStyle, { textAlign: 'left' })}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(produit.id)}
-                          onChange={() => handleCheckboxChange(produit.id)}
-                        />
-                      </td>
-                      <td style={tableCellStyle}>{produit.Code_produit}</td>
-                      <td style={tableCellStyle}>{produit.designation}</td>
-                      <td style={tableCellStyle}>{produit.type_quantite}</td>
-                      <td style={tableCellStyle}>{produit.calibre}</td>
-                      <td style={tableCellStyle}>{produit.categorie.categorie}</td>
-                      <td style={tableCellStyle}>{produit.categorie.description}</td>
-                      <td className="d-inline-flex" style={Object.assign({}, tableCellStyle, { textAlign: 'left' })}>
-                        <button
-                          className="btn btn-sm btn-warning m-1"
-                          onClick={() => handleEdit(produit)}
+                  <table className="table" id="produitsTable">
+                    <thead className="text-center">
+                      <tr>
+                        <th
+                          style={Object.assign({}, tableHeaderStyle, {
+                            textAlign: "left",
+                          })}
                         >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm m-1"
-                          onClick={() => handleDelete(produit.id)}
+                          <input
+                            type="checkbox"
+                            checked={selectAll}
+                            onChange={handleSelectAllChange}
+                          />
+                        </th>
+                        <th style={tableHeaderStyle}>Code_produit</th>
+                        <th style={tableHeaderStyle}>designation</th>
+                        <th style={tableHeaderStyle}>Type de Quantité</th>
+                        <th style={tableHeaderStyle}>Calibre</th>
+                        <th style={tableHeaderStyle}>categorie</th>
+                        {/* <th style={tableHeaderStyle}>description</th> */}
+                        <th
+                          className="text-center"
+                          style={Object.assign({}, tableHeaderStyle, {
+                            textAlign: "left",
+                          })}
                         >
-                          <i className="fas fa-minus-circle"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-              
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-center">
+                      {filteredProduits
+                        .slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage
+                        )
+                        .map((produit) => (
+                          <tr key={produit.id}>
+                            <td
+                              style={Object.assign({}, tableCellStyle, {
+                                textAlign: "left",
+                              })}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.includes(produit.id)}
+                                onChange={() =>
+                                  handleCheckboxChange(produit.id)
+                                }
+                              />
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.Code_produit}
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.designation}
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.type_quantite}
+                            </td>
+                            <td style={tableCellStyle}>{produit.calibre}</td>
+                            <td style={tableCellStyle}>
+                              {produit.categorie
+                                ? produit.categorie.categorie
+                                : "no categorie"}
+                            </td>
+                            {/* <td style={tableCellStyle}>
+                              {produit.categorie
+                                ? produit.categorie.description
+                                : "null"}
+                            </td> */}
+
+                            <td
+                              className="d-inline-flex"
+                              style={Object.assign({}, tableCellStyle, {
+                                textAlign: "left",
+                              })}
+                            >
+                              <button
+                                className="btn btn-sm btn-warning m-1"
+                                onClick={() => handleEdit(produit)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm m-1"
+                                onClick={() => handleDelete(produit.id)}
+                              >
+                                <i className="fas fa-minus-circle"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
                 )}
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}
