@@ -24,7 +24,7 @@ const ClientList = () => {
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ raison_sociale: '', abreviation: '', adresse: '', tele: '', ville: '', zone_id: '', user_id: '',ice: '',code_postal: '', });
+  const [formData, setFormData] = useState({ raison_sociale: '', abreviation: '', adresse: '', tele: '', ville: '', zone_id: '', user_id: '', ice: '', code_postal: '', });
   const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
   const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
   //-------------------edit-----------------------//
@@ -305,104 +305,160 @@ const ClientList = () => {
     XLSX.writeFile(wb, "clients.xlsx");
   };
 
+
+
   const handleDeleteZone = async (zoneId) => {
     try {
-        const response = await axios.delete(`http://localhost:8000/api/zones/${zoneId}`);
-        console.log(response.data);
-        Swal.fire({
-          icon: 'success',
-          title: 'Succès!',
-          text: 'Zone supprimé avec succès.',
-        });
+      const response = await axios.delete(`http://localhost:8000/api/zones/${zoneId}`);
+      console.log(response.data);
+      Swal.fire({
+        icon: "success",
+        title: "Succès!",
+        text: "Zone supprimée avec succès.",
+      });
     } catch (error) {
-        console.error("Error deleting zone:", error);
-        Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la suppression de la Zone.",
-        });
+      console.error("Error deleting zone:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur!",
+        text: "Échec de la suppression de la zone.",
+      });
     }
-};
+  };
 
-const handleAddZone = async () => {
-    const { value: zoneData } = await Swal.fire({
-        title: "Ajouter une Zone",
+  const handleEditZone = async (zoneId) => {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/zones/${zoneId}`);
+      const zoneToEdit = response.data;
+
+      if (!zoneToEdit) {
+        console.error("Zone not found or data is missing");
+        return;
+      }
+
+      const { value: editedZone } = await Swal.fire({
+        title: "Modifier une zone",
         html: `
-        <div class="form-group m-3">
-          <form id="addZoneForm">
-            <input id="swal-input1" class="swal2-input" placeholder="Zone" name="zone">
+          <form id="editZoneForm">
+              <input id="swal-edit-input1" class="swal2-input" placeholder="Zone" name="zone" value="${zoneToEdit.zone}">
           </form>
-        </div>
-        <div class="form-group mt-3">
-          <table class="table table-hover">
-            <thead>
-              <tr>
-                <th>Id</th>
-                <th>Zone</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${zones.map(zone => `
-                <tr key=${zone.id}>
-                  <td>${zone.id}</td>
-                  <td>${zone.zone}</td>
-                  <td>
-                    <select id="deleteDropdown_${zone.id}" class="form-control">
-                      <option value="">Select Action</option>
-                      <option value="${zone.id}">Delete</option>
-                    </select>
-                  </td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-        `,
+      `,
         showCancelButton: true,
-        confirmButtonText: "Ajouter",
+        confirmButtonText: "Modifier",
         cancelButtonText: "Annuler",
         preConfirm: () => {
-            const zone = Swal.getPopup().querySelector("#swal-input1").value;
-            return { zone };
+          const editedZoneValue = document.getElementById("swal-edit-input1").value;
+          return { zone: editedZoneValue };
         },
+      });
+
+      if (editedZone && editedZone.zone !== zoneToEdit.zone) {
+        const putResponse = await axios.put(
+          `http://localhost:8000/api/zones/${zoneId}`,
+          editedZone
+        );
+        console.log(putResponse.data);
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: "Zone modifiée avec succès.",
+        });
+      } else {
+        console.log("Zone not edited or unchanged");
+      }
+    } catch (error) {
+      console.error("Error editing zone:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur!",
+        text: "Échec de la modification de la zone.",
+      });
+    }
+  };
+
+
+  const handleAddZone = async () => {
+    const { value: zoneData } = await Swal.fire({
+      title: "Ajouter une zone",
+      html: `
+          <form id="addZoneForm">
+              <input id="swal-input1" class="swal2-input" placeholder="Zone" name="zone">
+          </form>
+          <div class="form-group mt-3">
+              <table class="table table-hover">
+                  <thead>
+                      <tr>
+                          <th>Id</th>
+                          <th>Zone</th>
+                          <th>Action</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      ${zones.map(zone => `
+                          <tr key=${zone.id}>
+                              <td>${zone.id}</td>
+                              <td>${zone.zone}</td>
+                              <td>
+                                  <select id="actionDropdown_${zone.id}" class="form-control">
+                                      <option value="">Select Action</option>
+                                      <option value="delete_${zone.id}">Delete</option>
+                                      <option value="edit_${zone.id}">Edit</option>
+                                  </select>
+                              </td>
+                          </tr>
+                      `).join('')}
+                  </tbody>
+              </table>
+          </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Ajouter",
+      cancelButtonText: "Annuler",
+      preConfirm: () => {
+        const zone = Swal.getPopup().querySelector("#swal-input1").value;
+        return { zone };
+      },
     });
 
     if (zoneData) {
-        try {
-            const response = await axios.post(
-                "http://localhost:8000/api/zones",
-                zoneData
-            );
-            console.log(response.data);
-            Swal.fire({
-                icon: "success",
-                title: "Success!",
-                text: "Zone ajoutée avec succès.",
-            });
-        } catch (error) {
-            console.error("Error adding zone:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Erreur!",
-                text: "Échec de l'ajout de la Zone.",
-            });
-        }
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/zones",
+          zoneData
+        );
+        console.log(response.data);
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Zone ajoutée avec succès.",
+        });
+      } catch (error) {
+        console.error("Error adding zone:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de l'ajout de la zone.",
+        });
+      }
     }
-};
+  };
 
-// Event listener for select dropdown
-document.addEventListener('change', function(event) {
-    if (event.target && event.target.id.startsWith('deleteDropdown_')) {
-        const zoneId = event.target.value;
-        if (zoneId) {
-            handleDeleteZone(zoneId);
-            // Clear selection after delete
-            event.target.value = '';
-        }
+  document.addEventListener("change", async function (event) {
+    if (event.target && event.target.id.startsWith("actionDropdown_")) {
+      const [action, zoneId] = event.target.value.split("_");
+      console.log("Action:", action); // Add this line for debugging
+      if (action === "delete") {
+        // Delete action
+        handleDeleteZone(zoneId);
+      } else if (action === "edit") {
+        // Edit action
+        handleEditZone(zoneId);
+      }
+
+      // Clear selection after action
+      event.target.value = "";
     }
-});
-
+  });
 
 
   return (
@@ -479,21 +535,21 @@ document.addEventListener('change', function(event) {
                   />
                 </Form.Group>
                 <Form.Group className="col-sm-4 m-2" id="zone_id">
-                <FontAwesomeIcon
+                  <FontAwesomeIcon
                     icon={faPlus}
                     className="ml-2 text-primary"
                     style={{ cursor: "pointer" }}
                     onClick={handleAddZone}
                     onChange={handleChange}
                   />
-                <Form.Label>Zone</Form.Label>
-                <Form.Control as="select" name="zone_id" value={formData.zone_id} onChange={handleChange}>
-                  <option value="">Sélectionner Zone</option>
-                  {zones.map((zone) => (
-                    <option key={zone.id} value={zone.id}>{zone.zone}</option>
-                  ))}
-                </Form.Control>
-              </Form.Group>
+                  <Form.Label>Zone</Form.Label>
+                  <Form.Control as="select" name="zone_id" value={formData.zone_id} onChange={handleChange}>
+                    <option value="">Sélectionner Zone</option>
+                    {zones.map((zone) => (
+                      <option key={zone.id} value={zone.id}>{zone.zone}</option>
+                    ))}
+                  </Form.Control>
+                </Form.Group>
                 <Form.Group className="col-sm-4 m-2" controlId="zone_id">
                   <Form.Label>Code Postal</Form.Label>
                   <Form.Control
@@ -504,8 +560,8 @@ document.addEventListener('change', function(event) {
                     placeholder="code_postal"
                     className="form-control-sm"
                   />
-                  </Form.Group>
-                  <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                </Form.Group>
+                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
                   <Form.Label>ICE</Form.Label>
                   <Form.Control
                     type="text"
@@ -515,7 +571,7 @@ document.addEventListener('change', function(event) {
                     placeholder="ice"
                     className="form-control-sm"
                   />
-                  </Form.Group>
+                </Form.Group>
                 <Form.Group className="col-sm-4 m-2" controlId="user_id">
                   <Form.Label>Utilisateur</Form.Label>
                   <Form.Control
