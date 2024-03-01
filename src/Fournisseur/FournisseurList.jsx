@@ -577,15 +577,17 @@ const FournisseurList = () => {
                     <Form.Label>Code Postal</Form.Label>
                     <Form.Control type="text" placeholder="code_postal" name="code_postal" value={formData.code_postal} onChange={handleChange} />
                   </Form.Group>
-                  <Form.Group className="col-sm-4 m-2">
-                    <Form.Label>Utilisateur</Form.Label>
-                    <Form.Control as="select" name="user_id" value={formData.user_id} onChange={handleChange}>
-                      <option value="">Sélectionner l'utilisateur</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>{user.name}</option>
-                      ))}
-                    </Form.Control>
-                  </Form.Group>
+                  <Form.Group className="col-sm-4 m-2" controlId="user_id">
+                  <Form.Label>Utilisateur</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="user_id"
+                    value={formData.user_id}
+                    onChange={handleChange}
+                    placeholder="user_id"
+                    className="form-control-sm"
+                  />
+                </Form.Group>
                   <Form.Group className="col m-3 text-center">
                     <Button type="submit" className="btn btn-success col-6">
                       {editingFournisseur ? 'Modifier' : 'Ajouter'}
@@ -666,7 +668,6 @@ const FournisseurList = () => {
         </Box>
       </Box>
     </ThemeProvider>
-
   );
 };
 

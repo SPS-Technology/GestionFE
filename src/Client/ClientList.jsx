@@ -9,12 +9,13 @@ import ExportToPdfButton from './exportToPdf';
 import "jspdf-autotable";
 import Search from "../Acceuil/Search";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faFileExcel, faPrint, } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFileExcel, faPlus } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import "../style.css"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
+
 //------------------------- CLIENT LIST---------------------//
 const ClientList = () => {
   const [clients, setClients] = useState([]);
@@ -304,6 +305,106 @@ const ClientList = () => {
     XLSX.writeFile(wb, "clients.xlsx");
   };
 
+  const handleDeleteZone = async (zoneId) => {
+    try {
+        const response = await axios.delete(`http://localhost:8000/api/zones/${zoneId}`);
+        console.log(response.data);
+        Swal.fire({
+          icon: 'success',
+          title: 'Succès!',
+          text: 'Zone supprimé avec succès.',
+        });
+    } catch (error) {
+        console.error("Error deleting zone:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Erreur!",
+            text: "Échec de la suppression de la Zone.",
+        });
+    }
+};
+
+const handleAddZone = async () => {
+    const { value: zoneData } = await Swal.fire({
+        title: "Ajouter une Zone",
+        html: `
+        <div class="form-group m-3">
+          <form id="addZoneForm">
+            <input id="swal-input1" class="swal2-input" placeholder="Zone" name="zone">
+          </form>
+        </div>
+        <div class="form-group mt-3">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Id</th>
+                <th>Zone</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${zones.map(zone => `
+                <tr key=${zone.id}>
+                  <td>${zone.id}</td>
+                  <td>${zone.zone}</td>
+                  <td>
+                    <select id="deleteDropdown_${zone.id}" class="form-control">
+                      <option value="">Select Action</option>
+                      <option value="${zone.id}">Delete</option>
+                    </select>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Ajouter",
+        cancelButtonText: "Annuler",
+        preConfirm: () => {
+            const zone = Swal.getPopup().querySelector("#swal-input1").value;
+            return { zone };
+        },
+    });
+
+    if (zoneData) {
+        try {
+            const response = await axios.post(
+                "http://localhost:8000/api/zones",
+                zoneData
+            );
+            console.log(response.data);
+            Swal.fire({
+                icon: "success",
+                title: "Success!",
+                text: "Zone ajoutée avec succès.",
+            });
+        } catch (error) {
+            console.error("Error adding zone:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de l'ajout de la Zone.",
+            });
+        }
+    }
+};
+
+// Event listener for select dropdown
+document.addEventListener('change', function(event) {
+    if (event.target && event.target.id.startsWith('deleteDropdown_')) {
+        const zoneId = event.target.value;
+        if (zoneId) {
+            handleDeleteZone(zoneId);
+            // Clear selection after delete
+            event.target.value = '';
+        }
+    }
+});
+
+
+
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: 'flex' }}>
@@ -377,18 +478,14 @@ const ClientList = () => {
                     className="form-control-sm"
                   />
                 </Form.Group>
-                {/* <Form.Group className="col-sm-4 m-2" controlId="zone_id">
-                  <Form.Label>zone_id</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="zone_id"
-                    value={formData.zone_id}
+                <Form.Group className="col-sm-4 m-2" id="zone_id">
+                <FontAwesomeIcon
+                    icon={faPlus}
+                    className="ml-2 text-primary"
+                    style={{ cursor: "pointer" }}
+                    onClick={handleAddZone}
                     onChange={handleChange}
-                    placeholder="zone_id"
-                    className="form-control-sm"
                   />
-                </Form.Group> */}
-                <Form.Group className="col-sm-4 m-2">
                 <Form.Label>Zone</Form.Label>
                 <Form.Control as="select" name="zone_id" value={formData.zone_id} onChange={handleChange}>
                   <option value="">Sélectionner Zone</option>
@@ -499,7 +596,7 @@ const ClientList = () => {
                   </table>
                 ) : (
                   <div className="text-center">
-                    <h5>Aucaun client</h5>
+                    <h5>Aucun client</h5>
                   </div>
                 )}
                 <TablePagination
