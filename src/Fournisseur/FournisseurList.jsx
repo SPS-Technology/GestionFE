@@ -609,7 +609,8 @@ const FournisseurList = () => {
                     <th scope="col">Téléphone</th>
                     <th scope="col">Ville</th>
                     <th scope="col">Abréviation</th>
-                    <th scope="col">ice</th>
+                    <th scope="col">Code Postal</th>
+                    <th scope="col">ICE</th>
                     <th scope="col">User</th>
                     <th scope="col">Action</th>
                   </tr>
@@ -625,8 +626,9 @@ const FournisseurList = () => {
                       <td>{fournisseurs.tele}</td>
                       <td>{fournisseurs.ville}</td>
                       <td>{fournisseurs.abreviation}</td>
+                      <td>{fournisseurs.code_postal}</td>
                       <td>{fournisseurs.ice}</td>
-                      <td>{fournisseurs.user_id}</td>
+                      <td>{fournisseurs.user.name}</td>
                       <td className="d-inline-flex">
                         <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(fournisseurs)}>
                           <i className="fas fa-edit"></i>

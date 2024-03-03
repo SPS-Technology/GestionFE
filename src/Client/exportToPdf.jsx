@@ -5,6 +5,7 @@ import { faFilePdf } from "@fortawesome/free-solid-svg-icons";
 import jsPDF from "jspdf"; // Import jsPDF library
 
 const exportToPdf = (clients, selectedItems) => {
+  console.log("idc", selectedItems)
   if (!clients || clients.length === 0) {
     alert("No data to export!");
     return;
