@@ -5,11 +5,11 @@ import { Form, Button } from 'react-bootstrap';
 import Navigation from "../Acceuil/Navigation";
 import TablePagination from "@mui/material/TablePagination";
 import PrintList from "./PrintList";
-import ExportToPdfButton from './exportToPdf';
+import ExportPdfButton from './exportToPdf';
 import "jspdf-autotable";
 import Search from "../Acceuil/Search";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFileExcel, faPlus, faCircleInfo, faSquarePlus } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFileExcel, faPlus, faMinus, faCircleInfo, faSquarePlus } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import "../style.css"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -41,6 +41,7 @@ const ClientList = () => {
 
   //-------------------Search-----------------------/
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClientId, setSelectedClientId] = useState(null);
 
 
   //------------------------Site-Client---------------------
@@ -83,7 +84,7 @@ const ClientList = () => {
         // Fetch site clients associés au client
         const siteClients = await fetchSiteClients(clientId);
         // console.log('Site clients:', siteClients);
-  
+
         // Mettre à jour l'état des clients avec les site clients associés au client
         setClients((prevClients) => {
           return prevClients.map((client) => {
@@ -93,7 +94,7 @@ const ClientList = () => {
             return client;
           });
         });
-  
+
         // Ajouter le client ID aux lignes étendues
         setExpandedRows([...expandedRows, clientId]);
       } catch (error) {
@@ -101,7 +102,7 @@ const ClientList = () => {
       }
     }
   };
-  
+
   const fetchSiteClients = async (clientId) => {
     try {
       const response = await axios.get(`http://localhost:8000/api/clients/${clientId}/siteclients`);
@@ -111,7 +112,7 @@ const ClientList = () => {
       return [];
     }
   };
-  
+
   useEffect(() => {
     // Préchargement des site clients pour chaque client
     clients.forEach(async (client) => {
@@ -256,15 +257,46 @@ const ClientList = () => {
   };
   //-------------------------SITE CLIENT----------------------------//
   //-------------------------  SUBMIT---------------------//
+  const handleSelectItem = (item) => {
+    const selectedIndex = selectedItems.findIndex((selectedItem) => selectedItem.id === item.id);
 
-  const handleSubmitSC = (e) => { ////---------------" SC : Site client "
+    if (selectedIndex === -1) {
+      setSelectedItems([...selectedItems, item]);
+    } else {
+      const updatedItems = [...selectedItems];
+      updatedItems.splice(selectedIndex, 1);
+      setSelectedItems(updatedItems);
+    }
+
+    console.log("Selected items:", selectedItems);
+  };
+
+
+
+  const getSelectedClientIds = () => {
+    return selectedItems.map(item => item.id);
+  };
+
+
+  const handleSubmitSC = (e) => {
     e.preventDefault();
+
+    const selectedClientIds = getSelectedClientIds();
+
+    if (selectedClientIds.length === 0) {
+      console.error("Aucun client sélectionné pour ajouter un site client.");
+      return;
+    }
+
     const url = editingSiteClient ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}` : 'http://localhost:8000/api/siteclients';
     const method = editingSiteClient ? 'put' : 'post';
+
+    // Ajoutez l'ID du client sélectionné au formulaire de site client
+    const formDataWithClientIds = { ...formDataSC, client_id: selectedClientIds.join(', ') };
     axios({
       method: method,
       url: url,
-      data: formDataSC,
+      data: formDataWithClientIds,
     }).then(() => {
       fetchClients();
       Swal.fire({
@@ -282,8 +314,7 @@ const ClientList = () => {
         user_id: '',
         ice: '',
         code_postal: '',
-        client_id: '',
-
+        client_id: '', // Mettez l'ID du client sélectionn
       });
       setEditingSiteClient(null); // Clear editing site client
       closeForm();
@@ -297,20 +328,21 @@ const ClientList = () => {
     });
   };
 
-  const handleEditSC = (siteclient) => {
-    setEditingSiteClient(siteclient); // Set the client to be edited
+
+  const handleEditSC = (siteClient) => {
+    setEditingSiteClient(siteClient); // Set the client to be edited
     // Populate form data with client details
     setFormDataSC({
-      raison_sociale: siteclient.raison_sociale,
-      abreviation: siteclient.abreviation,
-      adresse: siteclient.adresse,
-      tele: siteclient.tele,
-      ville: siteclient.ville,
-      zone_id: siteclient.zone_id,
-      user_id: siteclient.user_id,
-      ice: siteclient.ice,
-      code_postal: siteclient.code_postal,
-      client_id: siteclient.client_id,
+      raison_sociale: siteClient.raison_sociale,
+      abreviation: siteClient.abreviation,
+      adresse: siteClient.adresse,
+      tele: siteClient.tele,
+      ville: siteClient.ville,
+      zone_id: siteClient.zone_id,
+      user_id: siteClient.user_id,
+      ice: siteClient.ice,
+      code_postal: siteClient.code_postal,
+      client_id: siteClient.selectedClientIds ? siteClient.selectedClientIds.join(', ') : '', // Join selectedClientIds if available
     });
     if (formContainerStyleSC.right === '-500px') {
       setFormContainerStyleSC({ right: '0' });
@@ -320,9 +352,52 @@ const ClientList = () => {
     }
 
   };
+
+  const handleDeleteSiteClient = (id) => {
+    Swal.fire({
+      title: 'Êtes-vous sûr de vouloir supprimer ce site client ?',
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: 'Oui',
+      denyButtonText: 'Non',
+      customClass: {
+        actions: 'my-actions',
+        cancelButton: 'order-1 right-gap',
+        confirmButton: 'order-2',
+        denyButton: 'order-3',
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://localhost:8000/api/siteclients/${id}`)
+          .then(() => {
+            fetchClients();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Site Client supprimé avec succès.",
+            });
+          })
+          .catch((error) => {
+            console.error("Erreur lors de la suppression du site client:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Erreur!",
+              text: "Échec de la suppression du site client.",
+            });
+          });
+      } else {
+        console.log("Suppression annulée");
+      }
+    });
+  };
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClickSC = () => {
+    if (!selectedItems) {
+      console.error("Aucun client sélectionné pour ajouter un site client.");
+      return;
+    }
     if (formContainerStyleSC.right === '-500px') {
       setFormContainerStyleSC({ right: '0' });
       setTableContainerStyle({ marginRight: '500px' });
@@ -644,7 +719,21 @@ const ClientList = () => {
             <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
               {showForm ? 'Modifier le formulaire' : 'Ajouter un Client'}
             </Button>
-            <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClickSC} >
+            <Button
+              variant="primary"
+              className="col-2 btn btn-sm m-2"
+              id="showFormButton"
+              onClick={() => {
+                if (selectedItems.length === 1) {
+                  handleShowFormButtonClickSC();
+                } else if (selectedItems.length > 1) {
+                  console.error("Vous ne pouvez ajouter qu'un seul site client à la fois.");
+                } else {
+                  console.error("Aucun client sélectionné pour ajouter un site client.");
+                }
+              }}
+              disabled={selectedItems.length === 0 || selectedItems.length > 1} // Désactiver le bouton si aucun client n'est sélectionné ou si plus d'un client est sélectionné
+            >
               {showForm ? 'Modifier Site Client' : 'Ajouter Site Client'}
             </Button>
             <div id="formContainer" className="" style={formContainerStyle}>
@@ -869,12 +958,12 @@ const ClientList = () => {
                     className="form-control-sm"
                   />
                 </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="client_id">
+                <Form.Group className="col-sm-4 m-2 hidden" controlId="client_id">
                   <Form.Label>Client</Form.Label>
                   <Form.Control
                     type="text"
                     name="client_id"
-                    value={formDataSC.client_id}
+                    value={selectedItems ? selectedItems.map(client => client.id).join(', ') : ''}
                     onChange={handleChangeSC}
                     placeholder="client_id"
                     className="form-control-sm"
@@ -924,16 +1013,16 @@ const ClientList = () => {
                             <tr>
                               <td>
                                 <div className="no-print ">
-                                  <button className="btn btn-sm btn-light"  onClick={() => toggleRow(client.id)}>
-                                  <FontAwesomeIcon icon={faPlus} />
+                                  <button className="btn btn-sm btn-light" onClick={() => toggleRow(client.id)}>
+                                    <FontAwesomeIcon icon={expandedRows.includes(client.id) ? faMinus : faPlus} />
                                   </button>
                                 </div>
                               </td>
                               <td>
                                 <input
                                   type="checkbox"
-                                  checked={selectedItems.includes(client.id)}
-                                  onChange={() => handleCheckboxChange(client.id)}
+                                  checked={selectedItems.some((item) => item.id === client.id)}
+                                  onChange={() => handleSelectItem(client)}
                                 />
                               </td>
                               <td>{client.raison_sociale}</td>
@@ -958,7 +1047,7 @@ const ClientList = () => {
                                 >
                                   <i className="fas fa-minus-circle"></i>
                                 </button>
-                                
+
                               </td>
                             </tr>
                             {expandedRows.includes(client.id) && client.siteClients && (
@@ -980,8 +1069,8 @@ const ClientList = () => {
                                         </tr>
                                       </thead>
                                       <tbody>
-                                      {client.siteClients.map((siteClient) => (
-                                          
+                                        {client.siteClients.map((siteClient) => (
+
                                           <tr key={siteClient.id}>
                                             <td>{siteClient.raison_sociale}</td>
                                             <td>{siteClient.abreviation}</td>
@@ -990,17 +1079,27 @@ const ClientList = () => {
                                             <td>{siteClient.ville}</td>
                                             <td>{siteClient.code_postal}</td>
                                             <td>{siteClient.ice}</td>
-                                            <td>{siteClient.zone}</td>
+                                            <td>{siteClient.zone_id}</td>
                                             <td className="no-print">
                                               <button
                                                 className="btn btn-sm btn-info m-1"
-                                                onClick={() => handleEditSC(siteClient)}
+                                                onClick={() => {
+                                                  if (selectedItems.length === 1) {
+                                                    handleEditSC(siteClient);
+                                                  } else if (selectedItems.length > 1) {
+                                                    console.error("Vous ne pouvez modifier qu'un seul site client à la fois.");
+                                                  } else {
+                                                    console.error("Aucun client sélectionné pour modifier un site client.");
+                                                  }
+                                                }}
+                                                disabled={selectedItems.length === 0 || selectedItems.length > 1} 
                                               >
                                                 <i className="fas fa-edit"></i>
                                               </button>
-                                              {/* <button className="btn btn-danger" onClick={() => handleDelete(siteClient.id)}>
-                                  <FontAwesomeIcon icon={faTrash} />
-                                  </button> */}
+                                              <button className="btn btn-sm btn-danger m-1" 
+                                              onClick={() => handleDeleteSiteClient(siteClient.id)}>
+                                                <FontAwesomeIcon icon={faTrash} />
+                                              </button>
                                             </td>
                                           </tr>
                                         ))}
@@ -1019,6 +1118,18 @@ const ClientList = () => {
                     <h5>Aucun client</h5>
                   </div>
                 )}
+                <div className="d-flex flex-row">
+                  <div className="btn-group col-2">
+                    <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                    <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
+                    <ExportPdfButton clients={clients} selectedItems={selectedItems} />
+                    <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
+                      <FontAwesomeIcon icon={faFileExcel} />
+                    </Button>
+                  </div>
+                </div>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}
                   component="div"
@@ -1028,18 +1139,6 @@ const ClientList = () => {
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
                 />
-                <div className="d-flex flex-row">
-                  <div className="btn-group col-2">
-                    <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                    <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
-                    <ExportToPdfButton clients={clients} selectedItems={selectedItems} />
-                    <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
-                      <FontAwesomeIcon icon={faFileExcel} />
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
