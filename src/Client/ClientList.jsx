@@ -9,7 +9,7 @@ import ExportToPdfButton from './exportToPdf';
 import "jspdf-autotable";
 import Search from "../Acceuil/Search";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFileExcel, faPlus, faCircleInfo } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFileExcel, faPlus, faCircleInfo, faSquarePlus } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import "../style.css"
 import { createTheme, ThemeProvider } from "@mui/material/styles";
@@ -21,7 +21,7 @@ const ClientList = () => {
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const [zones, setZones] = useState([]);
-  const [siteclients, setSiteClients] = useState([]);
+  const [siteClients, setSiteClients] = useState([]);
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
@@ -51,55 +51,8 @@ const ClientList = () => {
   const [formContainerStyleSC, setFormContainerStyleSC] = useState({ right: '-500px' });
   const [expandedRows, setExpandedRows] = useState([]);
   const [filteredsiteclients, setFilteredsiteclients] = useState([]);
-  const toggleDetails = (index) => {
-    const updatedRows = [...expandedRows];
-    if (updatedRows.includes(index)) {
-      updatedRows.splice(updatedRows.indexOf(index), 1);
-    } else {
-      updatedRows.push(index);
-    }
-    setExpandedRows(updatedRows);
-  };
-  const handleToggleRow = (index) => {
-    if (expandedRows.includes(index)) {
-      setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
-    } else {
-      setExpandedRows([...expandedRows, index]);
-    }
-  };
-  const handleShowDetails = (client) => {
-    setExpandedRows((prevRows) =>
-      prevRows.includes(client)
-        ? prevRows.filter((row) => row !== client)
-        : [...prevRows, client]
-    );
-  };
-  // useEffect(() => {
-  //   const filtered = siteclients.filter((client) =>
-  //     siteclients.id_client
-  //   );
 
-  //   setFilteredclients(filtered);
-  // }, [siteclients, searchTerm]);
 
-  // const handleSearchsc = (term) => {
-  //   setSearchTerm(term);
-  // };
-
-  //---------------------------------------------
-  useEffect(() => {
-    const filtered = clients.filter((client) =>
-      client.raison_sociale
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
-    );
-
-    setFilteredclients(filtered);
-  }, [clients, searchTerm]);
-
-  const handleSearch = (term) => {
-    setSearchTerm(term);
-  };
 
   const fetchClients = async () => {
     try {
@@ -121,6 +74,76 @@ const ClientList = () => {
       console.error("Error fetching data:", error);
     }
   };
+
+  const toggleRow = async (clientId) => {
+    if (expandedRows.includes(clientId)) {
+      setExpandedRows(expandedRows.filter((id) => id !== clientId));
+    } else {
+      try {
+        // Fetch site clients associés au client
+        const siteClients = await fetchSiteClients(clientId);
+        // console.log('Site clients:', siteClients);
+  
+        // Mettre à jour l'état des clients avec les site clients associés au client
+        setClients((prevClients) => {
+          return prevClients.map((client) => {
+            if (client.id === clientId) {
+              return { ...client, siteClients };
+            }
+            return client;
+          });
+        });
+  
+        // Ajouter le client ID aux lignes étendues
+        setExpandedRows([...expandedRows, clientId]);
+      } catch (error) {
+        console.error('Erreur lors de la récupération des site clients:', error);
+      }
+    }
+  };
+  
+  const fetchSiteClients = async (clientId) => {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/clients/${clientId}/siteclients`);
+      return response.data.siteClients;
+    } catch (error) {
+      console.error('Erreur lors de la récupération des site clients:', error);
+      return [];
+    }
+  };
+  
+  useEffect(() => {
+    // Préchargement des site clients pour chaque client
+    clients.forEach(async (client) => {
+      if (!client.siteClients) {
+        const siteClients = await fetchSiteClients(client.id);
+        setClients((prevClients) => {
+          return prevClients.map((prevClient) => {
+            if (prevClient.id === client.id) {
+              return { ...prevClient, siteClients };
+            }
+            return prevClient;
+          });
+        });
+      }
+    });
+  }, [clients]); // Exécuter lorsqu'il y a un changement dans la liste des clients
+
+  //---------------------------------------------
+  useEffect(() => {
+    const filtered = clients.filter((client) =>
+      client.raison_sociale
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+
+    setFilteredclients(filtered);
+  }, [clients, searchTerm]);
+
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
 
   useEffect(() => {
     fetchClients();
@@ -868,9 +891,12 @@ const ClientList = () => {
             <div className="">
               <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                 {clients && clients.length > 0 ? (
-                  <table className="table table-hover" id="clientsTable">
+                  <table className="table table-responsive" id="clientsTable">
                     <thead className="text-center">
                       <tr>
+                        <th>
+                          {/* vide */}
+                        </th>
                         <th>
                           <input
                             type="checkbox"
@@ -893,9 +919,16 @@ const ClientList = () => {
                     <tbody className="text-center">
                       {filteredclients
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((client, index) => (
+                        .map((client) => (
                           <React.Fragment key={client.id}>
                             <tr>
+                              <td>
+                                <div className="no-print ">
+                                  <button className="btn btn-sm btn-light"  onClick={() => toggleRow(client.id)}>
+                                  <FontAwesomeIcon icon={faPlus} />
+                                  </button>
+                                </div>
+                              </td>
                               <td>
                                 <input
                                   type="checkbox"
@@ -925,19 +958,14 @@ const ClientList = () => {
                                 >
                                   <i className="fas fa-minus-circle"></i>
                                 </button>
-                                <button
-                                  className="btn btn-info m-1 no-print"
-                                  onClick={() => handleShowDetails(filteredclients.id)}
-                                >
-                                  <FontAwesomeIcon icon={faCircleInfo} />
-                                </button>
+                                
                               </td>
                             </tr>
-                            {expandedRows.includes(filteredclients.id) && (
+                            {expandedRows.includes(client.id) && client.siteClients && (
                               <tr>
-                                <td colSpan="11">
+                                <td colSpan="12">
                                   <div id="client">
-                                    <table className="table table-hover mt-2" style={{ backgroundColor: "#F1F1F1" }}>
+                                    <table className="table table-responsive" style={{ backgroundColor: "#F1F1F1" }}>
                                       <thead>
                                         <tr>
                                           <th>Raison Sociale</th>
@@ -948,32 +976,29 @@ const ClientList = () => {
                                           <th>Code Postal</th>
                                           <th>ICE</th>
                                           <th>Zone</th>
-                                          <th>User</th>
-                                          <th>Client</th>
                                           <th className="text-center">Action</th>
                                         </tr>
                                       </thead>
                                       <tbody>
-                                        {siteclients.map((siteclient) => (
-                                          <tr key={siteclient.id}>
-                                            <td>{siteclient.raison_sociale}</td>
-                                            <td>{siteclient.abreviation}</td>
-                                            <td>{siteclient.adresse}</td>
-                                            <td>{siteclient.tele}</td>
-                                            <td>{siteclient.ville}</td>
-                                            <td>{siteclient.code_postal}</td>
-                                            <td>{siteclient.ice}</td>
-                                            <td>{siteclient.zone.zone}</td>
-                                            <td>{siteclient.user.name}</td>
-                                            <td>{siteclient.client_id}</td>
+                                      {client.siteClients.map((siteClient) => (
+                                          
+                                          <tr key={siteClient.id}>
+                                            <td>{siteClient.raison_sociale}</td>
+                                            <td>{siteClient.abreviation}</td>
+                                            <td>{siteClient.adresse}</td>
+                                            <td>{siteClient.tele}</td>
+                                            <td>{siteClient.ville}</td>
+                                            <td>{siteClient.code_postal}</td>
+                                            <td>{siteClient.ice}</td>
+                                            <td>{siteClient.zone}</td>
                                             <td className="no-print">
                                               <button
                                                 className="btn btn-sm btn-info m-1"
-                                                onClick={() => handleEditSC(siteclient)}
+                                                onClick={() => handleEditSC(siteClient)}
                                               >
                                                 <i className="fas fa-edit"></i>
                                               </button>
-                                              {/* <button className="btn btn-danger" onClick={() => handleDeleteLigneCommande(ligneCommande.id)}>
+                                              {/* <button className="btn btn-danger" onClick={() => handleDelete(siteClient.id)}>
                                   <FontAwesomeIcon icon={faTrash} />
                                   </button> */}
                                             </td>

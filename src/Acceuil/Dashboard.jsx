@@ -12,6 +12,8 @@ import Grid from "@mui/material/Grid";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import ShoppingCartCheckoutIcon from '@mui/icons-material/ShoppingCartCheckout';
+import MapIcon from '@mui/icons-material/Map';
 import "../style.css";
 import Navigation from "./Navigation";
 import { Toolbar } from "@mui/material";
@@ -24,6 +26,8 @@ const Dashboard = () => {
   const [clients, setClients] = useState([]);
   const [produits, setProduits] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [zones, setZones] = useState([]);
+  const [commandes, setCommandes] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,6 +60,15 @@ const Dashboard = () => {
         "http://localhost:8000/api/fournisseurs"
       );
       setFournisseurs(fournisseurResponse.data.count);
+
+      const zoneResponse = await axios.get(
+        "http://localhost:8000/api/zones"
+      );
+      setZones(zoneResponse.data.count);
+      const commandeResponse = await axios.get(
+        "http://localhost:8000/api/commandes"
+      );
+      setCommandes(commandeResponse.data.count);
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
@@ -76,39 +89,61 @@ const Dashboard = () => {
           <Grid item xs={12} sm={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre de clients
+                <Typography variant="h5" component="div">
+                  Clients <PeopleAltIcon style={{ fontSize: 40 }} color="primary" />
                 </Typography>
                 <Typography variant="h4" color="primary">
                   {clients}
                 </Typography>
-                <PeopleAltIcon style={{ fontSize: 40 }} color="primary" />
+                
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre de produits
+                <Typography variant="h5" component="div">
+                  Produits <ShoppingCartIcon style={{ fontSize: 40 }} color="primary" />
                 </Typography>
                 <Typography variant="h4" color="primary">
-                  {produits}
+                  {produits} 
                 </Typography>
-                <ShoppingCartIcon style={{ fontSize: 40 }} color="primary" />
               </CardContent>
             </Card>
           </Grid>
           <Grid item xs={12} sm={4}>
             <Card>
               <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre des fournisseurs
+                <Typography variant="h5" component="div">
+                Fournisseurs <LocalShippingIcon style={{ fontSize: 40 }} color="primary" />
                 </Typography>
                 <Typography variant="h4" color="primary">
                   {fournisseurs}
                 </Typography>
-                <LocalShippingIcon style={{ fontSize: 40 }} color="primary" />
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" component="div">
+                  Zones <MapIcon style={{ fontSize: 40 }} color="primary" />
+                </Typography>
+                <Typography variant="h4" color="primary">
+                  {zones}
+                </Typography>           
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" component="div">
+                  Commandes <ShoppingCartCheckoutIcon style={{ fontSize: 40 }} color="primary" />
+                </Typography>
+                <Typography variant="h4" color="primary">
+                {commandes}
+                </Typography>
               </CardContent>
             </Card>
           </Grid>
