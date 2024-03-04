@@ -26,7 +26,7 @@ import { Toolbar } from "@mui/material";
 
 const ProduitList = () => {
   const [produits, setProduits] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [user, setUser] = useState({});
   const [categories, setCategories] = useState([]);
   let isEdit = false;
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,15 +66,16 @@ const ProduitList = () => {
     try {
       const response = await axios.get("http://localhost:8000/api/produits");
       setProduits(response.data.produit);
-      console.log("response", response);
-      const usersResponse = await axios.get("http://localhost:8000/api/users");
-      setUsers(usersResponse.data);
+
+      const usersResponse = await axios.get("http://localhost:8000/api/user");
+      const authenticatedUserId = usersResponse.data.id;
+      setUser(authenticatedUserId);
+      console.log("user authentifié", authenticatedUserId);
 
       const responseCategories = await axios.get(
         "http://localhost:8000/api/categories"
       );
       setCategories(responseCategories.data);
-      console.log("categories", responseCategories);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
@@ -235,7 +236,7 @@ const ProduitList = () => {
       type_quantite: produit.type_quantite,
       calibre: produit.calibre,
       categorie_id: produit.categorie_id,
-      user_id: produit.user_id,
+      user_id: user.id,
     });
     if (formContainerStyle.right === "-500px") {
       setFormContainerStyle({ right: "0" });
@@ -257,6 +258,15 @@ const ProduitList = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+
+    if (user) {
+      console.log("User ID before setting in formData:", user.id);
+    }
+    const updatedFormData = { ...formData, user_id: user.id };
+    setFormData(updatedFormData);
+
+    console.log("User ID after setting in formData:", user.id);
+
     const url = editingProduit
       ? `http://localhost:8000/api/produits/${editingProduit.id}`
       : "http://localhost:8000/api/produits";
@@ -265,7 +275,7 @@ const ProduitList = () => {
     axios({
       method: method,
       url: url,
-      data: formData,
+      data: updatedFormData,
     })
       .then(() => {
         fetchProduits();
@@ -280,7 +290,7 @@ const ProduitList = () => {
           type_quantite: "",
           calibre: "",
           categorie_id: "",
-          user_id: "",
+          user_id: "", 
         });
         setEditingProduit(null);
       })
@@ -338,6 +348,7 @@ const ProduitList = () => {
         title: "Succès!",
         text: "Categorie supprimé avec succès.",
       });
+      fetchProduits();
     } catch (error) {
       console.error("Error deleting categorie:", error);
       Swal.fire({
@@ -410,6 +421,7 @@ const ProduitList = () => {
           title: "Success!",
           text: "Catégorie ajoutée avec succès.",
         });
+        fetchProduits();
       } catch (error) {
         console.error("Error adding category:", error);
         Swal.fire({
@@ -446,7 +458,7 @@ const ProduitList = () => {
               : "";
 
           const descriptionValue =
-            categoryToModify && categoryToModify.description
+            categoryToModify && categoryToModify.descriptionart
               ? categoryToModify.description
               : "";
 
@@ -487,6 +499,7 @@ const ProduitList = () => {
               title: "Succès!",
               text: "Catégorie modifiée avec succès.",
             });
+            fetchProduits();
           }
         } catch (error) {
           console.error(
@@ -500,8 +513,6 @@ const ProduitList = () => {
           });
         }
       }
-
-      // Clear selection after action
       event.target.value = "";
     }
   });
@@ -615,7 +626,6 @@ const ProduitList = () => {
                     value={formData.categorie_id}
                     onChange={handleChange}
                     className="form-select form-select-sm"
-                    
                   >
                     <option value="">Sélectionner une catégorie</option>
                     {categories.map((category) => (
@@ -626,7 +636,7 @@ const ProduitList = () => {
                   </Form.Select>
                 </Form.Group>
 
-                <Form.Group className="col-sm-5 m-2 " controlId="user_id">
+                {/* <Form.Group className="col-sm-5 m-2 " controlId="user_id">
                   <Form.Label>User</Form.Label>
                   <Form.Control
                     type="text"
@@ -636,8 +646,9 @@ const ProduitList = () => {
                     placeholder="Utilisateur"
                     className="form-control-sm"
                     required
+                    readOnly
                   />
-                </Form.Group>
+                </Form.Group> */}
 
                 <Form.Group className="col-7 m-3">
                   <Button className="col-6" variant="primary" type="submit">
@@ -653,103 +664,93 @@ const ProduitList = () => {
                 className="table-responsive-sm"
                 style={tableContainerStyle}
               >
-                {produits && produits.length > 0 && (
-                  <table className="table" id="produitsTable">
-                    <thead className="text-center">
-                      <tr>
-                        <th
-                          style={Object.assign({}, tableHeaderStyle, {
-                            textAlign: "left",
-                          })}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={selectAll}
-                            onChange={handleSelectAllChange}
-                          />
-                        </th>
-                        <th style={tableHeaderStyle}>Code_produit</th>
-                        <th style={tableHeaderStyle}>designation</th>
-                        <th style={tableHeaderStyle}>Type de Quantité</th>
-                        <th style={tableHeaderStyle}>Calibre</th>
-                        <th style={tableHeaderStyle}>categorie</th>
-                        {/* <th style={tableHeaderStyle}>description</th> */}
-                        <th
-                          className="text-center"
-                          style={Object.assign({}, tableHeaderStyle, {
-                            textAlign: "left",
-                          })}
-                        >
-                          Action
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-center">
-                      {filteredProduits
-                        .slice(
-                          page * rowsPerPage,
-                          page * rowsPerPage + rowsPerPage
-                        )
-                        .map((produit) => (
-                          <tr key={produit.id}>
-                            <td
-                              style={Object.assign({}, tableCellStyle, {
-                                textAlign: "left",
-                              })}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedItems.includes(produit.id)}
-                                onChange={() =>
-                                  handleCheckboxChange(produit.id)
-                                }
-                              />
-                            </td>
-                            <td style={tableCellStyle}>
-                              {produit.Code_produit}
-                            </td>
-                            <td style={tableCellStyle}>
-                              {produit.designation}
-                            </td>
-                            <td style={tableCellStyle}>
-                              {produit.type_quantite}
-                            </td>
-                            <td style={tableCellStyle}>{produit.calibre}</td>
-                            <td style={tableCellStyle}>
-                              {produit.categorie
-                                ? produit.categorie.categorie
-                                : "no categorie"}
-                            </td>
-                            {/* <td style={tableCellStyle}>
-                              {produit.categorie
-                                ? produit.categorie.description
-                                : "null"}
-                            </td> */}
+                <table className="table" id="produitsTable">
+                  <thead className="text-center">
+                    <tr>
+                      <th
+                        style={Object.assign({}, tableHeaderStyle, {
+                          textAlign: "left",
+                        })}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectAll}
+                          onChange={handleSelectAllChange}
+                        />
+                      </th>
+                      <th style={tableHeaderStyle}>Code_produit</th>
+                      <th style={tableHeaderStyle}>designation</th>
+                      <th style={tableHeaderStyle}>Type de Quantité</th>
+                      <th style={tableHeaderStyle}>Calibre</th>
+                      <th style={tableHeaderStyle}>categorie</th>
+                      <th style={tableHeaderStyle}>user</th>
+                      <th
+                        className="text-center"
+                        style={Object.assign({}, tableHeaderStyle, {
+                          textAlign: "left",
+                        })}
+                      >
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-center">
+                    {filteredProduits
+                      .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                      )
+                      .map((produit) => (
+                        <tr key={produit.id}>
+                          <td
+                            style={Object.assign({}, tableCellStyle, {
+                              textAlign: "left",
+                            })}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={selectedItems.includes(produit.id)}
+                              onChange={() => handleCheckboxChange(produit.id)}
+                            />
+                          </td>
+                          <td style={tableCellStyle}>{produit.Code_produit}</td>
+                          <td style={tableCellStyle}>{produit.designation}</td>
+                          <td style={tableCellStyle}>
+                            {produit.type_quantite}
+                          </td>
+                          <td style={tableCellStyle}>{produit.calibre}</td>
+                          <td style={tableCellStyle}>
+                            {produit.categorie
+                              ? produit.categorie.categorie
+                              : "no categorie"}
+                          </td>
+                          <td style={tableCellStyle}>
+                            {produit.user.name}
+                          </td>
 
-                            <td
-                              className="d-inline-flex"
-                              style={Object.assign({}, tableCellStyle, {
-                                textAlign: "left",
-                              })}
+                          <td
+                            className="d-inline-flex"
+                            style={Object.assign({}, tableCellStyle, {
+                              textAlign: "left",
+                            })}
+                          >
+                            <button
+                              className="btn btn-sm btn-warning m-1"
+                              onClick={() => handleEdit(produit)}
                             >
-                              <button
-                                className="btn btn-sm btn-warning m-1"
-                                onClick={() => handleEdit(produit)}
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="btn btn-danger btn-sm m-1"
-                                onClick={() => handleDelete(produit.id)}
-                              >
-                                <i className="fas fa-minus-circle"></i>
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                    </tbody>
-                  </table>
-                )}
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            <button
+                              className="btn btn-danger btn-sm m-1"
+                              onClick={() => handleDelete(produit.id)}
+                            >
+                              <i className="fas fa-minus-circle"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}
                   component="div"
