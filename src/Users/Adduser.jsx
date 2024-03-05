@@ -31,7 +31,8 @@ const AddUser = () => {
   const handleChange = (e) => {
     setUser({
       ...user,
-      [e.target.name]: e.target.type === "file" ? e.target.files[0] : e.target.value,
+      [e.target.name]:
+        e.target.type === "file" ? e.target.files[0] : e.target.value,
     });
   };
 
@@ -42,11 +43,26 @@ const AddUser = () => {
   const getPermissionsForCategory = () => {
     switch (selectedCategory) {
       case "products":
-        return ["view_all_products", "create_product", "edit_product", "delete_product"];
+        return [
+          "view_all_products",
+          "create_product",
+          "edit_product",
+          "delete_product",
+        ];
       case "fournisseurs":
-        return ["view_all_fournisseurs", "create_fournisseurs", "update_fournisseurs", "delete_fournisseurs"];
+        return [
+          "view_all_fournisseurs",
+          "create_fournisseurs",
+          "update_fournisseurs",
+          "delete_fournisseurs",
+        ];
       case "clients":
-        return ["view_all_clients", "create_clients", "update_clients", "delete_clients"];
+        return [
+          "view_all_clients",
+          "create_clients",
+          "update_clients",
+          "delete_clients",
+        ];
       case "users":
         return ["view_all_users", "create_user", "edit_user", "delete_user"];
       default:
@@ -60,7 +76,9 @@ const AddUser = () => {
 
     if (permissionsForCategory.includes(permission)) {
       if (selectedPermissions.includes(permission)) {
-        setSelectedPermissions(selectedPermissions.filter((p) => p !== permission));
+        setSelectedPermissions(
+          selectedPermissions.filter((p) => p !== permission)
+        );
       } else {
         setSelectedPermissions([...selectedPermissions, permission]);
       }
@@ -84,7 +102,9 @@ const AddUser = () => {
         formData.append("permissions[]", permission);
       });
 
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+      const csrfToken = document.querySelector(
+        'meta[name="csrf-token"]'
+      ).content;
 
       const response = await axios.post(
         "http://localhost:8000/api/register",
@@ -143,119 +163,150 @@ const AddUser = () => {
           });
         }
       } else if (error.request) {
-        console.error("Erreur lors de la communication avec le serveur :", error.request);
+        console.error(
+          "Erreur lors de la communication avec le serveur :",
+          error.request
+        );
       } else {
-        console.error("Erreur lors de la configuration de la requête :", error.message);
+        console.error(
+          "Erreur lors de la configuration de la requête :",
+          error.message
+        );
       }
     }
   };
 
   return (
     <ThemeProvider theme={createTheme()}>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: "flex" }}>
         <Navigation />
-        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+        <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-      <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
-        <i className="fas fa-user-plus" aria-hidden="true"></i>
-        <h2 style={{ marginBottom: "20px" }}>Ajouter un utilisateur</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Nom:</label>
-            <input
-              type="text"
-              name="name"
-              value={user.name}
-              onChange={handleChange}
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-            <span style={{ color: "red" }}>{errors.name}</span>
-          </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Email:</label>
-            <input
-              type="email"
-              name="email"
-              value={user.email}
-              onChange={handleChange}
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-            <span style={{ color: "red" }}>{errors.email}</span>
-          </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Role:</label>
-            <input
-              type="text"
-              name="role"
-              value={user.role}
-              onChange={handleChange}
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-            <span style={{ color: "red" }}>{errors.role}</span>
-          </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Photo:</label>
-            <input
-              type="file"
-              name="photo"
-              onChange={handleChange}
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
+          <div style={{ padding: "20px", maxWidth: "600px", margin: "0 auto" }}>
+            <i className="fas fa-user-plus" aria-hidden="true"></i>
+            <h2 style={{ marginBottom: "20px" }}>Ajouter un utilisateur</h2>
+            <form onSubmit={handleSubmit}>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Nom:</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={user.name}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ color: "red" }}>{errors.name}</span>
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Email:</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={user.email}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ color: "red" }}>{errors.email}</span>
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Role:</label>
+                <input
+                  type="text"
+                  name="role"
+                  value={user.role}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ color: "red" }}>{errors.role}</span>
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Photo:</label>
+                <input
+                  type="file"
+                  name="photo"
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    boxSizing: "border-box",
+                  }}
+                />
 
-            <span style={{ color: "red" }}>{errors.photo}</span>
+                <span style={{ color: "red" }}>{errors.photo}</span>
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Mot de passe:</label>
+                <input
+                  type="text"
+                  name="password"
+                  value={user.password}
+                  onChange={handleChange}
+                  style={{
+                    width: "100%",
+                    padding: "8px",
+                    boxSizing: "border-box",
+                  }}
+                />
+                <span style={{ color: "red" }}>{errors.password}</span>
+              </div>
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ marginRight: "10px" }}>Catégorie:</label>
+                <select
+                  value={selectedCategory}
+                  onChange={handleCategoryChange}
+                >
+                  <option value="products">Produits</option>
+                  <option value="fournisseurs">Fournisseurs</option>
+                  <option value="clients">Clients</option>
+                  <option value="users">Utilisateurs</option>
+                </select>
+                <div>
+                  {getPermissionsForCategory().map((permission) => (
+                    <label key={permission}>
+                      <input
+                        type="checkbox"
+                        value={permission}
+                        checked={selectedPermissions.includes(permission)}
+                        onChange={handlePermissionChange}
+                      />
+                      {permission
+                        .split("_")
+                        .map(
+                          (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                        )
+                        .join(" ")}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <button
+                type="submit"
+                style={{
+                  background: "#4CAF50",
+                  color: "white",
+                  padding: "10px",
+                  border: "none",
+                  borderRadius: "5px",
+                  cursor: "pointer",
+                }}
+              >
+                Ajouter
+              </button>
+            </form>
           </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Mot de passe:</label>
-            <input
-              type="text"
-              name="password"
-              value={user.password}
-              onChange={handleChange}
-              style={{ width: "100%", padding: "8px", boxSizing: "border-box" }}
-            />
-            <span style={{ color: "red" }}>{errors.password}</span>
-          </div>
-          <div style={{ marginBottom: "15px" }}>
-            <label style={{ marginRight: "10px" }}>Catégorie:</label>
-            <select value={selectedCategory} onChange={handleCategoryChange}>
-              <option value="products">Produits</option>
-              <option value="fournisseurs">Fournisseurs</option>
-              <option value="clients">Clients</option>
-              <option value="users">Utilisateurs</option>
-            </select>
-            <div>
-              {getPermissionsForCategory().map((permission) => (
-                <label key={permission}>
-                  <input
-                    type="checkbox"
-                    value={permission}
-                    checked={selectedPermissions.includes(permission)}
-                    onChange={handlePermissionChange}
-                  />
-                  {permission
-                    .split("_")
-                    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                    .join(" ")}
-                </label>
-              ))}
-            </div>
-          </div>
-          <button
-            type="submit"
-            style={{
-              background: "#4CAF50",
-              color: "white",
-              padding: "10px",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-            }}
-          >
-            Ajouter
-          </button>
-        </form>
-      </div>
-      </Box>
+        </Box>
       </Box>
     </ThemeProvider>
   );

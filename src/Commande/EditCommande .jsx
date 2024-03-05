@@ -99,11 +99,12 @@ const EditCommande = ({
 
   const handleEditCommande = async (id) => {
     try {
+      console.log(getElementValueById("client_id"));
       // Step 1: Update the Commande
       await axios.put(
         `http://localhost:8000/api/commandes/${editCommandeId}`,
         {
-          client_id: findClientId(getElementValueById("client_id")),
+          client_id: getElementValueById("client_id"),
           //user_id: findUserId(getElementValueById("user_id")),
           status: getElementValueById("status"),
           mode_payement: getElementValueById("modePaiement"),
@@ -219,15 +220,6 @@ const EditCommande = ({
         title: "Error updating commande",
       });
     }
-  };
-
-  const findClientId = (raisonSociale) => {
-    return clients.find((client) => client.raison_sociale === raisonSociale)
-      ?.id;
-  };
-
-  const findUserId = (userName) => {
-    return users.find((user) => user.name === userName)?.id;
   };
 
   const populateProductInputs = (productId, inputType) => {
@@ -355,12 +347,18 @@ const EditCommande = ({
                   id="client_id"
                   className="form-select"
                   value={commandeData.client_id}
+                  onChange={(event) =>
+                    setCommandeData((prevData) => ({
+                      ...prevData,
+                      client_id: event.target.value,
+                    }))
+                  }
                 >
-                  <option disabled selected>
-                    Client
-                  </option>
+                  <option disabled>Select Client</option>
                   {clients.map((client) => (
-                    <option key={client.id}>{client.raison_sociale}</option>
+                    <option key={client.id} value={client.id}>
+                      {client.raison_sociale}
+                    </option>
                   ))}
                 </select>
               </td>
