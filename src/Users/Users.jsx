@@ -86,7 +86,6 @@ const Users = () => {
     if (!isAuthenticated) {
       navigate("/login");
     }
-    console.log("users", users);
   }, [isAuthenticated, navigate]);
 
   const handleDelete = async (id) => {
@@ -147,38 +146,46 @@ const Users = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-
+  
     try {
-      const formData = new FormData();
-      formData.append("name", user.name);
-      formData.append("email", user.email);
-      formData.append("role", user.role);
-      formData.append("password", user.password);
-      formData.append("photo", user.photo);
-      selectedPermissions.forEach((permission) => {
-        formData.append("permissions[]", permission);
-      });
-      console.log("FormData:", formData);
-
-      const csrfToken = document.querySelector(
-        'meta[name="csrf-token"]'
-      ).content;
-
+      const userData = {
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        password: user.password,
+        permissions: selectedPermissions,
+      };
+  
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  
       let response;
+  
       if (isEditing) {
-         response = await axios.put(
+        response = await axios.put(
           `http://localhost:8000/api/users/${user.id}`,
-          formData,
+          userData,
           {
             withCredentials: true,
             headers: {
               "X-CSRF-TOKEN": csrfToken,
-              "Content-Type": "multipart/form-data",
+              "Content-Type": "application/json",
             },
           }
         );
-        console.log(user.id);
       } else {
+        const formData = new FormData();
+        formData.append("name", user.name);
+        formData.append("email", user.email);
+        formData.append("role", user.role);
+        formData.append("password", user.password);
+        selectedPermissions.forEach((permission) => {
+          formData.append("permissions[]", permission);
+          });
+  
+        if (user.photo) {
+          formData.append("photo", user.photo);
+        }
+  
         response = await axios.post(
           "http://localhost:8000/api/register",
           formData,
@@ -191,17 +198,17 @@ const Users = () => {
           }
         );
       }
-
+  
       if (response.status === 200) {
         Swal.fire({
           icon: "success",
-          title: "Utilisateur ajouté avec succès!",
+          title: "Utilisateur ajouté/modifié avec succès!",
           showConfirmButton: false,
           timer: 1500,
         });
-
-        navigate("/users");
-
+  
+        fetchUsers(); 
+  
         setUser({
           id: null,
           name: "",
@@ -211,6 +218,7 @@ const Users = () => {
           password: "",
           permission: "",
         });
+  
         setErrors({
           name: "",
           email: "",
@@ -219,6 +227,7 @@ const Users = () => {
           password: "",
           permission: "",
         });
+  
         setSelectedPermissions([]);
         setIsEditing(false);
         closeForm();
@@ -228,7 +237,7 @@ const Users = () => {
     } catch (error) {
       if (error.response) {
         const serverErrors = error.response.data.errors;
-
+  
         if (error.response.status === 403) {
           Swal.fire({
             icon: "error",
@@ -257,7 +266,9 @@ const Users = () => {
       }
     }
   };
+  
   const handleShowFormButtonClick = () => {
+    
     if (formContainerStyle.right === "-900px") {
       setFormContainerStyle({ right: "0" });
       setTableContainerStyle({ marginRight: "300px" });
@@ -270,6 +281,7 @@ const Users = () => {
   
 
   const closeForm = () => {
+     setSelectedPermissions([]);
     setUser({
       id: null,
       name: "",
@@ -608,6 +620,7 @@ const Users = () => {
               </tbody>
             </table>
           </div>
+
           <Modal
             show={showPermissionsModal}
             onHide={handlePermissionsModalClose}
@@ -621,6 +634,7 @@ const Users = () => {
             <Modal.Header closeButton>
               <Modal.Title> gerer les Permissions</Modal.Title>
             </Modal.Header>
+
             <Modal.Body>
               <table className="table">
                 <thead>
@@ -633,7 +647,6 @@ const Users = () => {
                   <tr>
                     <td>Produits</td>
                     <td>
-                      {/* Liste des permissions pour les produits */}
                       {renderPermissionsCheckbox(
                         "view_all_products",
                         "View All Products"
@@ -655,7 +668,6 @@ const Users = () => {
                   <tr>
                     <td>Fournisseurs</td>
                     <td>
-                      {/* Liste des permissions pour les fournisseurs */}
                       {renderPermissionsCheckbox(
                         "view_all_fournisseurs",
                         "View All Fournisseurs"
@@ -677,7 +689,6 @@ const Users = () => {
                   <tr>
                     <td>Clients</td>
                     <td>
-                      {/* Liste des permissions pour les clients */}
                       {renderPermissionsCheckbox(
                         "view_all_clients",
                         "View All Clients"
@@ -699,7 +710,6 @@ const Users = () => {
                   <tr>
                     <td>Utilisateurs</td>
                     <td>
-                      {/* Liste des permissions pour les utilisateurs */}
                       {renderPermissionsCheckbox(
                         "view_all_users",
                         "View All Users"
@@ -718,6 +728,7 @@ const Users = () => {
                 Close
               </Button>
             </Modal.Footer>
+
           </Modal>
         </Box>
       </Box>
