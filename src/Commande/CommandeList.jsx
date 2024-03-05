@@ -12,7 +12,8 @@ import {
   faFilePdf,
   faFileExcel,
   faPrint,
-  faCircleInfo,
+  faPlus,
+  faMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -29,7 +30,6 @@ import { Toolbar } from "@mui/material";
 const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
-  //const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCommandes, setFilteredCommandes] = useState([]);
   const [page, setPage] = useState(0);
@@ -48,38 +48,9 @@ const CommandeList = () => {
   const [isAddCommandeDrawerOpen, setIsAddCommandeDrawerOpen] = useState(false);
   const [isEditCommandeDrawerOpen, setIsEditCommandeDrawerOpen] =
     useState(false);
-  const mainContentClasses = `main-content ${drawerOpen ? "collapsed" : ""}`;
-  const [formContainerStyle, setFormContainerStyle] = useState({
-    right: "-500px",
-  });
-  const [tableContainerStyle, setTableContainerStyle] = useState({
-    marginRight: "0px",
-  });
 
   const [expandedRows, setExpandedRows] = useState([]);
-  const toggleDetails = (index) => {
-    const updatedRows = [...expandedRows];
-    if (updatedRows.includes(index)) {
-      updatedRows.splice(updatedRows.indexOf(index), 1);
-    } else {
-      updatedRows.push(index);
-    }
-    setExpandedRows(updatedRows);
-  };
-  const handleDrawerOpen = () => {
-    setDrawerOpen(true);
-  };
 
-  const handleDrawerClose = () => {
-    setDrawerOpen(false);
-  };
-  const handleToggleRow = (index) => {
-    if (expandedRows.includes(index)) {
-      setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
-    } else {
-      setExpandedRows([...expandedRows, index]);
-    }
-  };
   const handleOpenAddCommandeDrawer = () => {
     setIsEditCommandeDrawerOpen(true);
   };
@@ -484,7 +455,7 @@ const CommandeList = () => {
   const getClientNameById = (clientId) => {
     console.log("clients", clients);
     const client = clients.find((c) => c.id === clientId);
-    return client ? client.raison_sociale : "... loading";
+    return client ? client.raison_sociale : "";
   };
   //------------formatDate----------//
   function formatDate(dateString) {
@@ -523,15 +494,12 @@ const CommandeList = () => {
                   </div>
                 </div>
                 <div className="">
-                  <div
-                    id="tableContainer"
-                    className="table-responsive-sm"
-                    style={tableContainerStyle}
-                  >
+                  <div id="tableContainer" className="table-responsive-sm">
                     <table className="table table-hover">
                       {/* Table headers */}
                       <thead className="text-center">
                         <tr>
+                          <th></th>
                           <th className="no-print">
                             <input
                               type="checkbox"
@@ -539,9 +507,9 @@ const CommandeList = () => {
                               onChange={handleSelectAllChange}
                             />
                           </th>
+
                           <th>Reference</th>
                           <th>Date Commande</th>
-                          <th>Date Saisie</th>
                           <th>Mode Paiement</th>
                           <th>Status</th>
                           <th>Client</th>
@@ -555,71 +523,80 @@ const CommandeList = () => {
                             page * rowsPerPage,
                             page * rowsPerPage + rowsPerPage
                           )
-                          .map((filteredCommandes, index) => (
-                            <React.Fragment key={filteredCommandes.id}>
-                              <tr key={filteredCommandes.id}>
+                          .map((filteredCommande, index) => (
+                            <React.Fragment key={filteredCommande.id}>
+                              <tr key={filteredCommande.id}>
+                                <td className="no-print">
+                                  <button
+                                    className="no-print"
+                                    onClick={() =>
+                                      handleShowDetails(filteredCommande.id)
+                                    }
+                                  >
+                                    <FontAwesomeIcon
+                                      icon={
+                                        expandedRows.includes(
+                                          filteredCommande.id
+                                        )
+                                          ? faMinus
+                                          : faPlus
+                                      }
+                                    />
+                                  </button>
+                                </td>
                                 <td className="no-print">
                                   <input
                                     type="checkbox"
                                     checked={selectedItems.includes(
-                                      filteredCommandes.id
+                                      filteredCommande.id
                                     )}
                                     onChange={() =>
-                                      handleCheckboxChange(filteredCommandes.id)
+                                      handleCheckboxChange(filteredCommande.id)
                                     }
                                   />
                                 </td>
-                                <td>{filteredCommandes.reference}</td>
+
+                                <td>{filteredCommande.reference}</td>
                                 <td>
-                                  {formatDate(filteredCommandes.dateCommande)}
+                                  {formatDate(filteredCommande.dateCommande)}
                                 </td>
-                                <td>
-                                  {formatDate(filteredCommandes.dateSaisis)}
-                                </td>
-                                <td>{filteredCommandes.mode_payement}</td>
-                                <td>{filteredCommandes.status}</td>
+
+                                <td>{filteredCommande.mode_payement}</td>
+                                <td>{filteredCommande.status}</td>
                                 <td>
                                   {getClientNameById(
-                                    filteredCommandes.client_id
+                                    filteredCommande.client_id
                                   )}
                                 </td>
                                 <td className="d-inline-flex no-print">
                                   <EditCommande
-                                    className="no-print m-1"
+                                    className="no-print"
                                     produits={produits}
                                     clients={clients}
                                     users={users}
                                     csrfToken={csrfToken}
                                     fetchCommandes={fetchCommandes}
-                                    editCommandeId={filteredCommandes.id}
+                                    editCommandeId={filteredCommande.id}
                                     open={isEditCommandeDrawerOpen}
                                     onClose={handleCloseEditCommandeDrawer}
                                   />
                                   <button
-                                    className="btn btn-danger m-1 no-print"
+                                    className="no-print"
                                     onClick={() =>
-                                      handleDelete(filteredCommandes.id)
+                                      handleDelete(filteredCommande.id)
                                     }
                                   >
                                     <FontAwesomeIcon icon={faTrash} />{" "}
                                   </button>
-                                  <button
-                                    className="btn btn-info m-1 no-print"
-                                    onClick={() =>
-                                      handleShowDetails(filteredCommandes.id)
-                                    }
-                                  >
-                                    <FontAwesomeIcon icon={faCircleInfo} />
-                                  </button>
                                 </td>
                               </tr>
-                              {expandedRows.includes(filteredCommandes.id) && (
+                              {expandedRows.includes(filteredCommande.id) && (
                                 <tr>
                                   <td colSpan="8">
                                     <div>
                                       <CommandeDetails
                                         produits={produits}
-                                        commande={filteredCommandes}
+                                        commande={filteredCommande}
                                         ligneCommandes={ligneCommandes}
                                         statusCommandes={statusCommandes}
                                         fetchLigneCommandes={
@@ -629,9 +606,7 @@ const CommandeList = () => {
                                           fetchStatusCommandes
                                         }
                                         onBackToList={() =>
-                                          handleShowDetails(
-                                            filteredCommandes.id
-                                          )
+                                          handleShowDetails(filteredCommande.id)
                                         }
                                       />
                                     </div>

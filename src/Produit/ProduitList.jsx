@@ -58,9 +58,14 @@ const ProduitList = () => {
     categorie_id: "",
   });
 
-  useEffect(() => {
-    fetchProduits();
-  }, []);
+  useEffect(
+    () => {
+      fetchProduits();
+      fetchCategories();
+    },
+    [],
+    []
+  );
 
   const fetchProduits = async () => {
     try {
@@ -70,6 +75,17 @@ const ProduitList = () => {
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
 
+      // // const responseCategories = await axios.get(
+      // //   "http://localhost:8000/api/categories"
+      // // );
+      // // setCategories(responseCategories.data);
+      // console.log("categories", responseCategories);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  const fetchCategories = async () => {
+    try {
       const responseCategories = await axios.get(
         "http://localhost:8000/api/categories"
       );
@@ -221,6 +237,7 @@ const ProduitList = () => {
       Code_produit: "",
       type_quantite: "",
       calibre: "",
+      prix_vente: "",
       categorie_id: "",
       user_id: "",
     });
@@ -234,6 +251,7 @@ const ProduitList = () => {
       designation: produit.designation,
       type_quantite: produit.type_quantite,
       calibre: produit.calibre,
+      prix_vente: produit.prix_vente,
       categorie_id: produit.categorie_id,
       user_id: produit.user_id,
     });
@@ -279,6 +297,7 @@ const ProduitList = () => {
           designation: "",
           type_quantite: "",
           calibre: "",
+          prix_vente: "",
           categorie_id: "",
           user_id: "",
         });
@@ -352,6 +371,8 @@ const ProduitList = () => {
           "http://localhost:8000/api/categories",
           categoryData
         );
+
+        fetchCategories();
         console.log(response.data);
         Swal.fire({
           icon: "success",
@@ -463,6 +484,18 @@ const ProduitList = () => {
                     required
                   />
                 </Form.Group>
+                <Form.Group className="col-sm-5 m-2 " controlId="prix_vente">
+                  <Form.Label>Prix Vente</Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="prix_vente"
+                    value={formData.prix_vente}
+                    onChange={handleChange}
+                    placeholder="Prix Vente"
+                    className="form-control-sm"
+                    required
+                  />
+                </Form.Group>
                 <Form.Group className="col-sm-5 m-2" controlId="categorie_id">
                   <FontAwesomeIcon
                     icon={faPlus}
@@ -516,62 +549,98 @@ const ProduitList = () => {
                 style={tableContainerStyle}
               >
                 {produits && produits.length > 0 && (
-              <table className="table" id="produitsTable">
-              <thead className="text-center">
-                <tr>
-                  <th style={Object.assign({}, tableHeaderStyle, { textAlign: 'left' })}>
-                    <input
-                      type="checkbox"
-                      checked={selectAll}
-                      onChange={handleSelectAllChange}
-                    />
-                  </th>
-                  <th style={tableHeaderStyle}>Code_produit</th>
-                  <th style={tableHeaderStyle}>designation</th>
-                  <th style={tableHeaderStyle}>Type de Quantité</th>
-                  <th style={tableHeaderStyle}>Calibre</th>
-                  <th style={tableHeaderStyle}>categorie</th>
-                  <th style={tableHeaderStyle}>description</th>
-                  <th className="text-center" style={Object.assign({}, tableHeaderStyle, { textAlign: 'left' })}>Action</th>
-                </tr>
-              </thead>
-              <tbody className="text-center">
-                {filteredProduits
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((produit) => (
-                    <tr key={produit.id}>
-                      <td style={Object.assign({}, tableCellStyle, { textAlign: 'left' })}>
-                        <input
-                          type="checkbox"
-                          checked={selectedItems.includes(produit.id)}
-                          onChange={() => handleCheckboxChange(produit.id)}
-                        />
-                      </td>
-                      <td style={tableCellStyle}>{produit.Code_produit}</td>
-                      <td style={tableCellStyle}>{produit.designation}</td>
-                      <td style={tableCellStyle}>{produit.type_quantite}</td>
-                      <td style={tableCellStyle}>{produit.calibre}</td>
-                      <td style={tableCellStyle}>{produit.categorie.categorie}</td>
-                      <td style={tableCellStyle}>{produit.categorie.description}</td>
-                      <td className="d-inline-flex" style={Object.assign({}, tableCellStyle, { textAlign: 'left' })}>
-                        <button
-                          className="btn btn-sm btn-warning m-1"
-                          onClick={() => handleEdit(produit)}
+                  <table className="table" id="produitsTable">
+                    <thead className="text-center">
+                      <tr>
+                        <th
+                          style={Object.assign({}, tableHeaderStyle, {
+                            textAlign: "left",
+                          })}
                         >
-                          <i className="fas fa-edit"></i>
-                        </button>
-                        <button
-                          className="btn btn-danger btn-sm m-1"
-                          onClick={() => handleDelete(produit.id)}
+                          <input
+                            type="checkbox"
+                            checked={selectAll}
+                            onChange={handleSelectAllChange}
+                          />
+                        </th>
+                        <th style={tableHeaderStyle}>Code_produit</th>
+                        <th style={tableHeaderStyle}>designation</th>
+                        <th style={tableHeaderStyle}>Type de Quantité</th>
+                        <th style={tableHeaderStyle}>Calibre</th>
+                        <th style={tableHeaderStyle}>Prix Vente</th>
+                        <th style={tableHeaderStyle}>categorie</th>
+                        <th style={tableHeaderStyle}>description</th>
+                        <th
+                          className="text-center"
+                          style={Object.assign({}, tableHeaderStyle, {
+                            textAlign: "left",
+                          })}
                         >
-                          <i className="fas fa-minus-circle"></i>
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-              
+                          Action
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-center">
+                      {filteredProduits
+                        .slice(
+                          page * rowsPerPage,
+                          page * rowsPerPage + rowsPerPage
+                        )
+                        .map((produit) => (
+                          <tr key={produit.id}>
+                            <td
+                              style={Object.assign({}, tableCellStyle, {
+                                textAlign: "left",
+                              })}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.includes(produit.id)}
+                                onChange={() =>
+                                  handleCheckboxChange(produit.id)
+                                }
+                              />
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.Code_produit}
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.designation}
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.type_quantite}
+                            </td>
+                            <td style={tableCellStyle}>{produit.calibre}</td>
+                            <td style={tableCellStyle}>{produit.prix_vente}</td>
+                            <td style={tableCellStyle}>
+                              {produit.categorie.categorie}
+                            </td>
+                            <td style={tableCellStyle}>
+                              {produit.categorie.description}
+                            </td>
+                            <td
+                              className="d-inline-flex"
+                              style={Object.assign({}, tableCellStyle, {
+                                textAlign: "left",
+                              })}
+                            >
+                              <button
+                                className="btn btn-sm btn-warning m-1"
+                                onClick={() => handleEdit(produit)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm m-1"
+                                onClick={() => handleDelete(produit.id)}
+                              >
+                                <i className="fas fa-minus-circle"></i>
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
                 )}
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}

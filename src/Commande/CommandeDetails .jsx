@@ -22,7 +22,7 @@ const CommandeDetails = ({ produits, commande }) => {
 
   const produitLookup = (produitId) => {
     const produit = produits.find((p) => p.id === produitId);
-    return produit ? produit.nom : "... loading";
+    return produit ? produit.designation : "";
   };
 
   const handleChangeRowsPerPage = (event) => {
@@ -106,19 +106,17 @@ const CommandeDetails = ({ produits, commande }) => {
   };
 
   return (
-    <div style={{ backgroundColor: "#E1E1E1" }}>
+    <div>
       <div className="details-container col row" id="commande">
         <div className="ligne-commande-table col-5 text-center mt-2 mx-5">
           {/* <Search  onSearch={handleSearch}/> */}
-          <table
-            className="table table-hover mt-2"
-            style={{ backgroundColor: "#F1F1F1" }}
-          >
+          <table className="table">
             <thead>
               <tr>
                 <th>Produit</th>
                 <th>Quantite</th>
                 <th>Prix Unitaire</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -129,7 +127,6 @@ const CommandeDetails = ({ produits, commande }) => {
                   <td>{ligneCommande.prix_unitaire}</td>
                   <td className="no-print">
                     <button
-                      className="btn btn-danger"
                       onClick={() =>
                         handleDeleteLigneCommande(ligneCommande.id)
                       }
@@ -152,30 +149,26 @@ const CommandeDetails = ({ produits, commande }) => {
             className="no-print"
           />
         </div>
-        <div className="status-commande-table col-5 text-center mt-5">
-          <table
-            className="table table-hover"
-            style={{ backgroundColor: "#F1F1F1" }}
-          >
-            <thead>
-              <tr>
-                <th colspan="2">{commande.reference}</th>
+
+        <table className="table text-center">
+          <thead>
+            <tr>
+              <th colspan="2">{commande.reference}</th>
+            </tr>
+            <tr>
+              <th>Status</th>
+              <th>Date Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {statusCommandeDetails.map((statusCommande) => (
+              <tr key={statusCommande.id}>
+                <td>{statusCommande.status}</td>
+                <td>{statusCommande.date_status}</td>
               </tr>
-              <tr>
-                <th>Status</th>
-                <th>Date Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {statusCommandeDetails.map((statusCommande) => (
-                <tr key={statusCommande.id}>
-                  <td>{statusCommande.status}</td>
-                  <td>{statusCommande.date_status}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
