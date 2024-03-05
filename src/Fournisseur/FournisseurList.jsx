@@ -598,7 +598,7 @@ const FournisseurList = () => {
               </div>
             </div>
             <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-              <table className="table" id="fournisseurTable">
+              <table className="table table-responsive table-bordered" id="fournisseurTable">
                 <thead>
                   <tr>
                     <th scope="col">

@@ -8,7 +8,6 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
 
     if (printWindow) {
       const tableToPrint = document.getElementById(tableId);
-
       if (tableToPrint) {
         const newWindowDocument = printWindow.document;
         newWindowDocument.write(`
@@ -18,27 +17,14 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <title>${title}</title>
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
             <style>
               body {
                 font-family: 'Arial', sans-serif;
-                margin-bottom: 60px;
               }
               .page-header {
                 text-align: center;
                 font-size: 24px;
                 margin-bottom: 20px;
-              }
-              .h1 {
-                text-align: center;
-              }
-              .list-title {
-                font-size: 18px;
-                margin-bottom: 10px;
-              }
-              .header {
-                font-size: 16px;
-                margin-bottom: 10px;
               }
               table {
                 width: 100%;
@@ -50,74 +36,63 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
                 padding: 8px;
                 text-align: left;
               }
-              .footer {
-                position: fixed;
-                bottom: 0;
-                width: 100%;
+              th {
+                font-weight: bold;
                 text-align: center;
-                font-size: 14px;
-                margin-top: 30px;
-                background-color: #fff;
+                color:black
               }
-              @media print {
-                .footer {
-                  position: fixed;
-                  bottom: 0;
-                }
-                body {
-                  margin-bottom: 0;
-                }
-                .no-print {
-                  display: none;
-                }
+              .table-header {
+                background-color: #fff;
+                color: #fff;
               }
               .content-wrapper {
                 margin-bottom: 100px;
               }
-              .extra-space {
-                margin-bottom: 30px;
-              }
             </style>
           </head>
           <body>
-    <div class="page-header print-no-date">${title}</div>
-    <div class="content-wrapper">
-      <table>
-        <thead>
-          <tr>
-            <th>Raison Sociale</th>
-            <th>Abreviation</th>
-            <th>Adresse</th>
-            <th>Téléphone</th>
-            <th>Ville</th>
-            <th>Zone</th>
-            <th>User</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${filteredclients.map((client) => `
-            <tr key=${client.id}>
-              <td>${client.raison_sociale}</td>
-              <td>${client.abreviation}</td>
-              <td>${client.adresse}</td>
-              <td>${client.tele}</td>
-              <td>${client.ville}</td>
-              <td>${client.zone}</td>
-              <td>${client.user_id}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    </div>
-    <script>
-      setTimeout(() => {
-        window.print();
-        window.onafterprint = function () {
-          window.close();
-        };
-      }, 1000);
-    </script>
-  </body>
+            <div class="container">
+              <div class="page-header print-no-date m-2">${title}</div>
+              <div class="content-wrapper">
+                <table>
+                  <thead>
+                    <tr class="table-header">
+                      <th>Raison Sociale</th>
+                      <th>Abreviation</th>
+                      <th>Adresse</th>
+                      <th>Téléphone</th>
+                      <th>Ville</th>
+                      <th>Code Postal</th>
+                      <th>ICE</th>
+                      <th>Zone</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredclients.map((client) => `
+                      <tr key=${client.id}>
+                        <td>${client.raison_sociale}</td>
+                        <td>${client.abreviation}</td>
+                        <td>${client.adresse}</td>
+                        <td>${client.tele}</td>
+                        <td>${client.ville}</td>
+                        <td>${client.code_postal}</td>
+                        <td>${client.ice}</td>
+                        <td>${client.zone.zone}</td>
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <script>
+              setTimeout(() => {
+                window.print();
+                window.onafterprint = function () {
+                  window.close();
+                };
+              }, 1000);
+            </script>
+          </body>
           </html>
         `);
 
@@ -132,7 +107,7 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
   
   return (
     <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
-      <FontAwesomeIcon icon={faPrint} className="me-2" />
+      <FontAwesomeIcon icon={faPrint} className="" />
     </button>
   );
 };

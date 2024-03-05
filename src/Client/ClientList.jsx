@@ -281,18 +281,11 @@ const ClientList = () => {
   const handleSubmitSC = (e) => {
     e.preventDefault();
 
-    const selectedClientIds = getSelectedClientIds();
-
-    if (selectedClientIds.length === 0) {
-      console.error("Aucun client sélectionné pour ajouter un site client.");
-      return;
-    }
-
     const url = editingSiteClient ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}` : 'http://localhost:8000/api/siteclients';
     const method = editingSiteClient ? 'put' : 'post';
 
     // Ajoutez l'ID du client sélectionné au formulaire de site client
-    const formDataWithClientIds = { ...formDataSC, client_id: selectedClientIds.join(', ') };
+    const formDataWithClientIds = { ...formDataSC, };
     axios({
       method: method,
       url: url,
@@ -342,7 +335,7 @@ const ClientList = () => {
       user_id: siteClient.user_id,
       ice: siteClient.ice,
       code_postal: siteClient.code_postal,
-      client_id: siteClient.selectedClientIds ? siteClient.selectedClientIds.join(', ') : '', // Join selectedClientIds if available
+      client_id: siteClient.client_id,
     });
     if (formContainerStyleSC.right === '-500px') {
       setFormContainerStyleSC({ right: '0' });
@@ -710,11 +703,12 @@ const ClientList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-
-          <div className="container">
             <h3>Liste des Clients</h3>
-            <div className="search-container d-flex flex-row-reverse " role="search">
+          <div className="container">
+            <div className="d-flex flex-row-reverse col" >      
+            <div className="search-container d-flex flex-row-reverse col-3" role="search">
               <Search onSearch={handleSearch} type="search" />
+            </div>
             </div>
             <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
               {showForm ? 'Modifier le formulaire' : 'Ajouter un Client'}
@@ -978,10 +972,17 @@ const ClientList = () => {
               </Form>
             </div>
             <div className="">
+            <div className="btn-group col-2 d-flex flex-row-reverse">
+                <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
+                <ExportPdfButton clients={clients} selectedItems={selectedItems} />
+                <Button className="btn btn-success btn-sm " onClick={exportToExcel}>
+                  <FontAwesomeIcon icon={faFileExcel} />
+                </Button>
+              </div>
               <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                 {clients && clients.length > 0 ? (
-                  <table className="table table-responsive" id="clientsTable">
-                    <thead className="text-center">
+                  <table className="table table-responsive table-bordered" id="clientsTable">
+                    <thead className="text-center table-secondary">
                       <tr>
                         <th>
                           {/* vide */}
@@ -1084,20 +1085,12 @@ const ClientList = () => {
                                               <button
                                                 className="btn btn-sm btn-info m-1"
                                                 onClick={() => {
-                                                  if (selectedItems.length === 1) {
-                                                    handleEditSC(siteClient);
-                                                  } else if (selectedItems.length > 1) {
-                                                    console.error("Vous ne pouvez modifier qu'un seul site client à la fois.");
-                                                  } else {
-                                                    console.error("Aucun client sélectionné pour modifier un site client.");
-                                                  }
-                                                }}
-                                                disabled={selectedItems.length === 0 || selectedItems.length > 1} 
-                                              >
+                                                  handleEditSC(siteClient);
+                                                }}>
                                                 <i className="fas fa-edit"></i>
                                               </button>
-                                              <button className="btn btn-sm btn-danger m-1" 
-                                              onClick={() => handleDeleteSiteClient(siteClient.id)}>
+                                              <button className="btn btn-sm btn-danger m-1"
+                                                onClick={() => handleDeleteSiteClient(siteClient.id)}>
                                                 <FontAwesomeIcon icon={faTrash} />
                                               </button>
                                             </td>
@@ -1118,17 +1111,10 @@ const ClientList = () => {
                     <h5>Aucun client</h5>
                   </div>
                 )}
-                <div className="d-flex flex-row">
-                  <div className="btn-group col-2">
-                    <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                    <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
-                    <ExportPdfButton clients={clients} selectedItems={selectedItems} />
-                    <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
-                      <FontAwesomeIcon icon={faFileExcel} />
-                    </Button>
-                  </div>
+                <div>
+                <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                  <FontAwesomeIcon icon={faTrash} />
+                </Button>
                 </div>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}

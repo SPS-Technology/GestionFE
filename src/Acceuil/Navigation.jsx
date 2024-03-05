@@ -30,6 +30,8 @@ import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import { grey } from "@mui/material/colors";
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -48,6 +50,7 @@ const AppBar = styled(MuiAppBar, {
       duration: theme.transitions.duration.enteringScreen,
     }),
   }),
+  backgroundColor :"grey"
 }));
 
 const Drawer = styled(MuiDrawer, {
@@ -200,8 +203,8 @@ const Navigation = () => {
           </Toolbar>
           <Divider />
           <List>
-            {user && (
-              <ListItem button style={{ color: "blue" }}>
+            {/* {user && (
+              <ListItem button style={{ color: "#696969" }}>
                 <ListItemIcon>
                   <Avatar
                     alt={user.name}
@@ -209,20 +212,20 @@ const Navigation = () => {
                     style={{ width: "40px", height: "40px" }}
                   />
                 </ListItemIcon>
-                <ListItemText primary={`Hello, ${user.name}`} />
+                <ListItemText primary={`${user.name}`} />
               </ListItem>
-            )}
-            <ListItem button component={Link} to="/" style={{ color: "blue" }}>
+            )} */}
+            <ListItem button component={Link} to="/" style={{ color: "#696969" }}>
               <ListItemIcon>
-                <ShoppingBasketIcon />
+                <DashboardIcon />
               </ListItemIcon>
-              <ListItemText primary="Gestion commandes" />
+              <ListItemText primary="Dashboard" />
             </ListItem>
             <ListItem
               button
               component={Link}
               to="/fournisseurs"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <BusinessIcon />
@@ -233,7 +236,7 @@ const Navigation = () => {
               button
               component={Link}
               to="/clients"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <PeopleIcon />
@@ -244,7 +247,7 @@ const Navigation = () => {
               button
               component={Link}
               to="/produits"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <AddCircleIcon />
@@ -255,29 +258,29 @@ const Navigation = () => {
               button
               component={Link}
               to="/commandes"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <ShoppingBasketIcon />
               </ListItemIcon>
               <ListItemText primary="Gestion Commandes" />
             </ListItem>
-            <ListItem
+            {/* <ListItem
               button
               component={Link}
               to="/add-user"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <AddCircleIcon />
               </ListItemIcon>
               <ListItemText primary="Ajouter utilisateur" />
-            </ListItem>
+            </ListItem> */}
             <ListItem
               button
               component={Link}
               to="/users"
-              style={{ color: "blue" }}
+              style={{ color: "#696969" }}
             >
               <ListItemIcon>
                 <SupervisorAccountIcon />
@@ -294,7 +297,7 @@ const Navigation = () => {
               <ListItemIcon>
                 <ExitToAppIcon />
               </ListItemIcon>
-              <ListItemText primary="Se déconnecter" />
+              <ListItemText primary="Déconnecter" />
             </ListItem>
           </List>
         </Drawer>

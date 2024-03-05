@@ -17,6 +17,7 @@ import MapIcon from '@mui/icons-material/Map';
 import "../style.css";
 import Navigation from "./Navigation";
 import { Toolbar } from "@mui/material";
+import AccountTreeIcon from '@mui/icons-material/AccountTree';
 import { Container } from "@mui/system";
 
 const Dashboard = () => {
@@ -28,6 +29,7 @@ const Dashboard = () => {
   const [fournisseurs, setFournisseurs] = useState([]);
   const [zones, setZones] = useState([]);
   const [commandes, setCommandes] = useState([]);
+  const [siteclients, setSiteclients] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -69,6 +71,11 @@ const Dashboard = () => {
         "http://localhost:8000/api/commandes"
       );
       setCommandes(commandeResponse.data.count);
+
+      const siteclientsResponse = await axios.get(
+        "http://localhost:8000/api/siteclients"
+      );
+      setSiteclients(siteclientsResponse.data.count);
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
@@ -82,76 +89,88 @@ const Dashboard = () => {
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: 'flex' }}>
         <Navigation />
-        
+
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <Toolbar />
           <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" component="div">
-                  Clients <PeopleAltIcon style={{ fontSize: 40 }} color="primary" />
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {clients}
-                </Typography>
-                
-              </CardContent>
-            </Card>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Clients <PeopleAltIcon style={{ fontSize: 40, color:"#696969" }} color="primary" />
+                  </Typography>
+                  <Typography variant="h4" style={{  color:"#696969" }} >
+                    {clients}
+                  </Typography>
+
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Site Clients <AccountTreeIcon style={{ fontSize: 40, color:"#696969"   }} />
+                  </Typography>
+                  <Typography variant="h4"style={{  color:"#696969" }}>
+                    {siteclients}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Produits <ShoppingCartIcon style={{ fontSize: 40, color:"#696969"  }} color="primary" />
+                  </Typography>
+                  <Typography variant="h4"style={{  color:"#696969" }}>
+                    {produits}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Fournisseurs <LocalShippingIcon style={{ fontSize: 40, color:"#696969"  }} color="primary" />
+                  </Typography>
+                  <Typography variant="h4" style={{  color:"#696969" }}>
+                    {fournisseurs}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Zones <MapIcon style={{ fontSize: 40, color:"#696969"  }} color="primary" />
+                  </Typography>
+                  <Typography variant="h4" style={{  color:"#696969" }}>
+                    {zones}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h5" component="div">
+                    Commandes <ShoppingCartCheckoutIcon style={{ fontSize: 40, color:"#696969"  }} color="primary" />
+                  </Typography>
+                  <Typography variant="h4" style={{  color:"#696969" }}>
+                    {commandes}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" component="div">
-                  Produits <ShoppingCartIcon style={{ fontSize: 40 }} color="primary" />
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {produits} 
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" component="div">
-                Fournisseurs <LocalShippingIcon style={{ fontSize: 40 }} color="primary" />
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {fournisseurs}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" component="div">
-                  Zones <MapIcon style={{ fontSize: 40 }} color="primary" />
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {zones}
-                </Typography>           
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h5" component="div">
-                  Commandes <ShoppingCartCheckoutIcon style={{ fontSize: 40 }} color="primary" />
-                </Typography>
-                <Typography variant="h4" color="primary">
-                {commandes}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
+        </Box>
       </Box>
     </ThemeProvider>
- 
+
   );
 };
 
