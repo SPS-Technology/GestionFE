@@ -17,6 +17,8 @@ const ListDevis = () => {
   const [showModal, setShowModal] = useState(false);
   const handleModalClose = () => setShowModal(false);
   const [totals, setTotals] = useState({});
+  const [selectedProductsData, setSelectedProductsData] = useState([]);
+
 
   const [produits, setProduits] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -49,20 +51,26 @@ const ListDevis = () => {
     try {
       const response = await axios.get("http://localhost:8000/api/devises");
       setDevis(response.data.devis);
-  
-      const lignedevisResponse = await axios.get("http://localhost:8000/api/lignedevis");
+
+      const lignedevisResponse = await axios.get(
+        "http://localhost:8000/api/lignedevis"
+      );
       setLigneDevis(lignedevisResponse.data.lignedevis);
-  
-      const clientResponse = await axios.get("http://localhost:8000/api/clients");
+
+      const clientResponse = await axios.get(
+        "http://localhost:8000/api/clients"
+      );
+      // console.log("API Response:", response.data);
       setClients(clientResponse.data.client);
-  
-      const produitResponse = await axios.get("http://localhost:8000/api/produits");
+
+      const produitResponse = await axios.get(
+        "http://localhost:8000/api/produits"
+      );
       setProduits(produitResponse.data.produit);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
-  
 
   useEffect(() => {
     fetchDevis();
@@ -112,23 +120,27 @@ const ListDevis = () => {
       //ligneDevisData.id_devis = ;
 
       const selectedProductsData = selectedProducts.map((productId) => {
-        const selectedProduct = produits.find((product) => product.id === productId);
-      
+        const selectedProduct = produits.find(
+          (product) => product.id === productId
+        );
+        console.log("selectedProducts", selectedProduct);
+
         if (selectedProduct) {
           return {
-            ligne: formData.ligne,
             Code_produit: selectedProduct.Code_produit,
             designation: selectedProduct.designation,
             id_devis: devisResponse.data.devis.id,
-            quantite: getElementValueById(`quantite_${productId}`),
-            prix_vente: getElementValueById(`prix_vente_${productId}`),
+            quantite: selectedProduct.quantite,
+            prix_vente: selectedProduct.prix_vente,
           };
         } else {
-          console.error(`Product with ID ${productId} not found in produits array.`);
+          console.error(
+            `Product with ID ${productId} not found in produits array.`
+          );
           return null; // or handle the error in a way that suits your needs
         }
       });
-        console.log("selectedProductsData", selectedProductsData);
+      console.log("selectedProductsData", selectedProductsData);
 
       for (const ligneDevisData of selectedProductsData) {
         await axios.post(
@@ -288,8 +300,41 @@ const ListDevis = () => {
     setShowModal(true); // Show the modal
   };
 
+  // const handleProductSelection = () => {
+  //   // Collect selected products
+  //   const selectedProductsData = produits
+  //     .map((produit) => {
+  //       const productId = produit.id;
+  //       const isChecked = document.getElementById(
+  //         `produit_${productId}`
+  //       ).checked;
+  //       if (isChecked) {
+  //         const quantite = document.getElementById(
+  //           `quantite_${productId}`
+  //         ).value;
+  //         const prixVente = document.getElementById(
+  //           `prix_vente_${productId}`
+  //         ).value;
+  //         return {
+  //           productId,
+  //           quantite,
+  //           prixVente,
+  //         };
+  //       }
+  //       return null;
+  //     })
+  //     .filter((product) => product !== null);
+
+  //   // Handle saving selected products
+  //   // For example, you can send selectedProductsData to the server
+  //   // using an axios.post request.
+  //   console.log(selectedProductsData);
+
+  //   // Close the modal
+  //   setShowModal(false);
+  // };
   const handleProductSelection = () => {
-    // Collect selected products
+    // Collect selected products with quantity and price
     const selectedProductsData = produits.map((produit) => {
       const productId = produit.id;
       const isChecked = document.getElementById(`produit_${productId}`).checked;
@@ -305,10 +350,8 @@ const ListDevis = () => {
       return null;
     }).filter((product) => product !== null);
   
-    // Handle saving selected products
-    // For example, you can send selectedProductsData to the server
-    // using an axios.post request.
-    console.log(selectedProductsData);
+    // Update selected products data state
+    setSelectedProductsData(selectedProductsData);
   
     // Close the modal
     setShowModal(false);
@@ -414,14 +457,49 @@ const ListDevis = () => {
                     name="user_id"
                   />
                 </Form.Group>
-                <Form.Group className="col-sm-2" controlId="">
+                <Form.Group className="m-2 col-4" controlId="">
                   <Button variant="primary" onClick={handleModalShow}>
                     produits
                   </Button>
                 </Form.Group>
+                <Form.Group className="m-2 col" controlId="user_id">
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th>Code</th>
+                        <th>Désignation</th>
+                        <th>Quantité</th>
+                        <th>Prix vente</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedProductsData.map((productData) => (
+                        <tr key={productData.productId}>
+                          <td>
+                            {
+                              produits.find(
+                                (produit) =>
+                                  produit.id === productData.productId
+                              )?.Code_produit
+                            }
+                          </td>
+                          <td>
+                            {
+                              produits.find(
+                                (produit) =>
+                                  produit.id === productData.productId
+                              )?.designation
+                            }
+                          </td>
+                          <td>{productData.quantite}</td>
+                          <td>{productData.prixVente}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </Form.Group>
+                
                 <Modal show={showModal} onHide={handleModalClose}>
-                <Toolbar />
-                <Toolbar />
                   <Modal.Header closeButton>
                     <Modal.Title>Sélectionner les produits</Modal.Title>
                   </Modal.Header>
@@ -430,6 +508,7 @@ const ListDevis = () => {
                       <table className="table table-hover">
                         <thead>
                           <tr>
+                            <th>Sélectionner</th>
                             <th>Code</th>
                             <th>Désignation</th>
                             <th>Quantité</th>
@@ -437,53 +516,37 @@ const ListDevis = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {selectedProducts.map((productId) => {
-                            const selectedProduct = produits.find(
-                              (product) => product.id === productId
-                            );
-                            if (!selectedProduct) return null;
-
-                            return (
-                              <tr key={productId}>
-                                <td>{selectedProduct.Code_produit}</td>
-                                <td>{selectedProduct.designation}</td>
-                                <td>
-                                  <input
-                                    className="col-3"
-                                    type="text"
-                                    value={
-                                      formData[`quantite_${productId}`] || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleChange({
-                                        target: {
-                                          name: `quantite_${productId}`,
-                                          value: e.target.value,
-                                        },
-                                      })
-                                    }
-                                  />
-                                </td>
-                                <td>
-                                  <input
-                                    type="text"
-                                    className="col-3"
-                                    value={
-                                      formData[`prix_vente_${productId}`] || ""
-                                    }
-                                    onChange={(e) =>
-                                      handleChange({
-                                        target: {
-                                          name: `prix_vente_${productId}`,
-                                          value: e.target.value,
-                                        },
-                                      })
-                                    }
-                                  />
-                                </td>
-                              </tr>
-                            );
-                          })}
+                          {produits.map((produit) => (
+                            <tr key={produit.id}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  id={`produit_${produit.id}`}
+                                  name="selectedProducts"
+                                  value={produit.id}
+                                  onChange={() =>
+                                    handleProductCheckboxChange(produit.id)
+                                  }
+                                />
+                              </td>
+                              <td>{produit.Code_produit}</td>
+                              <td>{produit.designation}</td>
+                              <td>
+                                <input
+                                  className="col-3"
+                                  type="text"
+                                  id={`quantite_${produit.id}`}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="text"
+                                  className="col-3"
+                                  id={`prix_vente_${produit.id}`}
+                                />
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
@@ -497,7 +560,6 @@ const ListDevis = () => {
                     </Button>
                   </Modal.Footer>
                 </Modal>
-
                 {/* <Form.Group className="mb-3" controlId="Code_produit">
                   <Form.Label>Code produit:</Form.Label>
                   <Form.Control
