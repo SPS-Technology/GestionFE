@@ -7,6 +7,7 @@ import ClientList from './Client/ClientList';
 import ProduitList from './Produit/ProduitList';
 import Login from './Login/Login';
 import CommandeList from './Commande/CommandeList';
+import DevisList from './Devis/DevisList';
 import AddUser from './Users/Adduser';
 import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
@@ -24,6 +25,7 @@ const App = () => {
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
         <Route path="/produits" element={<ProduitList />} />
+        <Route path="/devises" element={<DevisList />} />
         <Route path="/commandes" element={<CommandeList />} />
         <Route path="/add-user" element={<AddUser />} />
         <Route path="/users" element={<Users />} />

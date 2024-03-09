@@ -22,11 +22,10 @@ const ClientList = () => {
   const [users, setUsers] = useState([]);
   const [zones, setZones] = useState([]);
   const [siteClients, setSiteClients] = useState([]);
-
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ raison_sociale: '', abreviation: '', adresse: '', tele: '', ville: '', zone_id: '', user_id: '', ice: '', code_postal: '', });
-  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
+  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-100%' });
   const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
   //-------------------edit-----------------------//
   const [editingClient, setEditingClient] = useState(null); // State to hold the client being edited
@@ -35,25 +34,24 @@ const ClientList = () => {
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [page, setPage] = useState(0);
   const [filteredclients, setFilteredclients] = useState([]);
+  // Pagination calculations
+  const indexOfLastClient = (page + 1) * rowsPerPage;
+  const indexOfFirstClient = indexOfLastClient - rowsPerPage;
+  const currentClients = clients.slice(indexOfFirstClient, indexOfLastClient);
   //-------------------Selected-----------------------/
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-
   //-------------------Search-----------------------/
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedClientId, setSelectedClientId] = useState(null);
-
-
   //------------------------Site-Client---------------------
   const [showFormSC, setShowFormSC] = useState(false);
   const [editingSiteClient, setEditingSiteClient] = useState(null);
   const [editingSiteClientId, setEditingSiteClientId] = useState(null);
   const [formDataSC, setFormDataSC] = useState({ raison_sociale: '', abreviation: '', adresse: '', tele: '', ville: '', zone_id: '', user_id: '', ice: '', code_postal: '', client_id: '', });
-  const [formContainerStyleSC, setFormContainerStyleSC] = useState({ right: '-500px' });
+  const [formContainerStyleSC, setFormContainerStyleSC] = useState({ right: '-100%' });
   const [expandedRows, setExpandedRows] = useState([]);
   const [filteredsiteclients, setFilteredsiteclients] = useState([]);
-
-
 
   const fetchClients = async () => {
     try {
@@ -145,7 +143,6 @@ const ClientList = () => {
     setSearchTerm(term);
   };
 
-
   useEffect(() => {
     fetchClients();
   }, []);
@@ -173,7 +170,7 @@ const ClientList = () => {
       ice: client.ice,
       code_postal: client.code_postal,
     });
-    if (formContainerStyle.right === '-500px') {
+    if (formContainerStyle.right === '-100%') {
       setFormContainerStyle({ right: '0' });
       setTableContainerStyle({ marginRight: '500px' });
     } else {
@@ -230,7 +227,7 @@ const ClientList = () => {
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
-    if (formContainerStyle.right === '-500px') {
+    if (formContainerStyle.right === '-100%') {
       setFormContainerStyle({ right: '0' });
       setTableContainerStyle({ marginRight: '500px' });
     } else {
@@ -239,7 +236,7 @@ const ClientList = () => {
   };
 
   const closeForm = () => {
-    setFormContainerStyle({ right: '-500px' });
+    setFormContainerStyle({ right: '-100%' });
     setTableContainerStyle({ marginRight: '0' });
     setShowForm(false); // Hide the form
     setFormData({ // Clear form data
@@ -271,21 +268,19 @@ const ClientList = () => {
     console.log("Selected items:", selectedItems);
   };
 
-
-
   const getSelectedClientIds = () => {
     return selectedItems.map(item => item.id);
   };
 
-
   const handleSubmitSC = (e) => {
     e.preventDefault();
-
+    const selectedClientIds = getSelectedClientIds();
+    
     const url = editingSiteClient ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}` : 'http://localhost:8000/api/siteclients';
     const method = editingSiteClient ? 'put' : 'post';
 
     // Ajoutez l'ID du client sélectionné au formulaire de site client
-    const formDataWithClientIds = { ...formDataSC, };
+    const formDataWithClientIds = { ...formDataSC, client_id: selectedClientIds.join(', ') };
     axios({
       method: method,
       url: url,
@@ -321,7 +316,6 @@ const ClientList = () => {
     });
   };
 
-
   const handleEditSC = (siteClient) => {
     setEditingSiteClient(siteClient); // Set the client to be edited
     // Populate form data with client details
@@ -337,7 +331,7 @@ const ClientList = () => {
       code_postal: siteClient.code_postal,
       client_id: siteClient.client_id,
     });
-    if (formContainerStyleSC.right === '-500px') {
+    if (formContainerStyleSC.right === '-100%') {
       setFormContainerStyleSC({ right: '0' });
       setTableContainerStyle({ marginRight: '500px' });
     } else {
@@ -391,7 +385,7 @@ const ClientList = () => {
       console.error("Aucun client sélectionné pour ajouter un site client.");
       return;
     }
-    if (formContainerStyleSC.right === '-500px') {
+    if (formContainerStyleSC.right === '-100%') {
       setFormContainerStyleSC({ right: '0' });
       setTableContainerStyle({ marginRight: '500px' });
     } else {
@@ -400,7 +394,7 @@ const ClientList = () => {
   };
 
   const closeFormSC = () => {
-    setFormContainerStyleSC({ right: '-500px' });
+    setFormContainerStyleSC({ right: '-100%' });
     setTableContainerStyle({ marginRight: '0' });
     setShowFormSC(false); // Hide the form
     setFormDataSC({ // Clear form data
@@ -429,11 +423,6 @@ const ClientList = () => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-
-  // Pagination calculations
-  const indexOfLastClient = (page + 1) * rowsPerPage;
-  const indexOfFirstClient = indexOfLastClient - rowsPerPage;
-  const currentClients = clients.slice(indexOfFirstClient, indexOfLastClient);
 
   //------------------------- CLIENT DELETE---------------------//
 
@@ -613,6 +602,7 @@ const ClientList = () => {
         text: "Échec de la modification de la zone.",
       });
     }
+    fetchClients();
   };
 
   const handleAddZone = async () => {
@@ -654,6 +644,7 @@ const ClientList = () => {
         const zone = Swal.getPopup().querySelector("#swal-input1").value;
         return { zone };
       },
+     
     });
 
     if (zoneData) {
@@ -677,6 +668,7 @@ const ClientList = () => {
         });
       }
     }
+    fetchClients();
   };
 
   document.addEventListener("change", async function (event) {
@@ -981,7 +973,7 @@ const ClientList = () => {
               </div>
               <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                 {clients && clients.length > 0 ? (
-                  <table className="table table-responsive table-bordered" id="clientsTable">
+                  <table className="table table-bordered" id="clientsTable">
                     <thead className="text-center table-secondary">
                       <tr>
                         <th>
@@ -1055,8 +1047,8 @@ const ClientList = () => {
                               <tr>
                                 <td colSpan="12">
                                   <div id="client">
-                                    <table className="table table-responsive" style={{ backgroundColor: "#F1F1F1" }}>
-                                      <thead>
+                                    <table className="table table-responsive" style={{ backgroundColor: "#adb5bd" }}>
+                                      {/* <thead>
                                         <tr>
                                           <th>Raison Sociale</th>
                                           <th>Abreviation</th>
@@ -1068,11 +1060,12 @@ const ClientList = () => {
                                           <th>Zone</th>
                                           <th className="text-center">Action</th>
                                         </tr>
-                                      </thead>
+                                      </thead> */}
                                       <tbody>
                                         {client.siteClients.map((siteClient) => (
 
                                           <tr key={siteClient.id}>
+                                            <td colSpan={1}>Site</td>
                                             <td>{siteClient.raison_sociale}</td>
                                             <td>{siteClient.abreviation}</td>
                                             <td>{siteClient.adresse}</td>

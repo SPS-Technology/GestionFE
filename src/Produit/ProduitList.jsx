@@ -367,7 +367,9 @@ const ProduitList = () => {
         });
       }
     }
+    fetchProduits();
   };
+  
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>

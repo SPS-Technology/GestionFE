@@ -25,6 +25,7 @@ import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 import { Link } from "react-router-dom";
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import CssBaseline from "@mui/material/CssBaseline";
 import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
@@ -253,6 +254,17 @@ const Navigation = () => {
                 <AddCircleIcon />
               </ListItemIcon>
               <ListItemText primary="Produits" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/devises"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Devises" />
             </ListItem>
             <ListItem
               button

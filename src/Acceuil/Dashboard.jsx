@@ -53,6 +53,11 @@ const Dashboard = () => {
       );
       setClients(clientResponse.data.count);
 
+      const siteclientsResponse = await axios.get(
+        "http://localhost:8000/api/siteclients"
+      );
+      setSiteclients(siteclientsResponse.data.count);
+
       const produitResponse = await axios.get(
         "http://localhost:8000/api/produits"
       );
@@ -72,10 +77,6 @@ const Dashboard = () => {
       );
       setCommandes(commandeResponse.data.count);
 
-      const siteclientsResponse = await axios.get(
-        "http://localhost:8000/api/siteclients"
-      );
-      setSiteclients(siteclientsResponse.data.count);
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
