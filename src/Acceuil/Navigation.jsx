@@ -33,6 +33,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { grey } from "@mui/material/colors";
+import DescriptionIcon from '@mui/icons-material/Description';
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -265,6 +266,17 @@ const Navigation = () => {
                 <ReceiptIcon />
               </ListItemIcon>
               <ListItemText primary="Devises" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/factures"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <DescriptionIcon />
+              </ListItemIcon>
+              <ListItemText primary="Factures" />
             </ListItem>
             <ListItem
               button

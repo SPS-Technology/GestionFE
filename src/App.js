@@ -12,6 +12,7 @@ import AddUser from './Users/Adduser';
 import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
 import Dashboard from './Acceuil/Dashboard';
+import FactureList from './Facture/FactureList';
 
 
 const App = () => {
@@ -26,6 +27,7 @@ const App = () => {
         <Route path="/clients" element={<ClientList />} />
         <Route path="/produits" element={<ProduitList />} />
         <Route path="/devises" element={<DevisList />} />
+        <Route path="/factures" element={<FactureList />} />
         <Route path="/commandes" element={<CommandeList />} />
         <Route path="/add-user" element={<AddUser />} />
         <Route path="/users" element={<Users />} />

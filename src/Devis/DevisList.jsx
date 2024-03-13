@@ -6,23 +6,29 @@ import { Toolbar } from "@mui/material";
 import Navigation from "../Acceuil/Navigation";
 import { Form, Button, Modal, Table } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faPrint } from "@fortawesome/free-solid-svg-icons";
+import { faTrash, faFilePdf, faPrint, faPlus, faMinus, } from "@fortawesome/free-solid-svg-icons";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 import Swal from "sweetalert2";
 
 const ListDevis = () => {
-  const [devises, setDevis] = useState([]);
-  const [lignedevis, setLigneDevis] = useState([]);
+  const [devises, setDevises] = useState([]);
+  const [lignedevises, setLigneDevis] = useState([]);
   const [clients, setClients] = useState([]);
+  const [expandedRows, setExpandedRows] = useState([]);
+  const [filtereddevises, setFiltereddevises] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectAll, setSelectAll] = useState(false);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const handleModalClose = () => setShowModal(false);
   const [totals, setTotals] = useState({});
   const [selectedProductsData, setSelectedProductsData] = useState([]);
 
-
   const [produits, setProduits] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
-
+  const [factures, setFactures] = useState([]);
   const [formData, setFormData] = useState({
     reference: "",
     date: "",
@@ -50,7 +56,7 @@ const ListDevis = () => {
   const fetchDevis = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/devises");
-      setDevis(response.data.devis);
+      setDevises(response.data.devis);
 
       const lignedevisResponse = await axios.get(
         "http://localhost:8000/api/lignedevis"
@@ -67,10 +73,72 @@ const ListDevis = () => {
         "http://localhost:8000/api/produits"
       );
       setProduits(produitResponse.data.produit);
+
+      const factureResponse = await axios.get(
+        "http://localhost:8000/api/factures"
+      );
+      setFactures(factureResponse.data.facture);
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
+
+  const toggleRow = async (devisId) => {
+    if (expandedRows.includes(devisId)) {
+      setExpandedRows(expandedRows.filter((id) => id !== devisId));
+    } else {
+      try {
+        // Récupérer les lignes de devis associées à ce devis
+        const lignedevis = await fetchLigneDevis(devisId);
+
+        // Mettre à jour l'état pour inclure les lignes de devis récupérées
+        setDevises((prevDevises) =>
+          prevDevises.map((devis) =>
+            devis.id === devisId ? { ...devis, lignedevis } : devis
+          )
+        );
+
+        // Ajouter l'ID du devis aux lignes étendues
+        setExpandedRows([...expandedRows, devisId]);
+      } catch (error) {
+        console.error(
+          "Erreur lors de la récupération des lignes de devis :",
+          error
+        );
+      }
+    }
+  };
+  const fetchLigneDevis = async (devisId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/devises/${devisId}/lignedevis`
+      );
+      return response.data.lignedevis;
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des lignes de devis :",
+        error
+      );
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    // Préchargement des lingedevises pour chaque devis
+    devises.forEach(async (devis) => {
+      if (!devis.lignedevis) {
+        const lignedevis = await fetchLigneDevis(devis.id);
+        setClients((prevDevises) => {
+          return prevDevises.map((prevDevis) => {
+            if (prevDevis.id === devis.id) {
+              return { ...prevDevis, lignedevis };
+            }
+            return prevDevis;
+          });
+        });
+      }
+    });
+  }, [devises]);
 
   useEffect(() => {
     fetchDevis();
@@ -88,7 +156,7 @@ const ListDevis = () => {
     e.preventDefault();
 
     try {
-      // Prepare Devis data
+      // Préparer les données du devis
       const devisData = {
         reference: formData.reference,
         date: formData.date,
@@ -99,66 +167,105 @@ const ListDevis = () => {
         user_id: formData.user_id,
       };
 
-      // Send a POST request to save Devis data
-      const devisResponse = await axios.post(
-        "http://localhost:8000/api/devises",
-        devisData
-      );
-      console.log("devisResponse", devisResponse.data.devis.id);
-
-      // Prepare Ligne Devis data
-      // const ligneDevisData = {
-      //   ligne: formData.ligne,
-      //   Code_produit: formData.Code_produit,
-      //   designation: formData.designation,
-      //   quantite: formData.quantite,
-      //   prix_vente: formData.prix_vente,
-      //   id_devis: devisResponse.data.devis.id,
-      // };
-
-      // Set id_devis field for Ligne Devis
-      //ligneDevisData.id_devis = ;
-
-      const selectedProductsData = selectedProducts.map((productId) => {
-        const selectedProduct = produits.find(
-          (product) => product.id === productId
+      let response;
+      if (editingDevis) {
+        // Mettre à jour le devis existant
+        response = await axios.put(
+          `http://localhost:8000/api/devises/${editingDevis.id}`,
+          devisData
         );
-        console.log("selectedProducts", selectedProduct);
-
-        if (selectedProduct) {
-          return {
-            Code_produit: selectedProduct.Code_produit,
-            designation: selectedProduct.designation,
-            id_devis: devisResponse.data.devis.id,
-            quantite: selectedProduct.quantite,
-            prix_vente: selectedProduct.prix_vente,
-          };
-        } else {
-          console.error(
-            `Product with ID ${productId} not found in produits array.`
-          );
-          return null; // or handle the error in a way that suits your needs
-        }
-      });
-      console.log("selectedProductsData", selectedProductsData);
-
-      for (const ligneDevisData of selectedProductsData) {
-        await axios.post(
-          "http://localhost:8000/api/lignedevis",
-          ligneDevisData
+      } else {
+        // Créer un nouveau devis
+        response = await axios.post(
+          "http://localhost:8000/api/devises",
+          devisData
         );
       }
+       // Vérifier si le statut est "Valider"
+    if (formData.status === "Valider") {
+      // Préparer les données de la facture
+      const factureData = {
+        client_id: formData.client_id,
+        user_id: formData.user_id,
+        id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
+      };
 
-      // // Send a POST request to save Ligne Devis data
-      // await axios.post("http://localhost:8000/api/lignedevis", ligneDevisData);
+      // Envoyer une requête POST pour créer la facture
+      const factureResponse = await axios.post(
+        "http://localhost:8000/api/factures",
+        factureData
+      );
 
-      // // Handle success
-      // console.log("Devi added successfully.");
+      console.log("Facture créée:", factureResponse.data);
+    }
+//       // Vérifier si le statut est "Valider" et si response.data.devis est défini
+//       if (formData.status === "Valider" && response.data && response.data.devis) {
+//         // Préparer les données de la facture
+//         const factureData = {
+//           client_id: formData.client_id,
+//           user_id: formData.user_id,
+//           id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
+//         };
 
-      // Fetch updated data
+//         // Envoyer une requête POST pour créer la facture
+//         const factureResponse = await axios.post(
+//           "http://localhost:8000/api/factures",
+//           factureData
+//         );
+
+//         console.log("Facture créée:", factureResponse.data);
+//       }
+//       // Si le statut est "Valider" et l'id du devis est défini
+// if (formData.status === "Valider" && response.data && response.data.devis && response.data.devis.id) {
+//   // Mettre à jour le statut du devis
+//   const updatedDevisData = {
+//     status: "Valider",
+//     // autres champs à mettre à jour si nécessaire
+//   };
+
+//   // Envoyer une requête PUT pour mettre à jour le devis
+//   const updatedDevisResponse = await axios.put(
+//     `http://localhost:8000/api/devises/${response.data.devis.id}`,
+//     updatedDevisData
+//   );
+
+//   console.log("Devis mis à jour:", updatedDevisResponse.data);
+// }
+
+      // Préparer les données des lignes de devis
+      const selectedPrdsData = selectedProductsData.map((selectProduct) => {
+        return {
+          id: selectProduct.id, // Ajoutez l'ID de la ligne de devis
+          Code_produit: selectProduct.Code_produit,
+          designation: selectProduct.designation,
+          id_devis: response.data.devis ? response.data.devis.id : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
+          quantite: selectProduct.quantite,
+          prix_vente: selectProduct.prix_vente,
+        };
+
+      });
+
+      // Envoyer une requête POST pour chaque produit sélectionné
+      for (const ligneDevisData of selectedPrdsData) {
+        if (ligneDevisData.id) {
+          // Si l'ID existe, il s'agit d'une modification
+          await axios.put(
+            `http://localhost:8000/api/lignedevis/${ligneDevisData.id}`,
+            ligneDevisData
+          );
+        } else {
+          // Sinon, il s'agit d'une nouvelle ligne de devis
+          await axios.post(
+            "http://localhost:8000/api/lignedevis",
+            ligneDevisData
+          );
+        }
+      }
+
+      // Récupérer les données mises à jour
       fetchDevis();
 
-      // Reset form data
+      // Réinitialiser les données du formulaire
       setFormData({
         reference: "",
         date: "",
@@ -174,37 +281,31 @@ const ListDevis = () => {
         id_devis: "",
       });
 
-      // Close the form if needed
+      // Fermer le formulaire si nécessaire
       setShowForm(false);
 
-      // Show success message to the user
+      // Afficher un message de succès à l'utilisateur
       Swal.fire({
         icon: "success",
-        title: "Success!",
-        text: "Devis and Ligne Devis details added successfully.",
+        title: "Succès !",
+        text: "Détails du devis et des lignes de devis ajoutés avec succès.",
       });
     } catch (error) {
-      console.error("Error submitting data:", error);
+      console.error("Erreur lors de la soumission des données :", error);
 
-      // Show error message to the user
+      // Afficher un message d'erreur à l'utilisateur
       Swal.fire({
         icon: "error",
-        title: "Error!",
-        text: "Failed to add Devis and Ligne Devis details.",
+        title: "Erreur !",
+        text: "Impossible d'ajouter les détails du devis et des lignes de devis.",
       });
     }
+    closeForm();
   };
 
-  // const findProduitId = (Code_produit) => {
-  //   return produits.find((produit) => produit.Code_produit === Code_produit)?.id;
-  // };
-  // const getProduitByDesignation = (designation) => {
-  //   return produits.find((produit) => produit.designation === designation)?.id;
-  // };
 
   const handleEdit = (devis) => {
-    setEditingDevis(devis); // Set the client to be edited
-    // Populate form data with client details
+    setEditingDevis(devis);
     setFormData({
       reference: devis.reference,
       date: devis.date,
@@ -214,6 +315,17 @@ const ListDevis = () => {
       client_id: devis.client_id,
       user_id: devis.user_id,
     });
+
+    const selectedProducts = devis.lignedevis.map((lignedevis) => ({
+      id: lignedevis.id, // Ajoutez l'ID de la ligne de devis
+      Code_produit: lignedevis.Code_produit,
+      designation: lignedevis.designation,
+      quantite: lignedevis.quantite,
+      prix_vente: lignedevis.prix_vente,
+      id_devis: lignedevis.id_devis,
+    }));
+    setSelectedProductsData(selectedProducts);
+
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
       setTableContainerStyle({ marginRight: "500px" });
@@ -221,6 +333,7 @@ const ListDevis = () => {
       closeForm();
     }
   };
+
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -283,6 +396,11 @@ const ListDevis = () => {
       client_id: "",
       zone_id: "",
       user_id: "",
+      Code_produit: "",
+      designation: "",
+      prix_vente: "",
+      quantite: "",
+      id_devis: "",
     });
     setEditingDevis(null); // Clear editing client
   };
@@ -300,63 +418,205 @@ const ListDevis = () => {
     setShowModal(true); // Show the modal
   };
 
-  // const handleProductSelection = () => {
-  //   // Collect selected products
-  //   const selectedProductsData = produits
-  //     .map((produit) => {
-  //       const productId = produit.id;
-  //       const isChecked = document.getElementById(
-  //         `produit_${productId}`
-  //       ).checked;
-  //       if (isChecked) {
-  //         const quantite = document.getElementById(
-  //           `quantite_${productId}`
-  //         ).value;
-  //         const prixVente = document.getElementById(
-  //           `prix_vente_${productId}`
-  //         ).value;
-  //         return {
-  //           productId,
-  //           quantite,
-  //           prixVente,
-  //         };
-  //       }
-  //       return null;
-  //     })
-  //     .filter((product) => product !== null);
-
-  //   // Handle saving selected products
-  //   // For example, you can send selectedProductsData to the server
-  //   // using an axios.post request.
-  //   console.log(selectedProductsData);
-
-  //   // Close the modal
-  //   setShowModal(false);
-  // };
   const handleProductSelection = () => {
     // Collect selected products with quantity and price
-    const selectedProductsData = produits.map((produit) => {
-      const productId = produit.id;
-      const isChecked = document.getElementById(`produit_${productId}`).checked;
-      if (isChecked) {
-        const quantite = document.getElementById(`quantite_${productId}`).value;
-        const prixVente = document.getElementById(`prix_vente_${productId}`).value;
-        return {
-          productId,
-          quantite,
-          prixVente,
-        };
-      }
-      return null;
-    }).filter((product) => product !== null);
-  
+    const selectedProductsData = produits
+      .map((produit) => {
+        const productId = produit.id;
+        const isChecked = document.getElementById(
+          `produit_${productId}`
+        ).checked;
+        if (isChecked) {
+          const quantite = document.getElementById(
+            `quantite_${productId}`
+          ).value;
+          const prix_vente = document.getElementById(
+            `prix_vente_${productId}`
+          ).value;
+          const Code_produit = produit.Code_produit;
+          const designation = produit.designation;
+
+          return {
+            Code_produit,
+            designation,
+            productId,
+            quantite,
+            prix_vente,
+          };
+        }
+        return null;
+      })
+      .filter((product) => product !== null);
+    console.log("selectedProductsData", selectedProductsData);
+
     // Update selected products data state
     setSelectedProductsData(selectedProductsData);
-  
+
     // Close the modal
     setShowModal(false);
   };
-  
+
+  useEffect(() => {
+    const filtered = devises.filter((devis) =>
+      devis.reference.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFiltereddevises(filtered);
+  }, [devises, searchTerm]);
+
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
+
+  const handleCheckboxChange = (itemId) => {
+    if (selectedItems.includes(itemId)) {
+      setSelectedItems(selectedItems.filter((id) => id !== itemId));
+    } else {
+      setSelectedItems([...selectedItems, itemId]);
+    }
+  };
+
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (selectAll) {
+      setSelectedItems([]);
+    } else {
+      setSelectedItems(devises.map((devis) => devis.id));
+    }
+  };
+
+  const handlePrint = (devisId) => {
+    // Récupérer les informations spécifiques au devis sélectionné
+    const selectedDevis = devises.find((devis) => devis.id === devisId);
+
+    // Création d'une nouvelle instance de jsPDF
+    const doc = new jsPDF();
+
+    // Position de départ pour l'impression des données
+    let startY = 20;
+
+    // Dessiner les informations du client dans un tableau à gauche
+    const clientInfo = [
+      { label: "Raison sociale:", value: selectedDevis.client.raison_sociale },
+      { label: "Adresse:", value: selectedDevis.client.adresse },
+      { label: "Téléphone:", value: selectedDevis.client.tele },
+      { label: "ICE:", value: selectedDevis.client.ice },
+      // Ajoutez d'autres informations client si nécessaire
+    ];
+
+    // Dessiner le tableau d'informations client à gauche
+    doc.setFontSize(10); // Police plus petite pour les informations du client
+    clientInfo.forEach((info) => {
+      doc.text(`${info.label}`, 10, startY);
+      doc.text(`${info.value}`, 40, startY);
+      startY += 10; // Espacement entre les lignes du tableau
+    });
+
+    // Dessiner le tableau des informations du devis à droite
+    const devisInfo = [
+      { label: "N° Devis:", value: selectedDevis.reference },
+      { label: "Date:", value: selectedDevis.date },
+      {
+        label: "Validation de l'offre:",
+        value: selectedDevis.validation_offer,
+      },
+      { label: "Mode de Paiement:", value: selectedDevis.modePaiement },
+    ];
+
+    // Dessiner le tableau des informations du devis à droite
+    startY = 20; // Réinitialiser la position Y
+    devisInfo.forEach((info) => {
+      doc.text(`${info.label}`, 120, startY);
+      doc.text(`${info.value}`, 160, startY);
+      startY += 10; // Espacement entre les lignes du tableau
+    });
+
+    // Vérifier si les détails des lignes de devis sont définis
+    if (selectedDevis.lignedevis) {
+      // Dessiner les en-têtes du tableau des lignes de devis
+      const headersLigneDevis = [
+        "Code produit",
+        "Désignation",
+        "Quantité",
+        "Prix",
+        "Total HT",
+      ];
+
+      // Récupérer les données des lignes de devis
+      const rowsLigneDevis = selectedDevis.lignedevis.map((lignedevis) => [
+        lignedevis.Code_produit,
+        lignedevis.designation,
+        lignedevis.quantite,
+        lignedevis.prix_vente,
+        // Calculate the total for each product line
+        (lignedevis.quantite * lignedevis.prix_vente).toFixed(2), // Assuming the price is in currency format
+      ]);
+
+      // Dessiner le tableau des lignes de devis
+      doc.autoTable({
+        head: [headersLigneDevis],
+        body: rowsLigneDevis,
+        startY: startY + 20, // Décalage vers le bas pour éviter de chevaucher les informations du devis
+        margin: { top: 20 },
+        styles: {
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          fontSize: 8, // Police plus petite pour les lignes de devis
+        },
+        columnStyles: {
+          0: { cellWidth: 40 }, // Largeur de la première colonne
+          1: { cellWidth: 60 }, // Largeur de la deuxième colonne
+          2: { cellWidth: 20 }, // Largeur de la troisième colonne
+          3: { cellWidth: 30 }, // Largeur de la quatrième colonne
+          4: { cellWidth: 30 }, // Largeur de la cinquième colonne
+        },
+      });
+
+      // Dessiner le tableau des montants
+      const montantTable = [
+        [
+          "Montant Total Hors Taxes:",
+          getTotalHT(selectedDevis.lignedevis).toFixed(2),
+        ],
+        [
+          "TVA (20%):",
+          calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2),
+        ],
+        ["TTC:", getTotalTTC(selectedDevis.lignedevis).toFixed(2)],
+      ];
+
+      doc.autoTable({
+        body: montantTable,
+        startY: doc.autoTable.previous.finalY + 10,
+        margin: { top: 20 },
+        styles: {
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          fontSize: 10, // Police plus petite pour les montants
+        },
+      });
+    }
+
+    // Enregistrer le fichier PDF avec le nom 'devis.pdf'
+    doc.save("devis.pdf");
+  };
+
+  // Fonction pour calculer le montant total hors taxes
+  const getTotalHT = (lignedevis) => {
+    return lignedevis.reduce(
+      (total, item) => total + item.quantite * item.prix_vente,
+      0
+    );
+  };
+
+  // Fonction pour calculer la TVA
+  const calculateTVA = (totalHT) => {
+    return totalHT * 0.2; // 20% de TVA
+  };
+
+  // Fonction pour calculer le montant total toutes taxes comprises (TTC)
+  const getTotalTTC = (lignedevis) => {
+    return getTotalHT(lignedevis) + calculateTVA(getTotalHT(lignedevis));
+  };
 
   return (
     <ThemeProvider theme={createTheme()}>
@@ -420,13 +680,13 @@ const ListDevis = () => {
                   />
                 </Form.Group>
                 <Form.Group className="m-2 col-4" controlId="status">
-                  <Form.Label>Status:</Form.Label>
                   <Form.Select
                     value={formData.status}
                     onChange={handleChange}
                     name="status"
+                    id="status"
                   >
-                    <option value="">select</option>
+                    <option value="">Status</option>
                     <option value="Envoye">Envoye</option>
                     <option value="Valider">Valider</option>
                     <option value="Non Valider">Non Valide</option>
@@ -457,12 +717,12 @@ const ListDevis = () => {
                     name="user_id"
                   />
                 </Form.Group>
-                <Form.Group className="m-2 col-4" controlId="">
+                <Form.Group className="mt-5 col-4" controlId="">
                   <Button variant="primary" onClick={handleModalShow}>
                     produits
                   </Button>
                 </Form.Group>
-                <Form.Group className="m-2 col" controlId="user_id">
+                <Form.Group className="m-2 col" controlId="product_list">
                   <table className="table table-bordered">
                     <thead>
                       <tr>
@@ -492,14 +752,14 @@ const ListDevis = () => {
                             }
                           </td>
                           <td>{productData.quantite}</td>
-                          <td>{productData.prixVente}</td>
+                          <td>{productData.prix_vente}</td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
                 </Form.Group>
-                
                 <Modal show={showModal} onHide={handleModalClose}>
+                <Toolbar />
                   <Modal.Header closeButton>
                     <Modal.Title>Sélectionner les produits</Modal.Title>
                   </Modal.Header>
@@ -533,7 +793,7 @@ const ListDevis = () => {
                               <td>{produit.designation}</td>
                               <td>
                                 <input
-                                  className="col-3"
+                                  className="col-8"
                                   type="text"
                                   id={`quantite_${produit.id}`}
                                 />
@@ -541,7 +801,7 @@ const ListDevis = () => {
                               <td>
                                 <input
                                   type="text"
-                                  className="col-3"
+                                  className="col-10"
                                   id={`prix_vente_${produit.id}`}
                                 />
                               </td>
@@ -560,51 +820,6 @@ const ListDevis = () => {
                     </Button>
                   </Modal.Footer>
                 </Modal>
-                {/* <Form.Group className="mb-3" controlId="Code_produit">
-                  <Form.Label>Code produit:</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.Code_produit}
-                    onChange={handleChange}
-                    name="Code_produit"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="designation">
-                  <Form.Label>Designation:</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.designation}
-                    onChange={handleChange}
-                    name="designation"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="prix_vente">
-                  <Form.Label>Prix vente:</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.prix_vente}
-                    onChange={handleChange}
-                    name="prix_vente"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="quantite">
-                  <Form.Label>Quantite:</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.quantite}
-                    onChange={handleChange}
-                    name="quantite"
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3" controlId="ligne">
-                  <Form.Label>Ligne:</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.ligne}
-                    onChange={handleChange}
-                    name="ligne"
-                  />
-                </Form.Group> */}
                 <div className="col-3 mt-5">
                   <Button
                     className="btn btn-sm"
@@ -622,46 +837,131 @@ const ListDevis = () => {
               style={tableContainerStyle}
             >
               <table className="table table-bordered">
-                <thead className="text-center">
+                <thead className="text-center " style={{ backgroundColor: "#adb5bd" }}>
                   <tr>
+                    <th>{/* Vide */}</th>
+                    <th>
+                      <input
+                        type="checkbox"
+                        checked={selectAll}
+                        onChange={handleSelectAllChange}
+                      />
+                    </th>
                     <th>N° Devis</th>
                     <th>date</th>
                     <th>Validation de l'offre</th>
                     <th>Mode de Paiement</th>
                     <th>Status</th>
                     <th>Client</th>
-                    <th>User</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
                   {devises &&
                     devises.map((devis) => (
-                      <tr key={devis.id}>
-                        <td>{devis.reference}</td>
-                        <td>{devis.date}</td>
-                        <td>{devis.validation_offer}</td>
-                        <td>{devis.modePaiement}</td>
-                        <td>{devis.status}</td>
-                        <td>{devis.client_id}</td>
-                        <td>{devis.user_id}</td>
-                        <td>
-                          <div className="d-inline-flex text-center">
-                            <Button
-                              className="btn btn-sm btn-info m-1"
-                              onClick={() => handleEdit(devis)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                            <Button
-                              className="btn btn-danger btn-sm m-1"
-                              onClick={() => handleDelete(devis.id)}
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                      <React.Fragment key={devis.id}>
+                        <tr>
+                          <td>
+                            <div className="no-print ">
+                              <button
+                                className="btn btn-sm btn-light"
+                                onClick={() => toggleRow(devis.id)}
+                              >
+                                <FontAwesomeIcon
+                                  icon={
+                                    expandedRows.includes(devis.id)
+                                      ? faMinus
+                                      : faPlus
+                                  }
+                                />
+                              </button>
+                            </div>
+                          </td>
+                          <td>
+                            {/* <input
+                              type="checkbox"
+                              checked={selectedItems.some(
+                                (item) => item.id === devis.id
+                              )}
+                              onChange={() => handleSelectItem(devis)}
+                            /> */}
+                            <input type="checkbox" onChange={() => handleCheckboxChange(devis.id)} checked={selectedItems.includes(devis.id)} />
+                          </td>
+                          <td>{devis.reference}</td>
+                          <td>{devis.date}</td>
+                          <td>{devis.validation_offer}</td>
+                          <td>{devis.modePaiement}</td>
+                          <td>{devis.status}</td>
+                          <td>{devis.client.raison_sociale}</td>
+                          <td>
+                            <div className="d-inline-flex text-center">
+                              <Button
+                                className="col-3 btn btn-sm btn-info m-2"
+                                onClick={() => handleEdit(devis)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </Button>
+                              <Button
+                                className="col-3 btn btn-danger btn-sm m-2"
+                                onClick={() => handleDelete(devis.id)}
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </Button>
+                              <Button
+                                className="col-3 btn btn-sm m-2"
+                                onClick={() => handlePrint(devis.id)}
+                              >
+                                <FontAwesomeIcon icon={faFilePdf} />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedRows.includes(devis.id) && devis.lignedevis && (
+                          <tr>
+                            <td colSpan="12">
+                              <div id="lignesDevis">
+                                <table
+                                  className="table table-responsive table-bordered"
+                                  style={{ backgroundColor: "#adb5bd" }}
+                                >
+                                  <thead>
+                                    <tr>
+                                      <th>Code Produit</th>
+                                      <th>Description</th>
+                                      <th>Quantite</th>
+                                      <th>Prix Vente</th>
+                                      {/* <th className="text-center">Action</th> */}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {devis.lignedevis.map((ligneDevis) => (
+                                      <tr key={ligneDevis.id}>
+                                        <td>{ligneDevis.Code_produit}</td>
+                                        <td>{ligneDevis.designation}</td>
+                                        <td>{ligneDevis.quantite}</td>
+                                        <td>{ligneDevis.prix_vente} DH</td>
+                                        {/* <td className="no-print">
+                                              <button
+                                                className="btn btn-sm btn-info m-1"
+                                                onClick={() => {
+                                                  handleEditSC(siteClient);
+                                                }}>
+                                                <i className="fas fa-edit"></i>
+                                              </button>
+                                              <button className="btn btn-sm btn-danger m-1"
+                                                onClick={() => handleDeleteSiteClient(siteClient.id)}>
+                                                <FontAwesomeIcon icon={faTrash} />
+                                              </button>
+                                            </td> */}
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     ))}
                 </tbody>
               </table>

@@ -81,7 +81,6 @@ const ClientList = () => {
       try {
         // Fetch site clients associés au client
         const siteClients = await fetchSiteClients(clientId);
-        // console.log('Site clients:', siteClients);
 
         // Mettre à jour l'état des clients avec les site clients associés au client
         setClients((prevClients) => {
@@ -995,7 +994,7 @@ const ClientList = () => {
                         <th>ICE</th>
                         <th>Zone</th>
                         <th>User</th>
-                        <th className="text-center">Action</th>
+                        <th>Action</th>
                       </tr>
                     </thead>
                     <tbody className="text-center">
