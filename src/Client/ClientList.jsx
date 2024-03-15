@@ -274,7 +274,7 @@ const ClientList = () => {
   const handleSubmitSC = (e) => {
     e.preventDefault();
     const selectedClientIds = getSelectedClientIds();
-    
+
     const url = editingSiteClient ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}` : 'http://localhost:8000/api/siteclients';
     const method = editingSiteClient ? 'put' : 'post';
 
@@ -643,7 +643,7 @@ const ClientList = () => {
         const zone = Swal.getPopup().querySelector("#swal-input1").value;
         return { zone };
       },
-     
+
     });
 
     if (zoneData) {
@@ -694,12 +694,12 @@ const ClientList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-            <h3>Liste des Clients</h3>
+          <h3>Liste des Clients</h3>
           <div className="container">
-            <div className="d-flex flex-row-reverse col" >      
-            <div className="search-container d-flex flex-row-reverse col-3" role="search">
-              <Search onSearch={handleSearch} type="search" />
-            </div>
+            <div className="d-flex flex-row-reverse col" >
+              <div className="search-container d-flex flex-row-reverse col-3" role="search">
+                <Search onSearch={handleSearch} type="search" />
+              </div>
             </div>
             <Button variant="primary" className="col-2 btn btn-sm m-2" id="showFormButton" onClick={handleShowFormButtonClick}>
               {showForm ? 'Modifier le formulaire' : 'Ajouter un Client'}
@@ -963,7 +963,7 @@ const ClientList = () => {
               </Form>
             </div>
             <div className="">
-            <div className="btn-group col-2 d-flex flex-row-reverse">
+              <div className="btn-group col-2 d-flex flex-row-reverse">
                 <PrintList tableId="clientsTable" title="Liste des clients" clientList={clients} filteredclients={filteredclients} />
                 <ExportPdfButton clients={clients} selectedItems={selectedItems} />
                 <Button className="btn btn-success btn-sm " onClick={exportToExcel}>
@@ -1046,25 +1046,18 @@ const ClientList = () => {
                               <tr>
                                 <td colSpan="12">
                                   <div id="client">
-                                    <table className="table table-responsive" style={{ backgroundColor: "#adb5bd" }}>
-                                      {/* <thead>
-                                        <tr>
-                                          <th>Raison Sociale</th>
-                                          <th>Abreviation</th>
-                                          <th>Adresse</th>
-                                          <th>Téléphone</th>
-                                          <th>Ville</th>
-                                          <th>Code Postal</th>
-                                          <th>ICE</th>
-                                          <th>Zone</th>
-                                          <th className="text-center">Action</th>
-                                        </tr>
-                                      </thead> */}
+                                    <table className="table table-responsive table-bordered" style={{ backgroundColor: "#adb5bd" }}>
                                       <tbody>
                                         {client.siteClients.map((siteClient) => (
 
                                           <tr key={siteClient.id}>
-                                            <td colSpan={1}>Site</td>
+                                            <td>
+                                              <div className="no-print ">
+                                                <button className="btn btn-sm btn-light" disabled>
+                                                  <FontAwesomeIcon icon={expandedRows.includes(client.id) ? faMinus : faPlus} />
+                                                </button>
+                                              </div>
+                                            </td>
                                             <td>{siteClient.raison_sociale}</td>
                                             <td>{siteClient.abreviation}</td>
                                             <td>{siteClient.adresse}</td>
@@ -1104,9 +1097,9 @@ const ClientList = () => {
                   </div>
                 )}
                 <div>
-                <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                  <FontAwesomeIcon icon={faTrash} />
-                </Button>
+                  <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
                 </div>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}

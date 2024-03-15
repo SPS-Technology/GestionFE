@@ -13,6 +13,7 @@ import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
 import Dashboard from './Acceuil/Dashboard';
 import FactureList from './Facture/FactureList';
+import LivraisonList from './Livraison/LivraisonList';
 
 
 const App = () => {
@@ -31,6 +32,7 @@ const App = () => {
         <Route path="/commandes" element={<CommandeList />} />
         <Route path="/add-user" element={<AddUser />} />
         <Route path="/users" element={<Users />} />
+        <Route path="/livraisons" element={<LivraisonList />} />
         <Route path="/users/edit/:id" element={<EditUser />} />
       </Routes>
       </AuthProvider>

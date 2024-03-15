@@ -6,10 +6,19 @@ import { Toolbar } from "@mui/material";
 import Navigation from "../Acceuil/Navigation";
 import { Form, Button, Modal, Table } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faPrint, faPlus, faMinus, } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faFilePdf,
+  faPrint,
+  faPlus,
+  faMinus,
+} from "@fortawesome/free-solid-svg-icons";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import Swal from "sweetalert2";
+import Search from "../Acceuil/Search";
+import TablePagination from "@mui/material/TablePagination";
+
 
 const ListDevis = () => {
   const [devises, setDevises] = useState([]);
@@ -25,6 +34,7 @@ const ListDevis = () => {
   const handleModalClose = () => setShowModal(false);
   const [totals, setTotals] = useState({});
   const [selectedProductsData, setSelectedProductsData] = useState([]);
+
 
   const [produits, setProduits] = useState([]);
   const [selectedProducts, setSelectedProducts] = useState([]);
@@ -82,6 +92,7 @@ const ListDevis = () => {
       console.error("Error fetching data:", error);
     }
   };
+
 
   const toggleRow = async (devisId) => {
     if (expandedRows.includes(devisId)) {
@@ -181,56 +192,56 @@ const ListDevis = () => {
           devisData
         );
       }
-       // Vérifier si le statut est "Valider"
-    if (formData.status === "Valider") {
-      // Préparer les données de la facture
-      const factureData = {
-        client_id: formData.client_id,
-        user_id: formData.user_id,
-        id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
-      };
+      // Vérifier si le statut est "Valider"
+      if (formData.status === "Valider") {
+        // Préparer les données de la facture
+        const factureData = {
+          client_id: formData.client_id,
+          user_id: formData.user_id,
+          id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
+        };
 
-      // Envoyer une requête POST pour créer la facture
-      const factureResponse = await axios.post(
-        "http://localhost:8000/api/factures",
-        factureData
-      );
+        // Envoyer une requête POST pour créer la facture
+        const factureResponse = await axios.post(
+          "http://localhost:8000/api/factures",
+          factureData
+        );
 
-      console.log("Facture créée:", factureResponse.data);
-    }
-//       // Vérifier si le statut est "Valider" et si response.data.devis est défini
-//       if (formData.status === "Valider" && response.data && response.data.devis) {
-//         // Préparer les données de la facture
-//         const factureData = {
-//           client_id: formData.client_id,
-//           user_id: formData.user_id,
-//           id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
-//         };
+        console.log("Facture créée:", factureResponse.data);
+      }
+      //       // Vérifier si le statut est "Valider" et si response.data.devis est défini
+      //       if (formData.status === "Valider" && response.data && response.data.devis) {
+      //         // Préparer les données de la facture
+      //         const factureData = {
+      //           client_id: formData.client_id,
+      //           user_id: formData.user_id,
+      //           id_devis: response.data.devis.id, // Attribuer l'ID du devis créé
+      //         };
 
-//         // Envoyer une requête POST pour créer la facture
-//         const factureResponse = await axios.post(
-//           "http://localhost:8000/api/factures",
-//           factureData
-//         );
+      //         // Envoyer une requête POST pour créer la facture
+      //         const factureResponse = await axios.post(
+      //           "http://localhost:8000/api/factures",
+      //           factureData
+      //         );
 
-//         console.log("Facture créée:", factureResponse.data);
-//       }
-//       // Si le statut est "Valider" et l'id du devis est défini
-// if (formData.status === "Valider" && response.data && response.data.devis && response.data.devis.id) {
-//   // Mettre à jour le statut du devis
-//   const updatedDevisData = {
-//     status: "Valider",
-//     // autres champs à mettre à jour si nécessaire
-//   };
+      //         console.log("Facture créée:", factureResponse.data);
+      //       }
+      //       // Si le statut est "Valider" et l'id du devis est défini
+      // if (formData.status === "Valider" && response.data && response.data.devis && response.data.devis.id) {
+      //   // Mettre à jour le statut du devis
+      //   const updatedDevisData = {
+      //     status: "Valider",
+      //     // autres champs à mettre à jour si nécessaire
+      //   };
 
-//   // Envoyer une requête PUT pour mettre à jour le devis
-//   const updatedDevisResponse = await axios.put(
-//     `http://localhost:8000/api/devises/${response.data.devis.id}`,
-//     updatedDevisData
-//   );
+      //   // Envoyer une requête PUT pour mettre à jour le devis
+      //   const updatedDevisResponse = await axios.put(
+      //     `http://localhost:8000/api/devises/${response.data.devis.id}`,
+      //     updatedDevisData
+      //   );
 
-//   console.log("Devis mis à jour:", updatedDevisResponse.data);
-// }
+      //   console.log("Devis mis à jour:", updatedDevisResponse.data);
+      // }
 
       // Préparer les données des lignes de devis
       const selectedPrdsData = selectedProductsData.map((selectProduct) => {
@@ -238,11 +249,12 @@ const ListDevis = () => {
           id: selectProduct.id, // Ajoutez l'ID de la ligne de devis
           Code_produit: selectProduct.Code_produit,
           designation: selectProduct.designation,
-          id_devis: response.data.devis ? response.data.devis.id : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
+          id_devis: response.data.devis
+            ? response.data.devis.id
+            : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
           quantite: selectProduct.quantite,
           prix_vente: selectProduct.prix_vente,
         };
-
       });
 
       // Envoyer une requête POST pour chaque produit sélectionné
@@ -303,7 +315,6 @@ const ListDevis = () => {
     closeForm();
   };
 
-
   const handleEdit = (devis) => {
     setEditingDevis(devis);
     setFormData({
@@ -333,7 +344,6 @@ const ListDevis = () => {
       closeForm();
     }
   };
-
 
   const handleDelete = (id) => {
     Swal.fire({
@@ -618,12 +628,33 @@ const ListDevis = () => {
     return getTotalHT(lignedevis) + calculateTVA(getTotalHT(lignedevis));
   };
 
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0);
+  const indexOfLastDevis = (page + 1) * rowsPerPage;
+  const indexOfFirstDevis = indexOfLastDevis - rowsPerPage;
+  const currentDevises = devises.slice(indexOfFirstDevis, indexOfLastDevis);
+
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <h2 className="mt-3">Liste des Devis</h2>
+          <div
+            className="search-container d-flex flex-row-reverse col-3"
+            role="search"
+          >
+            <Search onSearch={handleSearch} type="search" />
+          </div>
           <div className="container">
             <Button
               variant="primary"
@@ -759,7 +790,7 @@ const ListDevis = () => {
                   </table>
                 </Form.Group>
                 <Modal show={showModal} onHide={handleModalClose}>
-                <Toolbar />
+                  <Toolbar />
                   <Modal.Header closeButton>
                     <Modal.Title>Sélectionner les produits</Modal.Title>
                   </Modal.Header>
@@ -837,7 +868,10 @@ const ListDevis = () => {
               style={tableContainerStyle}
             >
               <table className="table table-bordered">
-                <thead className="text-center " style={{ backgroundColor: "#adb5bd" }}>
+                <thead
+                  className="text-center "
+                  style={{ backgroundColor: "#adb5bd" }}
+                >
                   <tr>
                     <th>{/* Vide */}</th>
                     <th>
@@ -848,99 +882,116 @@ const ListDevis = () => {
                       />
                     </th>
                     <th>N° Devis</th>
-                    <th>date</th>
-                    <th>Validation de l'offre</th>
-                    <th>Mode de Paiement</th>
-                    <th>Status</th>
+                    <th>Date</th>
                     <th>Client</th>
+                    <th>Total HT</th>
+                    <th>TVA (20%)</th>
+                    <th>Total TTC</th>
+                    <th>Status</th>
+                    <th>Validation l'offre</th>
+                    <th>Mode Paiement</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
-                  {devises &&
-                    devises.map((devis) => (
-                      <React.Fragment key={devis.id}>
-                        <tr>
-                          <td>
-                            <div className="no-print ">
-                              <button
-                                className="btn btn-sm btn-light"
-                                onClick={() => toggleRow(devis.id)}
-                              >
-                                <FontAwesomeIcon
-                                  icon={
-                                    expandedRows.includes(devis.id)
-                                      ? faMinus
-                                      : faPlus
-                                  }
-                                />
-                              </button>
-                            </div>
-                          </td>
-                          <td>
-                            {/* <input
+                  {filtereddevises.map((devis) => (
+                    <React.Fragment key={devis.id}>
+                      <tr>
+                        <td>
+                          <div className="no-print ">
+                            <button
+                              className="btn btn-sm btn-light"
+                              onClick={() => toggleRow(devis.id)}
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  expandedRows.includes(devis.id)
+                                    ? faMinus
+                                    : faPlus
+                                }
+                              />
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          {/* <input
                               type="checkbox"
                               checked={selectedItems.some(
                                 (item) => item.id === devis.id
                               )}
                               onChange={() => handleSelectItem(devis)}
                             /> */}
-                            <input type="checkbox" onChange={() => handleCheckboxChange(devis.id)} checked={selectedItems.includes(devis.id)} />
-                          </td>
-                          <td>{devis.reference}</td>
-                          <td>{devis.date}</td>
-                          <td>{devis.validation_offer}</td>
-                          <td>{devis.modePaiement}</td>
-                          <td>{devis.status}</td>
-                          <td>{devis.client.raison_sociale}</td>
-                          <td>
-                            <div className="d-inline-flex text-center">
-                              <Button
-                                className="col-3 btn btn-sm btn-info m-2"
-                                onClick={() => handleEdit(devis)}
+                          <input
+                            type="checkbox"
+                            onChange={() => handleCheckboxChange(devis.id)}
+                            checked={selectedItems.includes(devis.id)}
+                          />
+                        </td>
+                        <td>{devis.reference}</td>
+                        <td>{devis.date}</td>
+                        <td>{devis.client.raison_sociale}</td>
+                        <td>{getTotalHT(devis.lignedevis)} DH</td> {/* Display Total HT */}
+                        <td>{calculateTVA(getTotalHT(devis.lignedevis))} DH</td> {/* Display TVA */}
+                        <td>{getTotalTTC(devis.lignedevis)} DH</td> {/* Display Total TTC */}
+                        <td>{devis.status}</td>
+                        <td>{devis.validation_offer}</td>
+                        <td>{devis.modePaiement}</td>
+                        <td>
+                          <div className="d-inline-flex text-center">
+                            <Button
+                              className="col-3 btn btn-sm btn-info m-2"
+                              onClick={() => handleEdit(devis)}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className="col-3 btn btn-danger btn-sm m-2"
+                              onClick={() => handleDelete(devis.id)}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                            <Button
+                              className="col-3 btn btn-sm m-2"
+                              onClick={() => handlePrint(devis.id)}
+                            >
+                              <FontAwesomeIcon icon={faFilePdf} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedRows.includes(devis.id) && devis.lignedevis && (
+                        <tr>
+                          <td colSpan="12">
+                            <div id="lignesDevis">
+                              <table
+                                className="table table-responsive table-bordered"
+                                style={{ backgroundColor: "#adb5bd" }}
                               >
-                                <i className="fas fa-edit"></i>
-                              </Button>
-                              <Button
-                                className="col-3 btn btn-danger btn-sm m-2"
-                                onClick={() => handleDelete(devis.id)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                              <Button
-                                className="col-3 btn btn-sm m-2"
-                                onClick={() => handlePrint(devis.id)}
-                              >
-                                <FontAwesomeIcon icon={faFilePdf} />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedRows.includes(devis.id) && devis.lignedevis && (
-                          <tr>
-                            <td colSpan="12">
-                              <div id="lignesDevis">
-                                <table
-                                  className="table table-responsive table-bordered"
-                                  style={{ backgroundColor: "#adb5bd" }}
-                                >
-                                  <thead>
-                                    <tr>
-                                      <th>Code Produit</th>
-                                      <th>Description</th>
-                                      <th>Quantite</th>
-                                      <th>Prix Vente</th>
-                                      {/* <th className="text-center">Action</th> */}
-                                    </tr>
-                                  </thead>
-                                  <tbody>
-                                    {devis.lignedevis.map((ligneDevis) => (
-                                      <tr key={ligneDevis.id}>
-                                        <td>{ligneDevis.Code_produit}</td>
-                                        <td>{ligneDevis.designation}</td>
-                                        <td>{ligneDevis.quantite}</td>
-                                        <td>{ligneDevis.prix_vente} DH</td>
-                                        {/* <td className="no-print">
+                                <thead>
+                                  <tr>
+                                    <th>Code Produit</th>
+                                    <th>Description</th>
+                                    <th>Quantite</th>
+                                    <th>Prix Vente</th>
+                                    <th>Total HT </th>
+                                    {/* <th className="text-center">Action</th> */}
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {devis.lignedevis.map((ligneDevis) => (
+                                    <tr key={ligneDevis.id}>
+                                      <td>{ligneDevis.Code_produit}</td>
+                                      <td>{ligneDevis.designation}</td>
+                                      <td>{ligneDevis.quantite}</td>
+                                      <td>{ligneDevis.prix_vente} DH</td>
+                                      <td>
+                                        {(
+                                          ligneDevis.quantite *
+                                          ligneDevis.prix_vente
+                                        ).toFixed(2)}{" "}
+                                        DH
+                                      </td>
+                                      {/* <td className="no-print">
                                               <button
                                                 className="btn btn-sm btn-info m-1"
                                                 onClick={() => {
@@ -953,18 +1004,27 @@ const ListDevis = () => {
                                                 <FontAwesomeIcon icon={faTrash} />
                                               </button>
                                             </td> */}
-                                      </tr>
-                                    ))}
-                                  </tbody>
-                                </table>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))}
                 </tbody>
               </table>
+              <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  component="div"
+                  count={filtereddevises.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </div>
           </div>
         </Box>

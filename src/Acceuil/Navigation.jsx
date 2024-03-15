@@ -34,6 +34,7 @@ import { useAuth } from "../AuthContext";
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import { grey } from "@mui/material/colors";
 import DescriptionIcon from '@mui/icons-material/Description';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -259,6 +260,17 @@ const Navigation = () => {
             <ListItem
               button
               component={Link}
+              to="/commandes"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <ShoppingBasketIcon />
+              </ListItemIcon>
+              <ListItemText primary="Gestion Commandes" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
               to="/devises"
               style={{ color: "#696969" }}
             >
@@ -281,25 +293,14 @@ const Navigation = () => {
             <ListItem
               button
               component={Link}
-              to="/commandes"
+              to="/livraisons"
               style={{ color: "#696969" }}
             >
               <ListItemIcon>
-                <ShoppingBasketIcon />
+                <EditNoteIcon />
               </ListItemIcon>
-              <ListItemText primary="Gestion Commandes" />
+              <ListItemText primary="Bon Livraison" />
             </ListItem>
-            {/* <ListItem
-              button
-              component={Link}
-              to="/add-user"
-              style={{ color: "#696969" }}
-            >
-              <ListItemIcon>
-                <AddCircleIcon />
-              </ListItemIcon>
-              <ListItemText primary="Ajouter utilisateur" />
-            </ListItem> */}
             <ListItem
               button
               component={Link}

@@ -7,10 +7,12 @@ import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
 import { Form, Button, Modal, Table } from "react-bootstrap";
 import "../style.css";
+import Search from "../Acceuil/Search";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faTrash, faFilePdf, faPrint, faPlus,faMinus,} from "@fortawesome/free-solid-svg-icons";
+import TablePagination from "@mui/material/TablePagination";
 
 
 const FactureList = () => {
@@ -21,7 +23,24 @@ const FactureList = () => {
   const [formContainerStyle, setFormContainerStyle] = useState({ right: '-100%' });
   const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
   const [showForm, setShowForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredfactures, setFilteredfactures] = useState([]);
 
+    // Pagination calculations
+    const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [page, setPage] = useState(0);
+    const indexOfLastFacture = (page + 1) * rowsPerPage;
+    const indexOfFirstFacture = indexOfLastFacture - rowsPerPage;
+    const currentFactures = factures.slice(indexOfFirstFacture, indexOfLastFacture);
+
+    const handleChangeRowsPerPage = (event) => {
+      setRowsPerPage(parseInt(event.target.value, 10));
+      setPage(0);
+    };
+    const handleChangePage = (event, newPage) => {
+      setPage(newPage);
+    };
+  
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -51,6 +70,19 @@ const FactureList = () => {
   useEffect(() => {
     fetchFactures();
   }, []);
+
+  useEffect(() => {
+    const filtered = factures.filter((facture) =>
+    facture.reference
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    );
+
+    setFilteredfactures(filtered);
+  }, [factures, searchTerm]);
+  const handleSearch = (term) => {
+    setSearchTerm(term);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -135,64 +167,75 @@ const closeForm = () => {
 
 };
 
-const handleFactureExport = (factureId) => {
-  const selectedDevis = factures.find((facture) => facture.id === factureId);
-
-  // Check if selectedDevis is valid
-  if (!selectedDevis) {
-    console.error("Selected facture not found");
-    return;
+const handleShowFormButtonClick = () => {
+  if (formContainerStyle.right === "-100%") {
+    setFormContainerStyle({ right: "-0%" });
+    setTableContainerStyle({ marginRight: "600px" });
+  } else {
+    closeForm();
   }
+};
 
-  const doc = new jsPDF();
+const handleFactureExport = async (factureId) => {
+  try {
+    const response = await axios.get(`http://localhost:8000/api/factures/${factureId}`);
+    const selectedFacture = response.data.facture;
 
-  let startY = 20;
+    if (!selectedFacture) {
+      console.error("Facture not found");
+      return;
+    }
 
-  const clientInfo = [
-    { label: 'Raison sociale:', value: selectedDevis.clients.raison_sociale },
-    { label: 'Adresse:', value: selectedDevis.clients.adresse },
-    { label: 'Téléphone:', value: selectedDevis.clients.tele },
-    { label: 'ICE:', value: selectedDevis.clients.ice }
-  ];
+    const doc = new jsPDF();
+    let startY = 20;
 
-  doc.setFontSize(10);
-  clientInfo.forEach((info) => {
-    doc.text(`${info.label}`, 10, startY);
-    doc.text(`${info.value}`, 50, startY);
-    startY += 10;
-  });
+     // Draw rectangle around client info
+     const clientInfoX = 10;
+     const clientInfoY = startY + 10;
+     const clientInfoWidth = 60;
+     const clientInfoHeight = 30;
+     doc.rect(clientInfoX, clientInfoY, clientInfoWidth, clientInfoHeight, "S");
+ 
+     // Info Client
+     const clientInfo = [
+       { label: 'Raison sociale:', value: selectedFacture.clients.raison_sociale },
+       { label: 'Adresse:', value: selectedFacture.clients.adresse },
+       { label: 'Téléphone:', value: selectedFacture.clients.tele },
+       { label: 'ICE:', value: selectedFacture.clients.ice }
+     ];
+ 
+     let clientInfoYPosition = startY + 15; // Adjust startY position for text
 
-  const factureInfo = [
-    { label: 'N° Facture:', value: selectedDevis.reference },
-    { label: 'Date:', value: selectedDevis.date },
-    { label: 'REF BL N°:', value: selectedDevis.ref_BL },
-    { label: 'REF BC N°:', value: selectedDevis.ref_BC },
-    { label: 'Mode de Paiement:', value: selectedDevis.modePaiement }
-  ];
+     clientInfo.forEach((info) => {
+       doc.setFontSize(8); // Set font size to 8
+       doc.text(`${info.label}`, clientInfoX + 5, clientInfoYPosition);
+       doc.text(`${info.value}`, clientInfoX + 30, clientInfoYPosition);
+       clientInfoYPosition += 5; // Adjust vertical spacing
+     });
+ 
+     startY += 50; // Adjust startY position after client info and rectangle
 
-  startY = 20;
+    // Table for factureInfo
+    const factureInfoRows = [
+      { title: 'N° Facture' },
+      { title: 'Date:' },
+      { title: 'REF BL N°:' },
+      { title: 'REF BC N°:' },
+      { title: 'Mode de Paiement:' }
+    ];
 
-  factureInfo.forEach((info) => {
-    doc.text(`${info.label}`, 120, startY);
-    doc.text(`${info.value}`, 160, startY);
-    startY += 10;
-  });
-
-  if (selectedDevis.devis && selectedDevis.devis.lignedevis) {
-    const headersLigneDevis = ['#', 'Code produit', 'Désignation', 'Quantité', 'Prix', 'Total HT',];
-    const rowsLigneDevis = selectedDevis.devis.lignedevis.map((lignedevis, index) => [
-      index + 1,
-      lignedevis.Code_produit,
-      lignedevis.designation,
-      lignedevis.quantite,
-      lignedevis.prix_vente,
-      (lignedevis.quantite * lignedevis.prix_vente).toFixed(2)
-    ]);
+    const factureInfoBody = [
+      selectedFacture.reference,
+      selectedFacture.date,
+      selectedFacture.ref_BL,
+      selectedFacture.ref_BC,
+      selectedFacture.modePaiement
+    ];
 
     doc.autoTable({
-      head: [headersLigneDevis],
-      body: rowsLigneDevis,
-      startY: startY + 20,
+      head: [factureInfoRows.map(row => row.title)],
+      body: [factureInfoBody],
+      startY: startY,
       margin: { top: 20 },
       styles: {
         lineWidth: 0.1,
@@ -200,44 +243,101 @@ const handleFactureExport = (factureId) => {
         fontSize: 8
       },
       columnStyles: {
-        0: { cellWidth: 8 }, // Largeur de la colonne du numéro de ligne
-        1: { cellWidth: 40 }, // Largeur de la colonne du code produit
-        2: { cellWidth: 60 }, // Largeur de la colonne de la désignation
-        3: { cellWidth: 20 }, // Largeur de la colonne de la quantité
-        4: { cellWidth: 25 }, // Largeur de la colonne du prix
-        5: { cellWidth: 30 }  // Largeur de la colonne du total
+        0: { cellWidth: 30 },
+        1: { cellWidth: 30 },
+        2: { cellWidth: 30 },
+        3: { cellWidth: 30 },
+        4: { cellWidth: 40 },
+      },
+      headerStyles: {
+        fillColor: [187, 187, 187],
+        textColor: [0, 0, 0],
+        fontStyle: "bold",
       },
     });
 
-    const totalHT = selectedDevis.devis.lignedevis.reduce((total, lignedevis) => total + (lignedevis.quantite * lignedevis.prix_vente), 0);
-    const TVA = 0.2 * totalHT;
-    const TTC = totalHT + TVA;
+    startY = doc.lastAutoTable.finalY + 10; // Move startY position below the factureInfo table
 
-    // Générer un tableau pour les informations de montant total, TVA, TTC et Total en lettres
-    const montantTable = [
-      { label: 'Montant Total Hors Taxes:', value: `${totalHT.toFixed(2)} DH` },
-      { label: 'TVA (20%):', value: `${TVA.toFixed(2)} DH` },
-      { label: 'TTC:', value: `${TTC.toFixed(2)} DH` },
-      { label: 'Total en lettres:', value: `${nombreEnLettres(TTC)} Dirhams` }
-    ];
+    let ligneData = [];
 
-    doc.autoTable({
-      body: montantTable.map(row => [row.label, row.value]),
-      startY: doc.lastAutoTable.finalY + 10,
-      margin: { top: 20 },
-      styles: {
-        lineWidth: 0.1,
-        lineColor: [0, 0, 0],
-        fontSize: 8
-      }
-    });
+    if (selectedFacture.devis && selectedFacture.devis.lignedevis) {
+      ligneData = selectedFacture.devis.lignedevis;
+    } else if (selectedFacture.ligne_facture && selectedFacture.ligne_facture.length > 0) {
+      ligneData = selectedFacture.ligne_facture;
+    }
 
-    doc.save("facture.pdf");
-  } else {
-    console.error("Ligne devis not found in selected facture");
+    if (ligneData.length > 0) {
+      startY += 2; // Add space between factureInfo and ligneData table
+
+      const headersLigne = ['#', 'Code produit', 'Désignation', 'Prix', 'Quantité', 'Total HT',];
+      const rowsLigne = ligneData.map((ligne, index) => [
+        index + 1,
+        ligne.Code_produit,
+        ligne.designation,
+        ligne.prix_vente,
+        ligne.quantite,
+        (ligne.quantite * ligne.prix_vente).toFixed(2)
+      ]);
+
+      doc.autoTable({
+        head: [headersLigne],
+        body: rowsLigne,
+        startY: startY,
+        margin: { top: 20 },
+        styles: {
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          fontSize: 8
+        },
+        columnStyles: {
+          0: { cellWidth: 7 },
+          1: { cellWidth: 40 },
+          2: { cellWidth: 50 },
+          3: { cellWidth: 20 },
+          4: { cellWidth: 25 },
+          5: { cellWidth: 30 }
+        },
+        headerStyles: {
+          fillColor: [187, 187, 187],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+        },
+      });
+
+      const totalHT = ligneData.reduce((total, ligne) => total + (ligne.quantite * ligne.prix_vente), 0);
+      const TVA = 0.2 * totalHT;
+      const TTC = totalHT + TVA;
+
+      const montantTable = [
+        { label: 'Montant Total Hors Taxes:', value: `${totalHT.toFixed(2)} DH` },
+        { label: 'TVA (20%):', value: `${TVA.toFixed(2)} DH` },
+        { label: 'TTC:', value: `${TTC.toFixed(2)} DH` },
+        { label: 'Total en lettres:', value: `${nombreEnLettres(TTC)} Dirhams` }
+      ];
+
+      doc.autoTable({
+        body: montantTable.map(row => [row.label, row.value]),
+        startY: doc.lastAutoTable.finalY + 10,
+        margin: { top: 20 },
+        styles: {
+          lineWidth: 0.1,
+          lineColor: [0, 0, 0],
+          fontSize: 8
+        }
+      });
+
+      const totalEnLettres = `Arrêteé la présente facture à la somme tout taxe comprise de : ${nombreEnLettres(TTC)} Dirhams`;
+      doc.setFontSize(10);
+      doc.text(totalEnLettres, 10, startY + 70);
+
+      doc.save("facture.pdf");
+    } else {
+      console.error("No ligne data found in selected facture");
+    }
+  } catch (error) {
+    console.error("Error exporting facture:", error);
   }
 };
-
 
 function nombreEnLettres(nombre) {
   const units = ['', 'un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf'];
@@ -284,7 +384,18 @@ function nombreEnLettres(nombre) {
           <div className="">
             <h2>Liste des Factures</h2>
           </div>
+          <div className="search-container d-flex flex-row-reverse col-3" role="search">
+              <Search onSearch={handleSearch} type="search" />
+          </div>
           <div className="container">
+          <Button
+              variant="primary"
+              className="col-2 btn btn-sm m-2"
+              id="showFormButton"
+              onClick={handleShowFormButtonClick}
+            >
+              {showForm ? "Modifier le formulaire" : "Ajouter un Facture"}
+            </Button>
             <div id="formContainer" className="" style={formContainerStyle} >
               <Form className="row" onSubmit={handleSubmit}>
                 <Form.Group className="m-2 col-4" controlId="reference">
@@ -349,25 +460,30 @@ function nombreEnLettres(nombre) {
                   <tr>
                     <th>N° Facture</th>
                     <th>Date</th>
+                    <th>Client</th>
+                    <th>Total HT</th>
+                    <th>TVA</th>
+                    <th>Total TTC</th>
                     <th>REF BL N°</th>
                     <th>REF BC N°</th>
                     <th>Mode de Paiement</th>
-                    <th>Client</th>
-                    <th>Devis</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
-                  {factures &&
-                    factures.map((facture) => (
+                {filteredfactures
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((facture) => (
                       <tr key={facture.id}>
                         <td>{facture.reference}</td>
                         <td>{facture.date}</td>
+                        <td>{facture.clients.raison_sociale}</td>
+                        <td>{facture.total_ht}</td>
+                        <td>{facture.tva}</td>
+                        <td>{facture.total_ttc}</td>
                         <td>{facture.ref_BL}</td>
                         <td>{facture.ref_BC}</td>
                         <td>{facture.modePaiement}</td>
-                        <td>{facture.clients.raison_sociale}</td>
-                        <td>{facture.devis.reference}</td>
                         <td>
                           <button
                             className="btn btn-sm btn-info m-1"
@@ -376,7 +492,7 @@ function nombreEnLettres(nombre) {
                             <i className="fas fa-edit"></i>
                           </button>
                           <Button
-                                className="col-3 btn btn-sm m-2"
+                                className="btn btn-sm m-2"
                                 onClick={() => handleFactureExport(facture.id)}
                               >
                                 <FontAwesomeIcon icon={faFilePdf} />
@@ -386,6 +502,15 @@ function nombreEnLettres(nombre) {
                     ))}
                 </tbody>
               </table>
+              <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  component="div"
+                  count={filteredfactures.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
             </div>
           </div>
         </Box>
