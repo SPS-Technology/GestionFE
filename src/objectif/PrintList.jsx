@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
 
-const PrintList = ({ tableId, title, clientList, filteredclients }) => {
+const PrintList = ({ tableId, title, OvjectifList, filteredobjectifs }) => {
   const handlePrint = () => {
     const printWindow = window.open("", "_blank", "");
 
@@ -57,27 +57,19 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
                 <table>
                   <thead>
                     <tr class="table-header">
-                      <th>Raison Sociale</th>
-                      <th>Abreviation</th>
-                      <th>Adresse</th>
-                      <th>Téléphone</th>
-                      <th>Ville</th>
-                      <th>Code Postal</th>
-                      <th>ICE</th>
-                      <th>Zone</th>
+                      <th>type_objectif</th>
+                      <th>unite</th>
+                      <th>valeur</th>
+                      <th>periode</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${filteredclients.map((client) => `
+                    ${filteredobjectifs.map((client) => `
                       <tr key=${client.id}>
-                        <td>${client.raison_sociale}</td>
-                        <td>${client.abreviation}</td>
-                        <td>${client.adresse}</td>
-                        <td>${client.tele}</td>
-                        <td>${client.ville}</td>
-                        <td>${client.code_postal}</td>
-                        <td>${client.ice}</td>
-                        <td>${client.zone.zone}</td>
+                        <td>${client.type_objectif}</td>
+                        <td>${client.unite}</td>
+                        <td>${client.valeur}</td>
+                        <td>${client.periode}</td>
                       </tr>
                     `).join("")}
                   </tbody>

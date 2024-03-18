@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
 
-const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
+const PrintList = ({ tableId, title, VehiculeList, filteredVehicules }) => {
   const handlePrint = () => {
     
     const printWindow = window.open("", "_blank", "");
@@ -86,21 +86,19 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
       <table>
         <thead>
           <tr>
-            <th>Code de produit</th>
-            <th>designation</th>
-            <th>Type de Quantité</th>
-            <th>Calibre</th>
-            <th>Categorie</th>
+            <th>Marque</th>
+            <th>Matricule</th>
+            <th>Model</th>
+            <th>Capacite</th>
           </tr>
         </thead>
         <tbody>
-          ${filteredProduits.map((produit) => `
+          ${filteredVehicules.map((produit) => `
             <tr key=${produit.id}>
-              <td>${produit.Code_produit}</td>
-              <td>${produit.designation}</td>
-              <td>${produit.type_quantite}</td>
-              <td>${produit.calibre}</td>
-              <td>${produit.categorie.categorie}</td>
+              <td>${produit.marque}</td>
+              <td>${produit.matricule}</td>
+              <td>${produit.model}</td>
+              <td>${produit.capacite}</td>
 
             </tr>
           `).join("")}

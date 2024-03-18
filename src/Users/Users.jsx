@@ -15,6 +15,7 @@ const Users = () => {
   const token = localStorage.getItem("API_TOKEN");
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const navigate = useNavigate();
+  const [selectAll, setSelectAll] = useState(false);
 
   const [users, setUsers] = useState([]);
   const [user, setUser] = useState({
@@ -60,6 +61,31 @@ const Users = () => {
   const handlePermissionsModalOpen = () => {
     setShowPermissionsModal(true);
   };
+  const handleSelectAllChange = () => {
+    setSelectAll(!selectAll);
+    if (!selectAll) {
+      setSelectedPermissions([
+        "view_all_products",
+        "create_product",
+        "edit_product",
+        "delete_product",
+        "view_all_fournisseurs",
+        "create_fournisseurs",
+        "update_fournisseurs",
+        "delete_fournisseurs",
+        "view_all_clients",
+        "create_clients",
+        "update_clients",
+        "delete_clients",
+        "view_all_users",
+        "create_user",
+        "edit_user",
+        "delete_user",
+      ]);
+    } else {
+      setSelectedPermissions([]);
+    }
+  };
 
   const handlePermissionsModalClose = () => {
     setShowPermissionsModal(false);
@@ -76,7 +102,7 @@ const Users = () => {
         Swal.fire({
           icon: "error",
           title: "Accès refusé",
-          text: "Vous n'avez pas l'autorisation de voir la liste des clients.",
+          text: "Vous n'avez pas l'autorisation de voir la liste des utilisateurs.",
         });
       }
     }
@@ -88,22 +114,70 @@ const Users = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://localhost:8000/api/users/${id}`, {
-        withCredentials: true,
-      });
-      setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      if (error.response && error.response.status === 403) {
-        Swal.fire({
-          icon: "error",
-          title: "Accès refusé",
-          text: "Vous n'avez pas l'autorisation de supprimer cet utilisateur.",
-        });
+  // const handleDelete = async (id) => {
+
+  //   try {
+  //     await axios.delete(`http://localhost:8000/api/users/${id}`, {
+  //       withCredentials: true,
+  //     });
+  //     setUsers((prevUsers) => prevUsers.filter((user) => user.id !== id));
+  //   } catch (error) {
+  //     console.error("Error deleting user:", error);
+  //     if (error.response && error.response.status === 403) {
+  //       Swal.fire({
+  //         icon: "error",
+  //         title: "Accès refusé",
+  //         text: "Vous n'avez pas l'autorisation de supprimer cet utilisateur.",
+  //       });
+  //     }
+  //   }
+  // };
+
+  const handleDelete = (id) => {
+    Swal.fire({
+      title: "Êtes-vous sûr de vouloir supprimer cet user ?",
+      showDenyButton: true,
+      showCancelButton: false,
+      confirmButtonText: "Oui",
+      denyButtonText: "Non",
+      customClass: {
+        actions: "my-actions",
+        cancelButton: "order-1 right-gap",
+        confirmButton: "order-2",
+        denyButton: "order-3",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        axios
+          .delete(`http://localhost:8000/api/users/${id}`)
+          .then((response) => {
+            fetchUsers();
+            Swal.fire({
+              icon: "success",
+              title: "Succès!",
+              text: "Utilisateur supprimé avec succès.",
+            });
+          })
+          .catch((error) => {
+            console.error("Error deleting user:", error);
+            if (error.response && error.response.status === 403) {
+              Swal.fire({
+                icon: "error",
+                title: "Accès refusé",
+                text: "Vous n'avez pas l'autorisation de supprimer cet utlisateur.",
+              });
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du user.",
+              });
+            }
+          });
+      } else {
+        console.log("Suppression annulée");
       }
-    }
+    });
   };
 
   const handleChange = (e) => {
@@ -146,20 +220,23 @@ const Users = () => {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-  
+
     try {
       const userData = {
         name: user.name,
         email: user.email,
         role: user.role,
+        // photo:user.photo,
         password: user.password,
         permissions: selectedPermissions,
       };
-  
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-  
+
+      const csrfToken = document.querySelector(
+        'meta[name="csrf-token"]'
+      ).content;
+
       let response;
-  
+
       if (isEditing) {
         response = await axios.put(
           `http://localhost:8000/api/users/${user.id}`,
@@ -180,12 +257,12 @@ const Users = () => {
         formData.append("password", user.password);
         selectedPermissions.forEach((permission) => {
           formData.append("permissions[]", permission);
-          });
-  
+        });
+
         if (user.photo) {
           formData.append("photo", user.photo);
         }
-  
+
         response = await axios.post(
           "http://localhost:8000/api/register",
           formData,
@@ -198,17 +275,23 @@ const Users = () => {
           }
         );
       }
-  
+
       if (response.status === 200) {
+        let successMessage = "Utilisateur ajouté avec succès!";
+
+        if (isEditing) {
+          successMessage = "Utilisateur modifié avec succès!";
+        }
+
         Swal.fire({
           icon: "success",
-          title: "Utilisateur ajouté/modifié avec succès!",
+          title: successMessage,
           showConfirmButton: false,
           timer: 1500,
         });
-  
-        fetchUsers(); 
-  
+
+        fetchUsers();
+
         setUser({
           id: null,
           name: "",
@@ -218,7 +301,7 @@ const Users = () => {
           password: "",
           permission: "",
         });
-  
+
         setErrors({
           name: "",
           email: "",
@@ -227,7 +310,7 @@ const Users = () => {
           password: "",
           permission: "",
         });
-  
+
         setSelectedPermissions([]);
         setIsEditing(false);
         closeForm();
@@ -237,12 +320,20 @@ const Users = () => {
     } catch (error) {
       if (error.response) {
         const serverErrors = error.response.data.errors;
-  
+
         if (error.response.status === 403) {
+          let errorMessage = "Vous n'avez pas l'autorisation ";
+
+          if (isEditing) {
+            errorMessage += "de modifier un utilisateur.";
+          } else {
+            errorMessage += "d'ajouter un utilisateur.";
+          }
+
           Swal.fire({
             icon: "error",
             title: "Accès refusé",
-            text: "Vous n'avez pas l'autorisation d'ajouter ou de modifier un utilisateur.",
+            text: errorMessage,
           });
         } else {
           setErrors({
@@ -266,9 +357,8 @@ const Users = () => {
       }
     }
   };
-  
+
   const handleShowFormButtonClick = () => {
-    
     if (formContainerStyle.right === "-900px") {
       setFormContainerStyle({ right: "0" });
       setTableContainerStyle({ marginRight: "300px" });
@@ -277,11 +367,8 @@ const Users = () => {
     }
   };
 
- 
-  
-
   const closeForm = () => {
-     setSelectedPermissions([]);
+    setSelectedPermissions([]);
     setUser({
       id: null,
       name: "",
@@ -289,6 +376,14 @@ const Users = () => {
       role: "",
       photo: null,
       password: "",
+    });
+    setErrors({
+      name: "",
+      email: "",
+      role: "",
+      photo: "",
+      password: "",
+      permission: "",
     });
     setIsEditing(false);
     setFormContainerStyle({ right: "-900px" });
@@ -311,314 +406,177 @@ const Users = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-
-          <Button
-            variant="primary"
-            className="col-2 btn btn-sm m-2"
-            id="showFormButton"
-            onClick={handleShowFormButtonClick}
-          >
-            {isEditing ? "Modifier Utilisateur" : "Ajouter Utilisateur"}{" "}
-            <i className="fas fa-user-plus" aria-hidden="true"></i>
-          </Button>
-          <div id="formContainer" style={formContainerStyle}>
-            <Form className="col row" onSubmit={handleFormSubmit}>
-              <div>
-                <Form.Label className="text-center m-2">
-                  {isEditing ? "Modifier Utilisateur" : "Ajouter Utilisateur"}
-                </Form.Label>
-                <Form.Group className="col-sm m-2" controlId="formName">
-                  <Form.Label>Nom</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="name"
-                    value={user.name}
-                    onChange={handleChange}
-                    placeholder="Entrez le nom"
-                  />
-                  <Form.Text className="text-danger">{errors.name}</Form.Text>
-                </Form.Group>
-                <Form.Group className="col-sm m-2 " controlId="formEmail">
-                  <Form.Label>Email</Form.Label>
-                  <Form.Control
-                    type="email"
-                    name="email"
-                    value={user.email}
-                    onChange={handleChange}
-                    placeholder="Entrez l'email"
-                  />
-                  <Form.Text className="text-danger">{errors.email}</Form.Text>
-                </Form.Group>
-                <Form.Group className="col-sm m-2 " controlId="formRole">
-                  <Form.Label>Role</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="role"
-                    value={user.role}
-                    onChange={handleChange}
-                    placeholder="Entrez le rôle"
-                  />
-                  <Form.Text className="text-danger">{errors.role}</Form.Text>
-                </Form.Group>
-
-                <Form.Group className="col-sm m-2 " controlId="formPhoto">
-                  <Form.Label>Photo</Form.Label>
-                  <Form.Control
-                    type="file"
-                    name="photo"
-                    onChange={handleChange}
-                  />
-
-                  <Form.Text className="text-danger">{errors.photo}</Form.Text>
-                </Form.Group>
-                <Form.Group className="col-sm m-2 " controlId="formPassword">
-                  <Form.Label>Mot de passe</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="password"
-                    value={user.password}
-                    onChange={handleChange}
-                    placeholder="Entrez le mot de passe"
-                  />
-                  <Form.Text className="text-danger">
-                    {errors.password}
-                  </Form.Text>
-                </Form.Group>
-              </div>
-              <Button
-                variant="primary"
-                className="m-2"
-                onClick={handlePermissionsModalOpen}
-              >
-                gerer Permissions
-              </Button>
-              {/* <div style={{ marginBottom: "15px" }}>
-                  <label style={{ marginRight: "10px" }}>Permissions:</label>
-                  <div>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="view_all_products"
-                        checked={selectedPermissions.includes(
-                          "view_all_products"
-                        )}
-                        onChange={handlePermissionChange}
-                      />
-                      View All Products
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="create_product"
-                        checked={selectedPermissions.includes("create_product")}
-                        onChange={handlePermissionChange}
-                      />
-                      Create Product
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="edit_product"
-                        checked={selectedPermissions.includes("edit_product")}
-                        onChange={handlePermissionChange}
-                      />
-                      Edit Product
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="delete_product"
-                        checked={selectedPermissions.includes("delete_product")}
-                        onChange={handlePermissionChange}
-                      />
-                      Delete Product
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="view_all_fournisseurs"
-                        checked={selectedPermissions.includes(
-                          "view_all_fournisseurs"
-                        )}
-                        onChange={handlePermissionChange}
-                      />
-                      View All Fournisseur
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="create_fournisseurs"
-                        checked={selectedPermissions.includes(
-                          "create_fournisseurs"
-                        )}
-                        onChange={handlePermissionChange}
-                      />
-                      Create Fournisseur
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="update_fournisseurs"
-                        checked={selectedPermissions.includes(
-                          "update_fournisseurs"
-                        )}
-                        onChange={handlePermissionChange}
-                      />
-                      Edit Fournisseur
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="delete_fournisseurs"
-                        checked={selectedPermissions.includes(
-                          "delete_fournisseurs"
-                        )}
-                        onChange={handlePermissionChange}
-                      />
-                      Delete Fournisseur
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="view_all_clients"
-                        checked={selectedPermissions.includes("view_all_clients")}
-                        onChange={handlePermissionChange}
-                      />
-                      View All Clients
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="create_clients"
-                        checked={selectedPermissions.includes("create_clients")}
-                        onChange={handlePermissionChange}
-                      />
-                      Create Clients
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="update_clients"
-                        checked={selectedPermissions.includes("update_clients")}
-                        onChange={handlePermissionChange}
-                      />
-                      Edit Clients
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="delete_clients"
-                        checked={selectedPermissions.includes("delete_clients")}
-                        onChange={handlePermissionChange}
-                      />
-                      Delete Clients
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="view_all_users"
-                        checked={selectedPermissions.includes("view_all_users")}
-                        onChange={handlePermissionChange}
-                      />
-                      View All Users
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="create_user"
-                        checked={selectedPermissions.includes("create_user")}
-                        onChange={handlePermissionChange}
-                      />
-                      Create User
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="edit_user"
-                        checked={selectedPermissions.includes("edit_user")}
-                        onChange={handlePermissionChange}
-                      />
-                      Edit User
-                    </label>
-                    <label>
-                      <input
-                        type="checkbox"
-                        value="delete_user"
-                        checked={selectedPermissions.includes("delete_user")}
-                        onChange={handlePermissionChange}
-                      />
-                      Delete User
-                    </label>
-                  </div>
-                </div> */}
-
-              <Button variant="primary" type="submit">
-                {isEditing ? "Modifier" : "Ajouter"}
-              </Button>
-            </Form>
-          </div>
-          <div className="container" style={tableContainerStyle}>
-            <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
-              Gestion des utilisateurs
-            </h2>
-            <table
-              className="table table-hover table-responsive"
-              id="clientsTable"
+          <div className="container-d-flex justify-content-start">
+            <Button
+              variant="primary"
+              className="col-2 btn btn-sm m-2"
+              id="showFormButton"
+              onClick={handleShowFormButtonClick}
             >
-              <thead>
-                <tr>
-                  <th style={tableHeaderStyle}>Name</th>
-                  <th style={tableHeaderStyle}>Email</th>
-                  <th style={tableHeaderStyle}>Role</th>
-                  <th style={tableHeaderStyle}>Photo</th>
-                  <th style={tableHeaderStyle}>Password</th>
-                  <th style={tableHeaderStyle}>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users &&
-                  users.map((user) => (
-                    <tr key={user.id}>
-                      <td style={tableCellStyle}>{user.name}</td>
-                      <td style={tableCellStyle}>{user.email}</td>
-                      <td style={tableCellStyle}>
-                        {user.roles.length > 0 ? user.roles[0].name : "No Role"}
-                      </td>
-                      <td style={tableCellStyle}>
-                        {user.photo && (
-                          <img
-                            src={user.photo}
-                            alt="Photo de l'utilisateur"
-                            style={{
-                              width: "50px",
-                              height: "50px",
-                              borderRadius: "50%",
-                            }}
-                          />
-                        )}
-                      </td>
-                      <td style={tableCellStyle}>{user.password}</td>{" "}
-                      <td style={tableCellStyle}>
-                        <Button
-                          variant="warning"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <i className="fas fa-edit"></i>
-                        </Button>
-                        <Button
-                          variant="danger"
-                          onClick={() =>
-                            window.confirm("Êtes-vous sûr ?") &&
-                            handleDelete(user.id)
-                          }
-                        >
-                          <i className="fas fa-minus-circle"></i>
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
+              {isEditing ? "Modifier Utilisateur" : "Ajouter Utilisateur"}{" "}
+              <i className="fas fa-user-plus" aria-hidden="true"></i>
+            </Button>
+            <div id="formContainer" style={formContainerStyle}>
+              <Form className="col row" onSubmit={handleFormSubmit}>
+                <div>
+                  <Button
+                    onClick={handlePermissionsModalOpen}
+                    style={{
+                      backgroundColor: "transparent",
+                      color: "black",
+                      marginTop: "24px",
+                      border: "none",
+                      marginLeft: "339px",
+                    }}
+                  >
+                    <i style={{ fontSize: "24px" }} className="fas fa-key"></i>
+                  </Button>
+                  <Form.Label
+                    className="text-center m-2"
+                    style={{
+                      color: "black", // Choisissez la couleur du texte souhaitée
+                      fontSize: "20px", // Choisissez la taille de police souhaitée
+                      padding: "10px", // Ajoutez du rembourrage pour améliorer l'apparence
+                      textAlign: "center",
+                    }}
+                  >
+                    {isEditing ? "Modifier Utilisateur" : "Ajouter Utilisateur"}
+                  </Form.Label>
+
+                  <Form.Group className="col-sm m-2" controlId="formName">
+                    <Form.Label>Nom</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="name"
+                      value={user.name}
+                      onChange={handleChange}
+                      placeholder="Entrez le nom"
+                    />
+                    <Form.Text className="text-danger">{errors.name}</Form.Text>
+                  </Form.Group>
+                  <Form.Group className="col-sm m-2 " controlId="formEmail">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control
+                      type="email"
+                      name="email"
+                      value={user.email}
+                      onChange={handleChange}
+                      placeholder="Entrez l'email"
+                    />
+                    <Form.Text className="text-danger">
+                      {errors.email}
+                    </Form.Text>
+                  </Form.Group>
+                  <Form.Group className="col-sm m-2 " controlId="formRole">
+                    <Form.Label>Role</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="role"
+                      value={user.role}
+                      onChange={handleChange}
+                      placeholder="Entrez le rôle"
+                    />
+                    <Form.Text className="text-danger">{errors.role}</Form.Text>
+                  </Form.Group>
+
+                  <Form.Group className="col-sm m-2 " controlId="formPhoto">
+                    <Form.Label>Photo</Form.Label>
+                    <Form.Control
+                      type="file"
+                      name="photo"
+                      onChange={handleChange}
+                    />
+
+                    <Form.Text className="text-danger">
+                      {errors.photo}
+                    </Form.Text>
+                  </Form.Group>
+                  <Form.Group className="col-sm m-2 " controlId="formPassword">
+                    <Form.Label>Mot de passe</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="password"
+                      value={user.password}
+                      onChange={handleChange}
+                      placeholder="Entrez le mot de passe"
+                    />
+                    <Form.Text className="text-danger">
+                      {errors.password}
+                    </Form.Text>
+                  </Form.Group>
+                </div>
+
+                <Button
+                  style={{ marginTop: "24px" }}
+                  variant="primary"
+                  type="submit"
+                >
+                  {isEditing ? "Modifier" : "Ajouter"}
+                </Button>
+              </Form>
+            </div>
+            <div className="container" style={tableContainerStyle}>
+              <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
+                Gestion des utilisateurs
+              </h2>
+              <table
+                className="table table-hover table-responsive"
+                id="clientsTable"
+              >
+                <thead>
+                  <tr>
+                    <th style={tableHeaderStyle}>Name</th>
+                    <th style={tableHeaderStyle}>Email</th>
+                    <th style={tableHeaderStyle}>Role</th>
+                    <th style={tableHeaderStyle}>Photo</th>
+                    <th style={tableHeaderStyle}>Password</th>
+                    <th style={tableHeaderStyle}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users &&
+                    users.map((user) => (
+                      <tr key={user.id}>
+                        <td style={tableCellStyle}>{user.name}</td>
+                        <td style={tableCellStyle}>{user.email}</td>
+                        <td style={tableCellStyle}>
+                          {user.roles.length > 0
+                            ? user.roles[0].name
+                            : "No Role"}
+                        </td>
+                        <td style={tableCellStyle}>
+                          {user.photo && (
+                            <img
+                              src={user.photo}
+                              alt="Photo de l'utilisateur"
+                              style={{
+                                width: "50px",
+                                height: "50px",
+                                borderRadius: "50%",
+                              }}
+                            />
+                          )}
+                        </td>
+                        <td style={tableCellStyle}>{user.password}</td>{" "}
+                        <td style={tableCellStyle}>
+                          <Button
+                            variant="warning"
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </Button>
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDelete(user.id)}
+                          >
+                            <i className="fas fa-minus-circle"></i>
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <Modal
@@ -636,6 +594,14 @@ const Users = () => {
             </Modal.Header>
 
             <Modal.Body>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={selectAll}
+                  onChange={handleSelectAllChange}
+                />
+                Check All
+              </label>
               <table className="table">
                 <thead>
                   <tr>
@@ -725,10 +691,9 @@ const Users = () => {
 
             <Modal.Footer>
               <Button variant="secondary" onClick={handlePermissionsModalClose}>
-                Close
+                valider
               </Button>
             </Modal.Footer>
-
           </Modal>
         </Box>
       </Box>

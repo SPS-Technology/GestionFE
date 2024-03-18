@@ -1,6 +1,7 @@
 // Search.jsx
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import { FaSearch } from 'react-icons/fa';
 
 const Search = ({ onSearch }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -13,14 +14,20 @@ const Search = ({ onSearch }) => {
 
   return (
     <Form inline>
-      <Form.Control
-        type="text"
-        placeholder="Chercher"
-        className="mr-sm-2"
-        value={searchTerm}
-        onChange={handleSearch}
-      />
-    
+      <div className="position-relative">
+        <Form.Control
+          type="text"
+          placeholder="Chercher"
+          className="mr-sm-2 pr-4" // Add padding for the search icon
+          value={searchTerm}
+          onChange={handleSearch}
+          style={{ borderRadius: '20px' }}
+        />
+       <FaSearch
+          className="position-absolute top-50 translate-middle-y"
+          style={{ right: '10px' }}
+        />
+      </div>
     </Form>
   );
 };

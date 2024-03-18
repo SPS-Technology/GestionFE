@@ -22,14 +22,18 @@ import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import BusinessIcon from "@mui/icons-material/Business";
 import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
+import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
+import StarHalfIcon from '@mui/icons-material/StarHalf';
 import { Link } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
+import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
 import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
+
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -40,6 +44,7 @@ const AppBar = styled(MuiAppBar, {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
+  backgroundColor: "grey",
   ...(open && {
     marginLeft: drawerWidth,
     width: `calc(100% - ${drawerWidth}px)`,
@@ -113,12 +118,6 @@ const Navigation = () => {
   const handleLogoutClick = async () => {
     try {
       // Logout logic
-
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Logout successful!",
-      });
       navigate("/login");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -139,7 +138,7 @@ const Navigation = () => {
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: "flex" }}>
         <CssBaseline />
-        <AppBar position="absolute" open={open}>
+        <AppBar position="absolute" open={open} className="beige-appbar">
           <Toolbar
             sx={{
               pr: "24px",
@@ -202,52 +201,96 @@ const Navigation = () => {
           <List>
             {user && (
               <ListItem button style={{ color: "blue" }}>
-                <ListItemIcon>
-                  <Avatar
-                    alt={user.name}
-                    src={user.photo}
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                </ListItemIcon>
-                <ListItemText primary={`Hello, ${user.name}`} />
+                {/*<ListItemIcon>*/}
+                {/*  <Avatar*/}
+                {/*    alt={user.name}*/}
+                {/*    src={user.photo}*/}
+                {/*    style={{ width: "40px", height: "40px" }}*/}
+                {/*  />*/}
+                {/*</ListItemIcon>*/}
+                <ListItemText primary={``} />
               </ListItem>
             )}
-            <ListItem button component={Link} to="/" style={{ color: "blue" }}>
+            <ListItem button component={Link} to="/" style={{  color: "grey" }}>
               <ListItemIcon>
-                <ShoppingBasketIcon />
+                <ShoppingBasketIcon  />
               </ListItemIcon>
-              <ListItemText primary="Gestion commandes" />
+              <ListItemText primary="Accueil" />
             </ListItem>
             <ListItem
               button
               component={Link}
               to="/fournisseurs"
-              style={{ color: "blue" }}
+              style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <BusinessIcon />
+                <BusinessIcon   />
               </ListItemIcon>
               <ListItemText primary="Fournisseurs" />
             </ListItem>
             <ListItem
               button
               component={Link}
-              to="/clients"
-              style={{ color: "blue" }}
+              to="/livreurs"
+              style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <PeopleIcon />
+                <DeliveryDiningIcon   />
+              </ListItemIcon>
+              <ListItemText primary="Livreurs" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/vehicules"
+              style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <TimeToLeaveIcon   />
+              </ListItemIcon>
+              <ListItemText primary="vehicules" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/vehicule-livreurs"
+              style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <TimeToLeaveIcon   />
+              </ListItemIcon>
+              <ListItemText primary="vehicule-livreurs" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/clients"
+              style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <PeopleIcon   />
               </ListItemIcon>
               <ListItemText primary="Clients" />
             </ListItem>
             <ListItem
               button
               component={Link}
-              to="/produits"
-              style={{ color: "blue" }}
+              to="/objectifs"
+              style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <AddCircleIcon />
+                <StarHalfIcon   />
+              </ListItemIcon>
+              <ListItemText primary="Objectifs" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/produits"
+              style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <AddCircleIcon  />
               </ListItemIcon>
               <ListItemText primary="Produits" />
             </ListItem>
@@ -255,32 +298,32 @@ const Navigation = () => {
               button
               component={Link}
               to="/commandes"
-              style={{ color: "blue" }}
+              style={{ color: "grey" }}
             >
               <ListItemIcon>
                 <ShoppingBasketIcon />
               </ListItemIcon>
               <ListItemText primary="Gestion Commandes" />
             </ListItem>
-            <ListItem
-              button
-              component={Link}
-              to="/add-user"
-              style={{ color: "blue" }}
-            >
-              <ListItemIcon>
-                <AddCircleIcon />
-              </ListItemIcon>
-              <ListItemText primary="Ajouter utilisateur" />
-            </ListItem>
+            {/*<ListItem*/}
+            {/*  button*/}
+            {/*  component={Link}*/}
+            {/*  to="/add-user"*/}
+            {/*  style={{ color: "grey" }}*/}
+            {/*>*/}
+            {/*  <ListItemIcon>*/}
+            {/*    <AddCircleIcon  />*/}
+            {/*  </ListItemIcon>*/}
+            {/*  <ListItemText primary="Ajouter utilisateur" />*/}
+            {/*</ListItem>*/}
             <ListItem
               button
               component={Link}
               to="/users"
-              style={{ color: "blue" }}
+              style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <SupervisorAccountIcon />
+                <SupervisorAccountIcon  />
               </ListItemIcon>
               <ListItemText primary="Gestion utilisateurs" />
             </ListItem>
@@ -295,7 +338,7 @@ const Navigation = () => {
               style={{ color: "red", background: "white" }}
             >
               <ListItemIcon>
-                <ExitToAppIcon />
+                <ExitToAppIcon  style={{ color:"red"}} />
               </ListItemIcon>
               <ListItemText primary="Se déconnecter" />
             </ListItem>

@@ -23,6 +23,7 @@ import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { Toolbar } from "@mui/material";
+import { BsShop } from "react-icons/bs";
 
 const ProduitList = () => {
   const [produits, setProduits] = useState([]);
@@ -40,7 +41,7 @@ const ProduitList = () => {
 
   const [editingProduit, setEditingProduit] = useState(null);
   const [editingProduitId, setEditingProduitId] = useState(null);
-
+  const [userHasDeletePermission, setUserHasDeletePermission] = useState(true);
   const [formContainerStyle, setFormContainerStyle] = useState({
     right: "-500px",
   });
@@ -57,7 +58,14 @@ const ProduitList = () => {
     user_id: "",
     categorie_id: "",
   });
-
+  const [errors, setErrors] = useState({
+    Code_produit: "",
+    designation: "",
+    type_quantite: "",
+    calibre: "",
+    user_id: "",
+    categorie_id: "",
+  });
   useEffect(() => {
     fetchProduits();
   }, []);
@@ -78,17 +86,32 @@ const ProduitList = () => {
       setCategories(responseCategories.data);
     } catch (error) {
       console.error("Error fetching data:", error);
+      if (error.response && error.response.status === 403) {
+        Swal.fire({
+          icon: "error",
+          title: "Accès refusé",
+          text: "Vous n'avez pas l'autorisation de voir la liste des produits.",
+        });
+      }
     }
   };
 
   useEffect(() => {
     if (produits) {
       const filtered = produits.filter((produit) =>
-        produit.designation.toLowerCase().includes(searchTerm.toLowerCase())
+        Object.values(produit).some((value) => {
+          if (typeof value === "string") {
+            return value.toLowerCase().includes(searchTerm.toLowerCase());
+          } else if (typeof value === "number") {
+            return value.toString().includes(searchTerm.toLowerCase());
+          }
+          return false;
+        })
       );
       setFilteredProduits(filtered);
     }
   }, [produits, searchTerm]);
+  
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -154,11 +177,19 @@ const ProduitList = () => {
             })
             .catch((error) => {
               console.error("Error deleting product:", error);
-              Swal.fire({
-                icon: "error",
-                title: "Error!",
-                text: "Échec de la suppression du produit.",
-              });
+              if (error.response && error.response.status === 403) {
+                Swal.fire({
+                  icon: "error",
+                  title: "Accès refusé",
+                  text: "Vous n'avez pas l'autorisation de supprimer ce produit.",
+                });
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error!",
+                  text: "Échec de la suppression du produit.",
+                });
+              }
             });
         });
       }
@@ -193,11 +224,19 @@ const ProduitList = () => {
           })
           .catch((error) => {
             console.error("Error deleting product:", error);
-            Swal.fire({
-              icon: "error",
-              title: "Erreur!",
-              text: "Échec de la suppression du produit.",
-            });
+            if (error.response && error.response.status === 403) {
+              Swal.fire({
+                icon: "error",
+                title: "Accès refusé",
+                text: "Vous n'avez pas l'autorisation de supprimer ce produit.",
+              });
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du produit.",
+              });
+            }
           });
       } else {
         console.log("Suppression annulée");
@@ -224,6 +263,14 @@ const ProduitList = () => {
       calibre: "",
       categorie_id: "",
       user_id: "",
+    });
+    setErrors({
+      Code_produit: "",
+      designation: "",
+      type_quantite: "",
+      calibre: "",
+      user_id: "",
+      categorie_id: "",
     });
     setEditingProduit(null); // Clear editing client
   };
@@ -290,39 +337,52 @@ const ProduitList = () => {
           type_quantite: "",
           calibre: "",
           categorie_id: "",
-          user_id: "", 
+          user_id: "",
+        });
+        setErrors({
+          Code_produit: "",
+          designation: "",
+          type_quantite: "",
+          calibre: "",
+          user_id: "",
+          categorie_id: "",
         });
         setEditingProduit(null);
+        closeForm();
       })
       .catch((error) => {
-        console.error(
-          `Error ${editingProduit ? "updating" : "adding"} product:`,
-          error
-        );
+        if (error.response) {
+          const serverErrors = error.response.data.error;
+          console.log(serverErrors);
+          setErrors({
+            Code_produit: serverErrors.Code_produit
+              ? serverErrors.Code_produit[0]
+              : "",
+            designation: serverErrors.designation
+              ? serverErrors.designation[0]
+              : "",
+            type_quantite: serverErrors.type_quantite
+              ? serverErrors.type_quantite[0]
+              : "",
+            calibre: serverErrors.calibre ? serverErrors.calibre[0] : "",
+            categorie_id: serverErrors.categorie_id
+              ? serverErrors.categorie_id[0]
+              : "",
+          });
 
-        if (error.response && error.response.status === 403) {
-          Swal.fire({
-            icon: "error",
-            title: "Accès refusé",
-            text: `Vous n'avez pas l'autorisation de ${
-              editingProduit ? "modifier" : "ajouter"
-            } un produit.`,
-          });
+          if (error.response.status === 403) {
+            Swal.fire({
+              icon: "error",
+              title: "Accès refusé",
+              text: `Vous n'avez pas l'autorisation de ${
+                editingProduit ? "modifier" : "ajouter"
+              } un produit.`,
+            });
+          } 
         } else {
-          Swal.fire({
-            icon: "error",
-            title: "Error!",
-            text: `Failed to ${editingProduit ? "update" : "add"} product.`,
-          });
+          console.error(error); // Gérez les erreurs qui ne proviennent pas de la réponse du serveur
         }
       });
-
-    if (formContainerStyle.right === "-500px") {
-      setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
-    } else {
-      closeForm();
-    }
   };
 
   //------------------------- fournisseur export to excel ---------------------//
@@ -358,20 +418,71 @@ const ProduitList = () => {
       });
     }
   };
+  const handleEditcatgeorie = async (categorieId) => {
+    try {
+      const response = await axios.get(
+        `http://localhost:8000/api/categories/${categorieId}`
+      );
+      const categorieToEdit = response.data;
+
+      const { value: editedCategorie } = await Swal.fire({
+        title: "Modifier une categorie",
+        html: `
+          <form id="editZoneForm">
+            <input id="swal-edit-input1" class="swal2-input" placeholder="categorie" name="categorie" value="${categorieToEdit.categorie}">
+          </form>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Modifier",
+        cancelButtonText: "Annuler",
+        preConfirm: () => {
+          const editedCategorieValue =
+            Swal.getPopup().querySelector("#swal-edit-input1").value;
+          return { categorie: editedCategorieValue };
+        },
+      });
+
+      if (
+        editedCategorie &&
+        editedCategorie.categorie !== categorieToEdit.categorie
+      ) {
+        const putResponse = await axios.put(
+          `http://localhost:8000/api/categories/${categorieId}`,
+          editedCategorie
+        );
+        console.log(putResponse.data);
+        Swal.fire({
+          icon: "success",
+          title: "Succès!",
+          text: "Categorie modifiée avec succès.",
+        });
+        fetchProduits();
+      } else {
+        console.log("Categorie not edited or unchanged");
+      }
+    } catch (error) {
+      console.error("Error editing Categorie:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Erreur!",
+        text: "Échec de la modification de la Categorie.",
+      });
+    }
+  };
+
   const handleAddCategory = async () => {
     const { value: categoryData } = await Swal.fire({
       title: "Ajouter une catégorie",
       html: `
           <form id="addCategoryForm">
               <input id="swal-input1" class="swal2-input" placeholder="Catégorie" name="categorie">
-              <input id="swal-input2" class="swal2-input" placeholder="Description" name="description">
               <div class="form-group mt-3">
                   <table class="table table-hover">
                       <thead>
                           <tr>
                               <th>Id</th>
                               <th>Catégorie</th>
-                              <th>Description</th>
+                              <th>Action</th>
                           </tr>
                       </thead>
                       <tbody>
@@ -381,12 +492,11 @@ const ProduitList = () => {
                               <tr key=${categ.id}>
                                   <td>${categ.id}</td>
                                   <td>${categ.categorie}</td>
-                                  <td>${categ.description}</td>
                                   <td>
                                       <select id="actionDropdown_${categ.id}" class="form-control">
                                           <option value="">Select Action</option>
-                                          <option value="modify_${categ.id}">Modifier</option>
-                                          <option value="delete_${categ.id}">Supprimer</option>
+                                          <option value="modify_${categ.id}" style="background-color: yellow;">Modifier</option>
+                          <option value="delete_${categ.id}" style="background-color: red;">Supprimer</option>
                                       </select>
                                   </td>
                               </tr>
@@ -403,9 +513,8 @@ const ProduitList = () => {
       cancelButtonText: "Annuler",
       preConfirm: () => {
         const categorie = Swal.getPopup().querySelector("#swal-input1").value;
-        const description = Swal.getPopup().querySelector("#swal-input2").value;
 
-        return { categorie, description };
+        return { categorie };
       },
     });
 
@@ -440,78 +549,7 @@ const ProduitList = () => {
         // Delete action
         handleDeletecatgeorie(categoryId);
       } else if (action === "modify") {
-        // Modify action
-        try {
-          const response = await axios.get(
-            `http://localhost:8000/api/categories/${categoryId}`
-          );
-          const categoryToModify = response.data;
-
-          if (!categoryToModify) {
-            console.error("Category not found or data is missing");
-            return;
-          }
-
-          const categorieValue =
-            categoryToModify && categoryToModify.categorie
-              ? categoryToModify.categorie
-              : "";
-
-          const descriptionValue =
-            categoryToModify && categoryToModify.descriptionart
-              ? categoryToModify.description
-              : "";
-
-          const { value: modifiedData } = await Swal.fire({
-            title: "Modifier une catégorie",
-            html: `
-                    <form id="modifyCategoryForm">
-                        <input id="swal-modify-input1" class="swal2-input" placeholder="Catégorie" name="categorie" value="${categorieValue}">
-                        <input id="swal-modify-input2" class="swal2-input" placeholder="Description" name="description" value="${descriptionValue}">
-                    </form>
-                `,
-            showCancelButton: true,
-            confirmButtonText: "Modifier",
-            cancelButtonText: "Annuler",
-            preConfirm: () => {
-              const modifiedCategorie = Swal.getPopup().querySelector(
-                "#swal-modify-input1"
-              ).value;
-              const modifiedDescription = Swal.getPopup().querySelector(
-                "#swal-modify-input2"
-              ).value;
-
-              return {
-                categorie: modifiedCategorie,
-                description: modifiedDescription,
-              };
-            },
-          });
-
-          if (modifiedData) {
-            const modifyResponse = await axios.put(
-              `http://localhost:8000/api/categories/${categoryId}`,
-              modifiedData
-            );
-            console.log(modifyResponse.data);
-            Swal.fire({
-              icon: "success",
-              title: "Succès!",
-              text: "Catégorie modifiée avec succès.",
-            });
-            fetchProduits();
-          }
-        } catch (error) {
-          console.error(
-            "Erreur lors de la modification de la catégorie:",
-            error
-          );
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la modification de la catégorie.",
-          });
-        }
+        handleEditcatgeorie(categoryId);
       }
       event.target.value = "";
     }
@@ -523,22 +561,52 @@ const ProduitList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-          <div className="container">
-            <h3>Liste des Produits</h3>
-            <div
-              className="search-container d-flex flex-row-reverse "
-              role="search"
-            >
-              <Search onSearch={handleSearch} type="search" />
+          <h3 className="text-left" style={{ color: "#A31818" }}>
+            <BsShop style={{ fontSize: "24px", marginRight: "8px" }} />
+            Liste des Produits
+          </h3>
+          <div className="d-flex flex-row justify-content-end">
+            <div className="btn-group col-2">
+              <PrintList
+                tableId="produitsTable"
+                title="Liste des produits"
+                produitList={produits}
+                filteredProduits={filteredProduits}
+              />
+              <ExportToPdfButton
+                produits={produits}
+                selectedItems={selectedItems}
+                disabled={selectedItems.length === 0}
+              />
+
+              <Button
+                className="btn btn-success btn-sm ml-2"
+                onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
+              >
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
             </div>
+          </div>
+          <div className="search-container d-flex justify-content-center align-items-center mb-3">
+            <Search onSearch={handleSearch} />
+          </div>
+
+          <div className="container-d-flex justify-content-start">
             <Button
-              variant="primary"
-              className="col-2 btn btn-sm m-2"
+              style={{
+                backgroundColor: "white",
+                color: "black",
+                display: "flex",
+                alignItems: "center",
+              }}
               id="showFormButton"
               onClick={handleShowFormButtonClick}
             >
-              {showForm ? "Modifier le formulaire" : "Ajouter un Produit"}
+              <BsShop style={{ fontSize: "24px", marginRight: "8px" }} />
+              Mise a jour Produit
             </Button>
+
             <div id="formContainer" className="mt-3" style={formContainerStyle}>
               <Form className="col row" onSubmit={handleSubmit}>
                 <Form.Label className="text-center m-2">
@@ -553,8 +621,10 @@ const ProduitList = () => {
                     onChange={handleChange}
                     placeholder="Code_produit"
                     className="form-control-sm"
-                    required
                   />
+                  <Form.Text className="text-danger">
+                    {errors.Code_produit}
+                  </Form.Text>
                 </Form.Group>
                 <Form.Group className="col-sm-5 m-2 " controlId="designation">
                   <Form.Label>Designation</Form.Label>
@@ -565,8 +635,10 @@ const ProduitList = () => {
                     onChange={handleChange}
                     placeholder="designation"
                     className="form-control-sm"
-                    required
                   />
+                  <Form.Text className="text-danger">
+                    {errors.designation}
+                  </Form.Text>
                 </Form.Group>
                 <Form.Group className="col-sm-5 m-2" controlId="type_quantite">
                   <Form.Label>Type de Quantité</Form.Label>
@@ -599,6 +671,9 @@ const ProduitList = () => {
                       checked={formData.type_quantite === "kg/unite"}
                     />
                   </div>
+                  <Form.Text className="text-danger">
+                    {errors.type_quantite}
+                  </Form.Text>
                 </Form.Group>
                 <Form.Group className="col-sm-5 m-2 " controlId="calibre">
                   <Form.Label>Calibre</Form.Label>
@@ -609,8 +684,10 @@ const ProduitList = () => {
                     onChange={handleChange}
                     placeholder="Calibre"
                     className="form-control-sm"
-                    required
                   />
+                  <Form.Text className="text-danger">
+                    {errors.calibre}
+                  </Form.Text>
                 </Form.Group>
                 <Form.Group className="col-sm-5 m-2" controlId="categorie_id">
                   <FontAwesomeIcon
@@ -634,6 +711,9 @@ const ProduitList = () => {
                       </option>
                     ))}
                   </Form.Select>
+                  <Form.Text className="text-danger">
+                    {errors.categorie_id}
+                  </Form.Text>
                 </Form.Group>
 
                 {/* <Form.Group className="col-sm-5 m-2 " controlId="user_id">
@@ -724,9 +804,7 @@ const ProduitList = () => {
                               ? produit.categorie.categorie
                               : "no categorie"}
                           </td>
-                          <td style={tableCellStyle}>
-                            {produit.user.name}
-                          </td>
+                          <td style={tableCellStyle}>{produit.user.name}</td>
 
                           <td
                             className="d-inline-flex"
@@ -751,6 +829,14 @@ const ProduitList = () => {
                       ))}
                   </tbody>
                 </table>
+                <Button
+                  className="btn btn-danger btn-sm"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedItems.length === 0}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                  supprimer selection
+                </Button>
                 <TablePagination
                   rowsPerPageOptions={[5, 10, 25]}
                   component="div"
@@ -760,32 +846,6 @@ const ProduitList = () => {
                   onPageChange={handleChangePage}
                   onRowsPerPageChange={handleChangeRowsPerPage}
                 />
-                <div className="d-flex flex-row">
-                  <div className="btn-group col-2">
-                    <Button
-                      className="btn btn-danger btn-sm"
-                      onClick={handleDeleteSelected}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                    <PrintList
-                      tableId="produitsTable"
-                      title="Liste des produits"
-                      produitList={produits}
-                      filteredProduits={filteredProduits}
-                    />
-                    <ExportToPdfButton
-                      produits={produits}
-                      selectedItems={selectedItems}
-                    />
-                    <Button
-                      className="btn btn-success btn-sm ml-2"
-                      onClick={exportToExcel}
-                    >
-                      <FontAwesomeIcon icon={faFileExcel} />
-                    </Button>
-                  </div>
-                </div>
               </div>
             </div>
           </div>

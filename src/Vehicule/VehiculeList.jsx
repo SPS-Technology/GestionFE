@@ -19,44 +19,36 @@ import "jspdf-autotable";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
-import BusinessIcon from "@mui/icons-material/Business";
-const FournisseurList = () => {
+import { FaCar } from "react-icons/fa";
+import PrintList from "./PrintList";
+import ExportPdfButton from "./exportToPdf";
+const VehiculeList = () => {
   // const [existingFournisseur, setExistingFournisseur] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredFournisseurs, setFilteredFournisseurs] = useState([]);
+  const [filteredVehicules, setFilteredVehicules] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const [fournisseurs, setFournisseurs] = useState([]);
+  const [vehicules, setVehicules] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
   //-------------------edit-----------------------//
-  const [editingFournisseur, setEditingFournisseur] = useState(null); // State to hold the fournisseur being edited
-  const [editingFournisseurId, setEditingFournisseurId] = useState(null);
+  const [editingVehicule, setEditingVehicule] = useState(null); // State to hold the fournisseur being edited
+  const [editingVehiculeId, setEditingVehiculeId] = useState(null);
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    CodeFournisseur: "",
-    raison_sociale: "",
-    abreviation: "",
-    adresse: "",
-    tele: "",
-    ville: "",
-    ice: "",
-    code_postal: "",
-    user_id: "",
+    marque: "",
+    matricule: "",
+    model: "",
+    capacite: "",
   });
   const [errors, setErrors] = useState({
-    CodeFournisseur: "",
-    raison_sociale: "",
-    abreviation: "",
-    adresse: "",
-    tele: "",
-    ville: "",
-    ice: "",
-    code_postal: "",
-    user_id: "",
+    marque: "",
+    matricule: "",
+    model: "",
+    capacite: "",
   });
   const [formContainerStyle, setFormContainerStyle] = useState({
     right: "-500px",
@@ -64,56 +56,56 @@ const FournisseurList = () => {
   const [tableContainerStyle, setTableContainerStyle] = useState({
     marginRight: "0px",
   });
+  const tableHeaderStyle = {
+    background: "#f2f2f2",
+    padding: "10px",
+    textAlign: "left",
+    borderBottom: "1px solid #ddd",
+  };
 
-  const fetchFournisseurs = async () => {
+  const fetchVehicules = async () => {
     try {
-      const response = await axios.get(
-        "http://localhost:8000/api/fournisseurs"
-      );
+      const response = await axios.get("http://localhost:8000/api/vehicules");
 
       console.log("API Response:", response.data);
 
-      setFournisseurs(response.data.fournisseurs);
+      setVehicules(response.data.vehicules);
 
       const usersResponse = await axios.get("http://localhost:8000/api/users");
       setUsers(usersResponse.data);
     } catch (error) {
       console.error("Error fetching data:", error);
-      if (error.response && error.response.status === 403) {
-        Swal.fire({
-          icon: "error",
-          title: "Accès refusé",
-          text: "Vous n'avez pas l'autorisation de voir la liste des fournisseurs.",
-        });
-      }
     }
   };
 
   useEffect(() => {
-    fetchFournisseurs();
+    fetchVehicules();
   }, []);
 
   useEffect(() => {
-    const filtered =
-      fournisseurs &&
-      fournisseurs.filter((fournisseur) =>
-        Object.values(fournisseur).some((value) => {
-          if (typeof value === "string") {
-            return value.toLowerCase().includes(searchTerm.toLowerCase());
-          } else if (typeof value === "number") {
-            return value.toString().includes(searchTerm.toLowerCase());
-          }
-          return false;
-        })
-      );
-    setFilteredFournisseurs(filtered);
-  }, [fournisseurs, searchTerm]);
-  
+    const filtered = vehicules.filter((vehicule) => {
+      const marqueMatch = vehicule.marque
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matriculeMatch = vehicule.matricule
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const modelMatch = vehicule.model
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const capaciteMatch = vehicule.capacite
+        .toString()
+        .includes(searchTerm.toString());
+
+      return marqueMatch || matriculeMatch || modelMatch || capaciteMatch;
+    });
+
+    setFilteredVehicules(filtered);
+  }, [vehicules, searchTerm]);
 
   const handleSearch = (term) => {
     setSearchTerm(term);
   };
-
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
@@ -149,34 +141,25 @@ const FournisseurList = () => {
       if (result.isConfirmed) {
         selectedItems.forEach((id) => {
           axios
-            .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+            .delete(`http://localhost:8000/api/vehicules/${id}`)
             .then((response) => {
-              fetchFournisseurs();
+              fetchVehicules();
               Swal.fire({
                 icon: "success",
                 title: "Succès!",
-                text: "fournisseur supprimé avec succès.",
+                text: "Vehicule supprimé avec succès.",
               });
             })
             .catch((error) => {
               console.error(
-                "Erreur lors de la suppression du fournisseur:",
+                "Erreur lors de la suppression du Vehicule:",
                 error
               );
-
-              if (error.response && error.response.status === 403) {
-                Swal.fire({
-                  icon: "error",
-                  title: "Accès refusé",
-                  text: "Vous n'avez pas l'autorisation de supprimer un  fournisseur.",
-                });
-              } else {
-                Swal.fire({
-                  icon: "error",
-                  title: "Erreur!",
-                  text: "Échec de la suppression du fournisseur.",
-                });
-              }
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du Vehicule.",
+              });
             });
         });
       }
@@ -194,7 +177,7 @@ const FournisseurList = () => {
     if (selectAll) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(fournisseurs.map((fournisseur) => fournisseur.id));
+      setSelectedItems(vehicules.map((livreur) => livreur.id));
     }
   };
   //------------------------- fournisseur print ---------------------//
@@ -291,8 +274,8 @@ const FournisseurList = () => {
               <div class="page-header print-no-date">${title}</div>
               <ul>
                 ${
-                  Array.isArray(fournisseurList)
-                    ? fournisseurList.map((item) => `<li>${item}</li>`).join("")
+                  Array.isArray(VehiculeList)
+                    ? VehiculeList.map((item) => `<li>${item}</li>`).join("")
                     : ""
                 }
               </ul>
@@ -325,30 +308,16 @@ const FournisseurList = () => {
     const pdf = new jsPDF();
 
     // Define the columns and rows for the table
-    const columns = [
-      "ID",
-      "CodeFournisseur",
-      "Raison Sociale",
-      "Adresse",
-      "Téléphone",
-      "Ville",
-      "Abréviation",
-      "ice",
-      "User",
-    ];
-    const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
-      selectedItems.includes(fournisseur.id)
+    const columns = ["ID", "marque", "matricule", "model", "capacite"];
+    const selectedVehicules = vehicules.filter((vehicule) =>
+      selectedItems.includes(vehicule.id)
     );
-    const rows = selectedFournisseurs.map((fournisseur) => [
-      fournisseur.id,
-      fournisseur.CodeFournisseur,
-      fournisseur.raison_sociale,
-      fournisseur.adresse,
-      fournisseur.tele,
-      fournisseur.ville,
-      fournisseur.abreviation,
-      fournisseur.ice,
-      fournisseur.user_id,
+    const rows = selectedVehicules.map((vehicule) => [
+      vehicule.id,
+      vehicule.marque,
+      vehicule.matricule,
+      vehicule.model,
+      vehicule.capacite,
     ]);
 
     // Set the margin and padding
@@ -387,9 +356,6 @@ const FournisseurList = () => {
         2: { cellWidth: columnWidths[2] },
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
-        5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
@@ -405,31 +371,28 @@ const FournisseurList = () => {
         2: { cellWidth: columnWidths[2] },
         3: { cellWidth: columnWidths[3] },
         4: { cellWidth: columnWidths[4] },
-        5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
       },
     });
 
     // Save the PDF
-    pdf.save("fournisseurs.pdf");
+    pdf.save("vehicules.pdf");
   };
   //------------------------- fournisseur export to excel ---------------------//
 
   const exportToExcel = () => {
-    const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
-      selectedItems.includes(fournisseur.id)
+    const selectedVehicules = vehicules.filter((vehicule) =>
+      selectedItems.includes(vehicule.id)
     );
-    const ws = XLSX.utils.json_to_sheet(selectedFournisseurs);
+    const ws = XLSX.utils.json_to_sheet(selectedVehicules);
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Fournisseurs");
-    XLSX.writeFile(wb, "fournisseurs.xlsx");
+    XLSX.utils.book_append_sheet(wb, ws, "Vehicules");
+    XLSX.writeFile(wb, "vehicules.xlsx");
   };
 
   //------------------------- fournisseur Delete---------------------//
   const handleDelete = (id) => {
     Swal.fire({
-      title: "Êtes-vous sûr de vouloir supprimer ce fournisseur ?",
+      title: "Êtes-vous sûr de vouloir supprimer cette véhicule ?",
       showDenyButton: true,
       showCancelButton: false,
       confirmButtonText: "Oui",
@@ -443,48 +406,36 @@ const FournisseurList = () => {
     }).then((result) => {
       if (result.isConfirmed) {
         axios
-          .delete(`http://localhost:8000/api/fournisseurs/${id}`)
+          .delete(`http://localhost:8000/api/vehicules/${id}`)
           .then((response) => {
             if (response.data.message) {
               // Successful deletion
-              fetchFournisseurs();
+              fetchVehicules();
               Swal.fire({
                 icon: "success",
                 title: "Succès!",
-                text: "fournisseur supprimé avec succès",
+                text: "Véhicule supprimé avec succès",
               });
-            } else if (response.data.error) {
-              // Error occurred
-              if (
-                response.data.error.includes(
-                  "Impossible de supprimer ou de mettre à jour une ligne parent : une contrainte de clé étrangère échoue"
-                )
-              ) {
-                Swal.fire({
-                  icon: "error",
-                  title: "Erreur!",
-                  text: "Impossible de supprimer le fournisseur car il a des produits associés.",
-                });
-              }
             }
           })
           .catch((error) => {
-            console.error(
-              "Erreur lors de la suppression du fournisseur:",
-              error
-            );
-
-            if (error.response && error.response.status === 403) {
-              Swal.fire({
-                icon: "error",
-                title: "Accès refusé",
-                text: "Vous n'avez pas l'autorisation de supprimer un  fournisseur.",
-              });
-            } else {
+            // Check for integrity constraint violation
+            if (error.response && error.response.status === 500) {
               Swal.fire({
                 icon: "error",
                 title: "Erreur!",
-                text: "Échec de la suppression du fournisseur.",
+                text: "Impossible de supprimer le véhicule car il est affecter a un livreur.",
+              });
+            } else {
+              // Other request errors
+              console.error(
+                "Erreur lors de la suppression du Véhicule:",
+                error
+              );
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: `Échec de la suppression du Véhicule. Veuillez consulter la console pour plus d'informations.`,
               });
             }
           });
@@ -493,21 +444,17 @@ const FournisseurList = () => {
       }
     });
   };
+
   //------------------------- fournisseur EDIT---------------------//
 
-  const handleEdit = (fournisseurs) => {
-    setEditingFournisseur(fournisseurs); // Set the fournisseurs to be edited
+  const handleEdit = (vehicule) => {
+    setEditingVehicule(vehicule); // Set the fournisseurs to be edited
     // Populate form data with fournisseurs details
     setFormData({
-      CodeFournisseur: fournisseurs.CodeFournisseur,
-      raison_sociale: fournisseurs.raison_sociale,
-      abreviation: fournisseurs.abreviation,
-      adresse: fournisseurs.adresse,
-      tele: fournisseurs.tele,
-      ville: fournisseurs.ville,
-      ice: fournisseurs.ice,
-      code_postal: fournisseurs.code_postal,
-      user_id: fournisseurs.user_id,
+      marque: vehicule.marque,
+      model: vehicule.model,
+      matricule: vehicule.matricule,
+      capacite: vehicule.capacite,
     });
     if (formContainerStyle.right === "-500px") {
       setFormContainerStyle({ right: "0" });
@@ -519,50 +466,51 @@ const FournisseurList = () => {
     // setShowForm(true);
   };
   useEffect(() => {
-    if (editingFournisseurId !== null) {
+    if (editingVehiculeId !== null) {
       setFormContainerStyle({ right: "0" });
       setTableContainerStyle({ marginRight: "500px" });
     }
-  }, [editingFournisseurId]);
+  }, [editingVehiculeId]);
 
   //------------------------- fournisseur SUBMIT---------------------//
 
   useEffect(() => {
-    fetchFournisseurs();
+    fetchVehicules();
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const url = editingFournisseur
-      ? `http://localhost:8000/api/fournisseurs/${editingFournisseur.id}`
-      : "http://localhost:8000/api/fournisseurs";
-    const method = editingFournisseur ? "put" : "post";
+    const url = editingVehicule
+      ? `http://localhost:8000/api/vehicules/${editingVehicule.id}`
+      : "http://localhost:8000/api/vehicules";
+    const method = editingVehicule ? "put" : "post";
     axios({
       method: method,
       url: url,
       data: formData,
     })
       .then(() => {
-        fetchFournisseurs();
+        fetchVehicules();
         Swal.fire({
           icon: "success",
           title: "Succès!",
-          text: `fournisseur ${
-            editingFournisseur ? "modifié" : "ajouté"
+          text: `Vehicule ${
+            editingVehicule ? "modifié" : "ajouté"
           } avec succès.`,
         });
         setFormData({
-          CodeFournisseur: "",
-          raison_sociale: "",
-          abreviation: "",
-          adresse: "",
-          tele: "",
-          ville: "",
-          ice: "",
-          code_postal: "",
-          user_id: "",
+          marque: "",
+          matricule: "",
+          model: "",
+          capacite: "",
         });
-        setEditingFournisseur(null); // Clear editing fournisseur
+        setErrors({
+          marque: "",
+          matricule: "",
+          model: "",
+          capacite: "",
+        });
+        setEditingVehicule(null);
         closeForm();
       })
       .catch((error) => {
@@ -570,37 +518,14 @@ const FournisseurList = () => {
           const serverErrors = error.response.data.error;
           console.log(serverErrors);
           setErrors({
-            CodeFournisseur: serverErrors.CodeFournisseur
-              ? serverErrors.CodeFournisseur[0]
-              : "",
-            raison_sociale: serverErrors.raison_sociale
-              ? serverErrors.raison_sociale[0]
-              : "",
-            abreviation: serverErrors.abreviation
-              ? serverErrors.abreviation[0]
-              : "",
-            adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
-            tele: serverErrors.tele ? serverErrors.tele[0] : "",
-            ville: serverErrors.ville ? serverErrors.ville[0] : "",
-            ice: serverErrors.ice ? serverErrors.ice[0] : "",
-            code_postal: serverErrors.code_postal ? serverErrors.code_postal[0] : "",
+            marque: serverErrors.marque ? serverErrors.marque[0] : "",
+            matricule: serverErrors.matricule ? serverErrors.matricule[0] : "",
+            model: serverErrors.model ? serverErrors.model[0] : "",
+            capacite: serverErrors.capacite ? serverErrors.capacite[0] : "",
           });
-
-          if (error.response.status === 403) {
-            Swal.fire({
-              icon: "error",
-              title: "Accès refusé",
-              text: `Vous n'avez pas l'autorisation de ${
-                editingFournisseur ? "modifier" : "ajouter"
-              } un fournisseur.`,
-            });
-          }
-        } else {
-          console.error(error); // Gérez les erreurs qui ne proviennent pas de la réponse du serveur
         }
       });
   };
-
   //------------------------- fournisseur FORM---------------------//
 
   const handleShowFormButtonClick = () => {
@@ -617,28 +542,18 @@ const FournisseurList = () => {
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
     setFormData({
-      CodeFournisseur: "",
-      raison_sociale: "",
-      abreviation: "",
-      adresse: "",
-      tele: "",
-      ville: "",
-      ice: "",
-      code_postal: "",
-      user_id: "",
+      marque: "",
+      matricule: "",
+      model: "",
+      capacite: "",
     });
     setErrors({
-      CodeFournisseur: "",
-      raison_sociale: "",
-      abreviation: "",
-      adresse: "",
-      tele: "",
-      ville: "",
-      ice: "",
-      code_postal: "",
-      user_id: "",
+      marque: "",
+      matricule: "",
+      model: "",
+      capacite: "",
     });
-    setEditingFournisseur(null); // Clear editing fournisseur
+    setEditingVehicule(null);
   };
 
   return (
@@ -648,32 +563,27 @@ const FournisseurList = () => {
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
           <h3 className="text-left" style={{ color: "#A31818" }}>
-            <BusinessIcon style={{ fontSize: "24px", marginRight: "8px" }} />
-            Liste des Fournisseurs
+            <FaCar style={{ fontSize: "24px", marginRight: "8px" }} />
+            Liste des Vehicules
           </h3>
+         
           <div className="d-flex flex-row justify-content-end">
             <div className="btn-group col-2">
-              <Button
-                className="btn btn-secondary btn-sm"
-                onClick={() =>
-                  printList(
-                    "fournisseurTable",
-                    "Liste des Fournisseurs",
-                    fournisseurs
-                  )
-                }
-              >
-                <FontAwesomeIcon icon={faPrint} />
-              </Button>
-              <Button
-                className="btn btn-danger btn-sm ml-2"
-                onClick={exportToPdf}
-              >
-                <FontAwesomeIcon icon={faFilePdf} />
-              </Button>
+              <PrintList
+                tableId="VehiculeTable"
+                title="Liste des Vehicules"
+                VehiculeList={vehicules}
+                filteredVehicules={filteredVehicules}
+              />
+              <ExportPdfButton
+                vehicules={vehicules}
+                selectedItems={selectedItems}
+              />
+
               <Button
                 className="btn btn-success btn-sm ml-2"
                 onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
               >
                 <FontAwesomeIcon icon={faFileExcel} />
               </Button>
@@ -682,25 +592,20 @@ const FournisseurList = () => {
           <div className="search-container d-flex justify-content-center align-items-center mb-3">
             <Search onSearch={handleSearch} />
           </div>
-
           <div className="container-d-flex justify-content-start">
             <div className="add-Ajout-form">
               <Button
+                id="showFormButton"
+                onClick={handleShowFormButtonClick}
                 style={{
                   backgroundColor: "white",
                   color: "black",
                   display: "flex",
                   alignItems: "center",
                 }}
-                variant="primary"
-                className="col-3 btn btn-sm"
-                id="showFormButton"
-                onClick={handleShowFormButtonClick}
               >
-                <BusinessIcon
-                  style={{ fontSize: "24px", marginRight: "8px" }}
-                />
-                Mise a jour Fournisseur
+                <FaCar style={{ fontSize: "24px", marginRight: "8px" }} />
+                Mise a jour Vehicule
               </Button>
 
               <div
@@ -711,137 +616,80 @@ const FournisseurList = () => {
                 <Form className="col row" onSubmit={handleSubmit}>
                   <Form.Label className="text-center m-2">
                     <h5>
-                      {editingFournisseur
-                        ? "Modifier Fournisseur"
-                        : "Ajouter un Fournisseur"}
+                      {editingVehicule
+                        ? "Modifier vehicule"
+                        : "Ajouter un vehicule"}
                     </h5>
                   </Form.Label>
                   <Form.Group className="col-sm-5 m-2 ">
-                    <Form.Label> CodeFournisseur</Form.Label>
+                    <Form.Label>marque</Form.Label>
                     <Form.Control
                       type="text"
-                      placeholder="CodeFournisseur"
-                      name="CodeFournisseur"
-                      value={formData.CodeFournisseur}
+                      placeholder="marque"
+                      name="marque"
+                      value={formData.marque}
                       onChange={handleChange}
                     />
-                      <Form.Text className="text-danger">
-                      {errors.CodeFournisseur}
+                    <Form.Text className="text-danger">
+                      {errors.marque}
                     </Form.Text>
                   </Form.Group>
                   <Form.Group className="col-sm-5 m-2 ">
-                    <Form.Label>Raison Sociale</Form.Label>
+                    <Form.Label>matricule</Form.Label>
                     <Form.Control
                       type="text"
-                      placeholder="Raison Sociale"
-                      name="raison_sociale"
-                      value={formData.raison_sociale}
+                      placeholder="matricule"
+                      name="matricule"
+                      value={formData.matricule}
                       onChange={handleChange}
                     />
-                      <Form.Text className="text-danger">
-                      {errors.raison_sociale}
-                    </Form.Text>
-                  </Form.Group>
-                  <Form.Group className="col-sm-5 m-2 ">
-                    <Form.Label>abreviation</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Abréviation"
-                      name="abreviation"
-                      value={formData.abreviation}
-                      onChange={handleChange}
-                    />
-                      <Form.Text className="text-danger">
-                      {errors.abreviation}
+                    <Form.Text className="text-danger">
+                      {errors.matricule}
                     </Form.Text>
                   </Form.Group>
                   <Form.Group className="col-sm-10 m-2">
-                    <Form.Label>Adresse</Form.Label>
+                    <Form.Label>model</Form.Label>
                     <Form.Control
                       type="text"
-                      placeholder="Adresse"
-                      name="adresse"
-                      value={formData.adresse}
+                      placeholder="model"
+                      name="model"
+                      value={formData.model}
                       onChange={handleChange}
                     />
-                      <Form.Text className="text-danger">
-                      {errors.adresse}
+                    <Form.Text className="text-danger">
+                      {errors.model}
                     </Form.Text>
                   </Form.Group>
                   <Form.Group className="col-sm-5 m-2">
-                    <Form.Label>Téléphone</Form.Label>
+                    <Form.Label>capacite</Form.Label>
                     <Form.Control
-                      type="text"
-                      placeholder="Téléphone"
-                      name="tele"
-                      value={formData.tele}
+                      type="number"
+                      placeholder="capacite"
+                      name="capacite"
+                      value={formData.capacite}
                       onChange={handleChange}
                     />
-                      <Form.Text className="text-danger">
-                      {errors.tele}
+                    <Form.Text className="text-danger">
+                      {errors.capacite}
                     </Form.Text>
                   </Form.Group>
-                  <Form.Group className="col-sm-5 m-2">
-                    <Form.Label>Ville</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Ville"
-                      name="ville"
-                      value={formData.ville}
-                      onChange={handleChange}
-                    />
-                      <Form.Text className="text-danger">
-                      {errors.ville}
-                    </Form.Text>
-                  </Form.Group>
-                  <Form.Group className="col-sm-4 m-2">
-                    <Form.Label>ice</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="ice"
-                      name="ice"
-                      value={formData.ice}
-                      onChange={handleChange}
-                    />
-                      <Form.Text className="text-danger">
-                      {errors.ice}
-                    </Form.Text>
-                  </Form.Group>
-                  <Form.Group className="col-sm-4 m-2">
-                    <Form.Label>Code Postal</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="code_postal"
-                      name="code_postal"
-                      value={formData.code_postal}
-                      onChange={handleChange}
-                    />
-                      <Form.Text className="text-danger">
-                      {errors.code_postal}
-                    </Form.Text>
-                  </Form.Group>
-                  {/* <Form.Group className="col-sm-4 m-2" controlId="user_id">
-                    <Form.Label>Utilisateur</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="user_id"
-                      value={formData.user_id}
-                      onChange={handleChange}
-                      placeholder="user_id"
-                      className="form-control-sm"
-                    />
-                  </Form.Group> */}
-                  <Form.Group className="col m-3 text-center">
-                    <Button type="submit" className="btn btn-success col-6">
-                      {editingFournisseur ? "Modifier" : "Ajouter"}
-                    </Button>
-                    <Button
-                      className="btn btn-secondary col-5 offset-1"
-                      onClick={closeForm}
-                    >
-                      Annuler
-                    </Button>
-                  </Form.Group>
+
+                  <div className="mt-5">
+                    <Form.Group className="col m-3 text-center">
+                      <Button
+                        type="submit"
+                        className="btn btn-danger col-md-4 m-3"
+                      >
+                        {editingVehicule ? "Modifier" : "Ajouter"}
+                      </Button>
+                      <Button
+                        className="btn btn-secondary col-md-4 m-3"
+                        onClick={closeForm}
+                      >
+                        Annuler
+                      </Button>
+                    </Form.Group>
+                  </div>
                 </Form>
               </div>
             </div>
@@ -850,57 +698,49 @@ const FournisseurList = () => {
               className="table-responsive-sm"
               style={tableContainerStyle}
             >
-              <table className="table" id="fournisseurTable">
+              <table
+                className="table table-responsive table-bordered "
+                id="VehiculeTable"
+              >
                 <thead>
                   <tr>
-                    <th scope="col">
+                    <th style={tableHeaderStyle}>
                       <input type="checkbox" onChange={handleSelectAllChange} />
                     </th>
-                    <th scope="col"> CodeFournisseur</th>
-                    <th scope="col">Raison Sociale</th>
-                    <th scope="col">Adresse</th>
-                    <th scope="col">Téléphone</th>
-                    <th scope="col">Ville</th>
-                    <th scope="col">Abréviation</th>
-                    <th scope="col">Code Postal</th>
-                    <th scope="col">ICE</th>
-                    <th scope="col">User</th>
-                    <th scope="col">Action</th>
+                    <th style={tableHeaderStyle}>marque </th>
+                    <th style={tableHeaderStyle}>matricule</th>
+                    <th style={tableHeaderStyle}>model</th>
+                    <th style={tableHeaderStyle}>capacite</th>
+                    <th style={tableHeaderStyle}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredFournisseurs
+                  {filteredVehicules
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((fournisseurs) => (
-                      <tr key={fournisseurs.id}>
+                    .map((vehicule) => (
+                      <tr key={vehicule.id}>
                         <td>
                           <input
                             type="checkbox"
-                            onChange={() =>
-                              handleCheckboxChange(fournisseurs.id)
-                            }
-                            checked={selectedItems.includes(fournisseurs.id)}
+                            onChange={() => handleCheckboxChange(vehicule.id)}
+                            checked={selectedItems.includes(vehicule.id)}
                           />
                         </td>
-                        <td>{fournisseurs.CodeFournisseur}</td>
-                        <td>{fournisseurs.raison_sociale}</td>
-                        <td>{fournisseurs.adresse}</td>
-                        <td>{fournisseurs.tele}</td>
-                        <td>{fournisseurs.ville}</td>
-                        <td>{fournisseurs.abreviation}</td>
-                        <td>{fournisseurs.code_postal}</td>
-                        <td>{fournisseurs.ice}</td>
-                        <td>{fournisseurs.user.name}</td>
+                        <td>{vehicule.marque}</td>
+                        <td>{vehicule.matricule}</td>
+                        <td>{vehicule.model}</td>
+                        <td>{vehicule.capacite}</td>
+
                         <td className="d-inline-flex">
                           <Button
                             className="btn btn-sm btn-info m-1"
-                            onClick={() => handleEdit(fournisseurs)}
+                            onClick={() => handleEdit(vehicule)}
                           >
                             <i className="fas fa-edit"></i>
                           </Button>
                           <Button
                             className="btn btn-danger btn-sm m-1"
-                            onClick={() => handleDelete(fournisseurs.id)}
+                            onClick={() => handleDelete(vehicule.id)}
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </Button>
@@ -909,17 +749,18 @@ const FournisseurList = () => {
                     ))}
                 </tbody>
               </table>
-
               <Button
                 className="btn btn-danger btn-sm"
                 onClick={handleDeleteSelected}
+                disabled={selectedItems.length === 0}
               >
                 <FontAwesomeIcon icon={faTrash} />
+                supprimer selection
               </Button>
               <TablePagination
                 rowsPerPageOptions={[5, 10, 25]}
                 component="div"
-                count={filteredFournisseurs.length}
+                count={filteredVehicules.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
@@ -933,4 +774,4 @@ const FournisseurList = () => {
   );
 };
 
-export default FournisseurList;
+export default VehiculeList;

@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
 
-const PrintList = ({ tableId, title, clientList, filteredclients }) => {
+const PrintList = ({ tableId, title, LivreurList, filtredlivreurs }) => {
   const handlePrint = () => {
     const printWindow = window.open("", "_blank", "");
 
@@ -57,27 +57,21 @@ const PrintList = ({ tableId, title, clientList, filteredclients }) => {
                 <table>
                   <thead>
                     <tr class="table-header">
-                      <th>Raison Sociale</th>
-                      <th>Abreviation</th>
+                      <th>Nom</th>
+                      <th>Prenom</th>
                       <th>Adresse</th>
-                      <th>Téléphone</th>
-                      <th>Ville</th>
-                      <th>Code Postal</th>
-                      <th>ICE</th>
-                      <th>Zone</th>
+                      <th>Telephone</th>
+                      <th>CIN</th>
                     </tr>
                   </thead>
                   <tbody>
-                    ${filteredclients.map((client) => `
-                      <tr key=${client.id}>
-                        <td>${client.raison_sociale}</td>
-                        <td>${client.abreviation}</td>
-                        <td>${client.adresse}</td>
-                        <td>${client.tele}</td>
-                        <td>${client.ville}</td>
-                        <td>${client.code_postal}</td>
-                        <td>${client.ice}</td>
-                        <td>${client.zone.zone}</td>
+                    ${filtredlivreurs.map((livreur) => `
+                      <tr key=${livreur.id}>
+                        <td>${livreur.nom}</td>
+                        <td>${livreur.prenom}</td>
+                        <td>${livreur.adresse}</td>
+                        <td>${livreur.tele}</td>
+                        <td>${livreur.cin}</td>
                       </tr>
                     `).join("")}
                   </tbody>

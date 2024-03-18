@@ -2,7 +2,7 @@ import React from 'react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPrint } from "@fortawesome/free-solid-svg-icons";
 
-const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
+const PrintList = ({ tableId, title, vehicule_livreur, filteredvehicule_livreurs }) => {
   const handlePrint = () => {
     
     const printWindow = window.open("", "_blank", "");
@@ -86,21 +86,25 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
       <table>
         <thead>
           <tr>
-            <th>Code de produit</th>
-            <th>designation</th>
-            <th>Type de Quantité</th>
-            <th>Calibre</th>
-            <th>Categorie</th>
+            <th>Livreur</th>
+            <th>Vehicule</th>
+            <th>kilometrage au debut</th>
+            <th>kilometrage a la fin</th>
+            <th>heure</th>
+            <th>date Debut d'affectation</th>
+            <th>date Fin d'affectation</th>
           </tr>
         </thead>
         <tbody>
-          ${filteredProduits.map((produit) => `
-            <tr key=${produit.id}>
-              <td>${produit.Code_produit}</td>
-              <td>${produit.designation}</td>
-              <td>${produit.type_quantite}</td>
-              <td>${produit.calibre}</td>
-              <td>${produit.categorie.categorie}</td>
+          ${filteredvehicule_livreurs.map((vehicule_livreur) => `
+            <tr key=${vehicule_livreur.id}>
+              <td>${vehicule_livreur.livreur.nom}</td>
+              <td>${vehicule_livreur.vehicule.matricule}</td>
+              <td>${vehicule_livreur.kilometrage_debut}</td>
+              <td>${vehicule_livreur.kilometrage_fin}</td>
+              <td>${vehicule_livreur.heure}</td>
+              <td>${vehicule_livreur.date_debut_affectation}</td>
+              <td>${vehicule_livreur.date_fin_affectation}</td>
 
             </tr>
           `).join("")}

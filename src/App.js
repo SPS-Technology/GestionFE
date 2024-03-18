@@ -11,6 +11,10 @@ import AddUser from './Users/Adduser';
 import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
 import Dashboard from './Acceuil/Dashboard';
+import LivreurList from './Livreur/LivreurList';
+import VehiculeList from './Vehicule/VehiculeList';
+import ObjectifList from './objectif/ObjectifList';
+import Vehicule_livreur from './Vehicule_Livreur/Vehicule_livreur';
 
 
 const App = () => {
@@ -23,11 +27,15 @@ const App = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
+        <Route path="/livreurs" element={<LivreurList />} />
+        <Route path="/objectifs" element={<ObjectifList />} />
+        <Route path="/vehicules" element={<VehiculeList />} />
         <Route path="/produits" element={<ProduitList />} />
         <Route path="/commandes" element={<CommandeList />} />
-        <Route path="/add-user" element={<AddUser />} />
+        <Route path="/vehicule-livreurs" element={<Vehicule_livreur />} />
+        {/* <Route path="/add-user" element={<AddUser />} /> */}
         <Route path="/users" element={<Users />} />
-        <Route path="/users/edit/:id" element={<EditUser />} />
+        {/* <Route path="/users/edit/:id" element={<EditUser />} /> */}
       </Routes>
       </AuthProvider>
     </div>

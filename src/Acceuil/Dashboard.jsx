@@ -12,6 +12,10 @@ import Grid from "@mui/material/Grid";
 import PeopleAltIcon from "@mui/icons-material/PeopleAlt";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import PeopleIcon from "@mui/icons-material/People";
+import DirectionsCarIcon from "@mui/icons-material/DirectionsCar";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import DeliveryDiningIcon from "@mui/icons-material/DeliveryDining";
 import "../style.css";
 import Navigation from "./Navigation";
 import { Toolbar } from "@mui/material";
@@ -24,6 +28,9 @@ const Dashboard = () => {
   const [clients, setClients] = useState([]);
   const [produits, setProduits] = useState([]);
   const [fournisseurs, setFournisseurs] = useState([]);
+  const [livreurs, setLivreurs] = useState([]);
+  const [vehicules, setVehicules] = useState([]);
+  const [objectifs, setObjectifs] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -56,6 +63,19 @@ const Dashboard = () => {
         "http://localhost:8000/api/fournisseurs"
       );
       setFournisseurs(fournisseurResponse.data.count);
+
+      const livreursResponse = await axios.get(
+        "http://localhost:8000/api/livreurs"
+      );
+      setLivreurs(livreursResponse.data.count);
+      const vehiculeResponse = await axios.get(
+        "http://localhost:8000/api/vehicules"
+      );
+      setVehicules(vehiculeResponse.data.count);
+      const objectifrResponse = await axios.get(
+        "http://localhost:8000/api/objectifs"
+      );
+      setObjectifs(objectifrResponse.data.count);
     } catch (error) {
       console.error("Error fetching counts:", error);
     }
@@ -67,56 +87,97 @@ const Dashboard = () => {
 
   return (
     <ThemeProvider theme={createTheme()}>
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: "flex" }}>
         <Navigation />
-        
+
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           <Toolbar />
           <Grid container spacing={3}>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre de clients
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {clients}
-                </Typography>
-                <PeopleAltIcon style={{ fontSize: 40 }} color="primary" />
-              </CardContent>
-            </Card>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre de clients
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {clients}
+                  </Typography>
+                  <PeopleAltIcon style={{ fontSize: 40 }} color="primary" />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre de produits
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {produits}
+                  </Typography>
+                  <ShoppingCartIcon style={{ fontSize: 40 }} color="primary" />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre des fournisseurs
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {fournisseurs}
+                  </Typography>
+                  <LocalShippingIcon style={{ fontSize: 40 }} color="primary" />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre de livreurs
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {livreurs}
+                  </Typography>
+                  <DeliveryDiningIcon
+                    style={{ fontSize: 40 }}
+                    color="primary"
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre de véhicules
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {vehicules}
+                  </Typography>
+                  <DirectionsCarIcon style={{ fontSize: 40 }} color="primary" />
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card>
+                <CardContent>
+                  <Typography variant="h6" component="div">
+                    Nombre d'objectifs
+                  </Typography>
+                  <Typography variant="h4" color="primary">
+                    {objectifs}
+                  </Typography>
+                  <BarChartIcon style={{ fontSize: 40 }} color="primary" />
+                </CardContent>
+              </Card>
+            </Grid>
           </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre de produits
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {produits}
-                </Typography>
-                <ShoppingCartIcon style={{ fontSize: 40 }} color="primary" />
-              </CardContent>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="div">
-                  Nombre des fournisseurs
-                </Typography>
-                <Typography variant="h4" color="primary">
-                  {fournisseurs}
-                </Typography>
-                <LocalShippingIcon style={{ fontSize: 40 }} color="primary" />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      </Box>
+        </Box>
       </Box>
     </ThemeProvider>
- 
   );
 };
 
