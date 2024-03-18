@@ -1,10 +1,14 @@
 import React, { useState } from "react";
-import Drawer from "@mui/material/Drawer";
-import Button from "@mui/material/Button";
+//import Drawer from "@mui/material/Drawer";
+//import Button from "@mui/material/Button";
+
+import Drawer from "react-bootstrap/Drawer";
+import Button from "react-bootstrap/Button";
 import axios from "axios";
 import swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
+import Form from "react-bootstrap/Form";
 import Select from "react-dropdown-select";
 
 const AddCommande = ({ produits, clients, csrfToken, fetchCommandes }) => {
@@ -139,119 +143,74 @@ const AddCommande = ({ produits, clients, csrfToken, fetchCommandes }) => {
   return (
     <div>
       <Button
-        variant="contained"
+        variant="primary"
         onClick={handleDrawerOpen}
         style={{ marginBottom: "10px" }}
       >
         <FontAwesomeIcon icon={faPlus} style={{ marginRight: "5px" }} />
-        Ajouter
       </Button>
-      <Drawer anchor="right" open={open} onClose={handleDrawerClose}>
-        <div style={{ padding: "20px", marginTop: "100px" }}>
-          <table className="swal2-input">
-            <thead>
-              <tr>
-                <th>Client : </th>
 
-                <th>Mode Paiement :</th>
-                <th>Date Commande : </th>
-                <th>Produit : </th>
-              </tr>
-              <tr>
-                <td>
-                  <select id="client_id" className="form-select col-2">
-                    <option disabled selected>
-                      Client
-                    </option>
-                    {clients.map((client) => (
-                      <option key={client.id}>{client.raison_sociale}</option>
-                    ))}
-                  </select>
-                </td>
+      <Drawer show={open} onHide={handleDrawerClose} placement="right">
+        <Drawer.Header closeButton>
+          <Drawer.Title>Add Commande</Drawer.Title>
+        </Drawer.Header>
+        <Drawer.Body>
+          <Form>
+            <Form.Group controlId="client_id">
+              <Form.Label>Client:</Form.Label>
+              <Form.Select>
+                <option disabled selected>
+                  Client
+                </option>
+                {clients.map((client) => (
+                  <option key={client.id}>{client.raison_sociale}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
 
-                <td>
-                  <select id={`modePaiement`} className="form-select col-2">
-                    <option disabled selected>
-                      Mode de Paiement
-                    </option>
-                    <option value="Espece">Espece</option>
-                    <option value="Tpe">Tpe</option>
-                    <option value="Virement">Cheque</option>
-                    {/* Add more payment types as needed */}
-                  </select>
-                </td>
-                <td>
-                  <input type="date" id={`dateCommande`} />
-                </td>
-                <td>
-                  <Select
-                    options={produits.map((produit) => ({
-                      value: produit.id,
-                      label: produit.designation,
-                    }))}
-                    onChange={handleProductCheckboxChange}
-                    multi
-                  />
-                </td>
-              </tr>
-            </thead>
-          </table>
-          <table
-            id="selectedProduitTable"
-            className="swal2-input table table-hover"
-          >
-            <thead>
-              <tr>
-                <th>Code Produit</th>
-                <th>designation</th>
-                <th>Type Quantite</th>
-                <th>Calibre</th>
-                <th>Quantite</th>
-                <th>Prix</th>
-              </tr>
-            </thead>
-            <tbody>
-              {selectedProducts.map((produit) => (
-                <tr key={produit.id}>
-                  <td>{produit.Code_produit}</td>
-                  <td>{produit.designation}</td>
-                  <td>{produit.type_quantite}</td>
-                  <td>{produit.calibre}</td>
+            <Form.Group controlId="modePaiement">
+              <Form.Label>Mode Paiement:</Form.Label>
+              <Form.Select>
+                <option disabled selected>
+                  Mode de Paiement
+                </option>
+                <option value="Espece">Espece</option>
+                <option value="Tpe">Tpe</option>
+                <option value="Virement">Cheque</option>
+                {/* Add more payment types as needed */}
+              </Form.Select>
+            </Form.Group>
 
-                  <td>
-                    <input
-                      type="text"
-                      id={`quantite_${produit.id}`}
-                      className="quantiteInput"
-                      placeholder="Quantite"
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="text"
-                      id={`prix_${produit.id}`}
-                      value={produit.prix}
-                      className="prixInput"
-                      placeholder="Prix"
-                      onChange={(e) =>
-                        handlePrixChange(produit.id, e.target.value)
-                      }
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="text-center">
-            <Button
-              variant="contained"
-              className="col-3"
-              onClick={handleAddCommande}
-            >
-              Ajouter
-            </Button>
-          </div>
-        </div>
+            <Form.Group controlId="dateCommande">
+              <Form.Label>Date Commande:</Form.Label>
+              <Form.Control type="date" />
+            </Form.Group>
+
+            <Form.Group controlId="selectedProduit">
+              <Form.Label>Produit:</Form.Label>
+              <Select
+                options={produits.map((produit) => ({
+                  value: produit.id,
+                  label: produit.designation,
+                }))}
+                onChange={handleProductCheckboxChange}
+                multi
+              />
+            </Form.Group>
+
+            <Form.Group controlId="selectedProduitTable">
+              {/* Selected Product Table */}
+            </Form.Group>
+          </Form>
+        </Drawer.Body>
+        <Drawer.Footer>
+          <Button variant="secondary" onClick={handleDrawerClose}>
+            Close
+          </Button>
+          <Button variant="primary" onClick={handleAddCommande}>
+            Add Commande
+          </Button>
+        </Drawer.Footer>
       </Drawer>
     </div>
   );

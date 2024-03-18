@@ -10,6 +10,7 @@ import IconButton from "@mui/material/IconButton";
 import Badge from "@mui/material/Badge";
 import Container from "@mui/material/Container";
 import MenuIcon from "@mui/icons-material/Menu";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { styled } from "@mui/material/styles";
@@ -17,6 +18,9 @@ import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemIcon from "@mui/material/ListItemIcon";
 import ListItemText from "@mui/material/ListItemText";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
+import "../style.css";
 import Avatar from "@mui/material/Avatar";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import BusinessIcon from "@mui/icons-material/Business";
@@ -24,13 +28,13 @@ import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
 import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
-import { useNavigate } from "react-router-dom";
+import StoreIcon from "@mui/icons-material/Store";
 import { useAuth } from "../AuthContext";
-const drawerWidth = 240;
+const drawerWidth = 300;
 
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== "open",
@@ -74,11 +78,13 @@ const Drawer = styled(MuiDrawer, {
       },
     }),
   },
+  backgroundColor: "white",
 }));
 
 const defaultTheme = createTheme();
 
 const Navigation = () => {
+  const [selectedOption, setSelectedOption] = useState("");
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [open, setOpen] = React.useState(true);
   const [user, setUser] = useState(null);
@@ -89,6 +95,19 @@ const Navigation = () => {
   const { logout } = useAuth();
   const [openDrawer, setOpenDrawer] = useState(false);
 
+  const handleOptionChange = (event) => {
+    const selectedValue = event.target.value;
+    setSelectedOption(selectedValue);
+
+    // Redirect to the corresponding route based on the selected option
+    if (selectedValue === "charging") {
+      navigate("/chargingCommand"); // Replace with your actual route
+    } else if (selectedValue === "preparing") {
+      navigate("/preparingCommand"); // Replace with your actual route
+    } else if (selectedValue === "list") {
+      navigate("/commandes"); // Replace with your actual route
+    }
+  };
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -164,11 +183,9 @@ const Navigation = () => {
               color="inherit"
               noWrap
               sx={{ flexGrow: 1 }}
-            >
-
-            </Typography>
+            ></Typography>
             <IconButton color="inherit">
-              <Badge  color="secondary">
+              <Badge color="secondary">
                 {user && (
                   <ListItem button style={{ color: "white" }}>
                     <ListItemIcon>
@@ -201,7 +218,7 @@ const Navigation = () => {
           <Divider />
           <List>
             {user && (
-              <ListItem button style={{ color: "blue" }}>
+              <ListItem button style={{ color: "black" }}>
                 <ListItemIcon>
                   <Avatar
                     alt={user.name}
@@ -212,28 +229,24 @@ const Navigation = () => {
                 <ListItemText primary={`Hello, ${user.name}`} />
               </ListItem>
             )}
-            <ListItem button component={Link} to="/" style={{ color: "blue" }}>
-              <ListItemIcon>
-                <ShoppingBasketIcon />
-              </ListItemIcon>
-              <ListItemText primary="Gestion commandes" />
-            </ListItem>
+
             <ListItem
               button
               component={Link}
               to="/fournisseurs"
-              style={{ color: "blue" }}
+              style={{ color: "black" }}
             >
               <ListItemIcon>
                 <BusinessIcon />
               </ListItemIcon>
               <ListItemText primary="Fournisseurs" />
             </ListItem>
+
             <ListItem
               button
               component={Link}
               to="/clients"
-              style={{ color: "blue" }}
+              style={{ color: "black" }}
             >
               <ListItemIcon>
                 <PeopleIcon />
@@ -244,7 +257,7 @@ const Navigation = () => {
               button
               component={Link}
               to="/produits"
-              style={{ color: "blue" }}
+              style={{ color: "black" }}
             >
               <ListItemIcon>
                 <AddCircleIcon />
@@ -254,19 +267,59 @@ const Navigation = () => {
             <ListItem
               button
               component={Link}
-              to="/commandes"
-              style={{ color: "blue" }}
+              to="/stock"
+              style={{ color: "black" }}
             >
+              <ListItemIcon>
+                <StoreIcon />
+              </ListItemIcon>
+
+              <ListItemText primary="Stock" />
+            </ListItem>
+            <ListItem button style={{ color: "black", display: "flex" }}>
               <ListItemIcon>
                 <ShoppingBasketIcon />
               </ListItemIcon>
-              <ListItemText primary="Gestion Commandes" />
+
+              <Select
+                value={selectedOption}
+                onChange={handleOptionChange}
+                displayEmpty
+                style={{
+                  marginLeft: "-10px",
+                  border: "none",
+                  borderBottom: "none",
+                  textDecoration: "none",
+                }}
+                variant="standard"
+              >
+                <MenuItem value="" disabled>
+                  <ListItemText
+                    primary="Gestion commandes"
+                    style={{ marginLeft: "10px" }}
+                  />
+                </MenuItem>
+                <MenuItem value="list">Liste des Commandes</MenuItem>
+                <MenuItem value="charging">Chargement Commandes</MenuItem>
+                <MenuItem value="preparing">Préparation Commandes</MenuItem>
+              </Select>
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/devises"
+              style={{ color: "black" }}
+            >
+              <ListItemIcon>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Devises" />
             </ListItem>
             <ListItem
               button
               component={Link}
               to="/add-user"
-              style={{ color: "blue" }}
+              style={{ color: "black" }}
             >
               <ListItemIcon>
                 <AddCircleIcon />
@@ -277,7 +330,7 @@ const Navigation = () => {
               button
               component={Link}
               to="/users"
-              style={{ color: "blue" }}
+              style={{ color: "black" }}
             >
               <ListItemIcon>
                 <SupervisorAccountIcon />

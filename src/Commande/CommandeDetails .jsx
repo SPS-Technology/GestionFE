@@ -1,12 +1,12 @@
 // CommandeDetails.jsx
 import React, { useState, useEffect } from "react";
-import "./commande.css";
 import TablePagination from "@mui/material/TablePagination";
-import Search from "../Acceuil/Search";
+import "../style.css";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
+import { grey } from "@mui/material/colors";
 const CommandeDetails = ({ produits, commande }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(0);
@@ -80,6 +80,7 @@ const CommandeDetails = ({ produits, commande }) => {
       axios
         .delete(`http://localhost:8000/api/ligneCommandes/${id}`)
         .then(() => {
+          fetchLigneCommandes();
           Swal.fire({
             icon: "success",
             title: "Succès!",
@@ -104,72 +105,80 @@ const CommandeDetails = ({ produits, commande }) => {
       console.log("Suppression annulée");
     }
   };
+  const tableHeaderStyle = {
+    border: "1px solid #000",
+    padding: "8px",
+    textAlign: "center",
+    backgroundColor: "#f2f2f2", // Header background color
+  };
 
+  const tableCellStyle = {
+    border: "1px solid #000",
+    padding: "8px",
+    textAlign: "center",
+  };
   return (
-    <div>
-      <div className="details-container col row" id="commande">
-        <div className="ligne-commande-table col-5 text-center mt-2 mx-5">
-          {/* <Search  onSearch={handleSearch}/> */}
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Quantite</th>
-                <th>Prix Unitaire</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {ligneCommandeDetails.map((ligneCommande) => (
-                <tr key={ligneCommande.id}>
-                  <td>{produitLookup(ligneCommande.produit_id)}</td>
-                  <td>{ligneCommande.quantite}</td>
-                  <td>{ligneCommande.prix_unitaire}</td>
-                  <td className="no-print">
-                    <button
-                      onClick={() =>
-                        handleDeleteLigneCommande(ligneCommande.id)
-                      }
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={commande.ligne_commandes.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-            className="no-print"
-          />
-        </div>
+    <div className="table-container">
+      <table className="table ">
+        <thead>
+          <tr>
+            <th style={tableHeaderStyle}>Produit</th>
+            <th style={tableHeaderStyle}>Quantite</th>
+            <th style={tableHeaderStyle}>Prix Unitaire</th>
+            {/* <th style={tableHeaderStyle}></th> */}
+          </tr>
+        </thead>
+        <tbody style={tableCellStyle}>
+          {ligneCommandeDetails.map((ligneCommande) => (
+            <tr key={ligneCommande.id}>
+              <td style={tableCellStyle}>
+                {produitLookup(ligneCommande.produit_id)}
+              </td>
+              <td style={tableCellStyle}>{ligneCommande.quantite}</td>
+              <td style={tableCellStyle}>{ligneCommande.prix_unitaire}</td>
+              <td style={tableCellStyle} className="no-print">
+                <button
+                  onClick={() => handleDeleteLigneCommande(ligneCommande.id)}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={commande.ligne_commandes.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        className="no-print"
+      />
 
-        <table className="table text-center">
-          <thead>
-            <tr>
-              <th colspan="2">{commande.reference}</th>
+      <table className="table text-center">
+        <thead>
+          <tr>
+            <th colspan="2">
+              Historique des status pour : {commande.reference}
+            </th>
+          </tr>
+          <tr>
+            <th style={tableHeaderStyle}>Status</th>
+            <th style={tableHeaderStyle}>Date Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {statusCommandeDetails.map((statusCommande) => (
+            <tr key={statusCommande.id}>
+              <td style={tableCellStyle}>{statusCommande.status}</td>
+              <td style={tableCellStyle}>{statusCommande.date_status}</td>
             </tr>
-            <tr>
-              <th>Status</th>
-              <th>Date Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {statusCommandeDetails.map((statusCommande) => (
-              <tr key={statusCommande.id}>
-                <td>{statusCommande.status}</td>
-                <td>{statusCommande.date_status}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

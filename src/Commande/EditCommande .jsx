@@ -186,22 +186,22 @@ const EditCommande = ({
         status: getElementValueById("status"),
         // Update other properties as needed
       };
-      if (!statusExists) {
-        await axios.post(
-          `http://localhost:8000/api/statusCommande/`,
-          statusCommandeData,
-          {
-            withCredentials: true,
-            headers: {
-              "X-CSRF-TOKEN": csrfToken,
-            },
-          }
-        );
-      }
+      // if (!statusExists) {
+      await axios.post(
+        `http://localhost:8000/api/statusCommande/`,
+        statusCommandeData,
+        {
+          withCredentials: true,
+          headers: {
+            "X-CSRF-TOKEN": csrfToken,
+          },
+        }
+      );
+      //}
       // Step 4: Fetch updated commandes
       swal.fire({
         icon: "success",
-        title: "Commande added successfully!",
+        title: "Commande modifiee avec succe!",
         showConfirmButton: false,
         timer: 1500, // Adjust the duration as needed
       });
@@ -210,7 +210,7 @@ const EditCommande = ({
       handleDrawerClose();
       fetchCommandes();
 
-      console.log("Commande updated successfully!");
+      console.log("Commande modifiee avec succe!");
     } catch (error) {
       handleDrawerClose();
       console.error("Error updating commande:", error);
@@ -249,7 +249,7 @@ const EditCommande = ({
         </td>
         <td>{produit.designation}</td>
         <td>{produit.type_quantite}</td>
-        <td>{produit.calibre}</td>
+        <td>{produit.calibre.calibre}</td>
         <td>
           <input
             type="text"
@@ -286,11 +286,9 @@ const EditCommande = ({
 
   return (
     <div>
-      <Button
-        variant="info"
-        onClick={handleDrawerOpen}
-        startIcon={<FontAwesomeIcon icon={faPenToSquare}></FontAwesomeIcon>}
-      ></Button>
+      <button onClick={handleDrawerOpen} className="btn btn-sm btn-info">
+        <i className="fas fa-edit"></i>
+      </button>
       <Drawer anchor="right" open={open} onClose={handleDrawerClose}>
         <div style={{ padding: "20px" }}>
           <h3 className="text-center mb-5">Edit Commande</h3>
