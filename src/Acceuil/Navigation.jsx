@@ -5,6 +5,9 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import Toolbar from "@mui/material/Toolbar";
 import MuiDrawer from "@mui/material/Drawer";
+import ReportTwoToneIcon from '@mui/icons-material/ReportTwoTone';
+import AttachMoneyTwoToneIcon from '@mui/icons-material/AttachMoneyTwoTone';
+import AccountBalanceWalletTwoToneIcon from '@mui/icons-material/AccountBalanceWalletTwoTone';
 import Divider from "@mui/material/Divider";
 import IconButton from "@mui/material/IconButton";
 import Badge from "@mui/material/Badge";
@@ -20,20 +23,19 @@ import ListItemText from "@mui/material/ListItemText";
 import Avatar from "@mui/material/Avatar";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import BusinessIcon from "@mui/icons-material/Business";
+import AccountBalanceTwoToneIcon from '@mui/icons-material/AccountBalanceTwoTone';
+import { GiBank } from "react-icons/gi";
+
 import PeopleIcon from "@mui/icons-material/People";
 import ShoppingBasketIcon from "@mui/icons-material/ShoppingBasket";
-import DeliveryDiningIcon from '@mui/icons-material/DeliveryDining';
 import AddCircleIcon from "@mui/icons-material/AddCircle";
 import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
-import StarHalfIcon from '@mui/icons-material/StarHalf';
 import { Link } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
-import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
 import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -118,6 +120,12 @@ const Navigation = () => {
   const handleLogoutClick = async () => {
     try {
       // Logout logic
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Logout successful!",
+      });
       navigate("/login");
     } catch (error) {
       console.error("Error during logout:", error);
@@ -229,37 +237,49 @@ const Navigation = () => {
               <ListItemText primary="Fournisseurs" />
             </ListItem>
             <ListItem
-              button
-              component={Link}
-              to="/livreurs"
-              style={{ color: "grey" }}
+                button
+                component={Link}
+                to="/recouverements"
+                style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <DeliveryDiningIcon   />
+                <AccountBalanceWalletTwoToneIcon   />
               </ListItemIcon>
-              <ListItemText primary="Livreurs" />
+              <ListItemText primary="Recouvrements" />
             </ListItem>
             <ListItem
-              button
-              component={Link}
-              to="/vehicules"
-              style={{ color: "grey" }}
+                button
+                component={Link}
+                to="/chiffreaffaires"
+                style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <TimeToLeaveIcon   />
+                <AttachMoneyTwoToneIcon   />
               </ListItemIcon>
-              <ListItemText primary="vehicules" />
+              <ListItemText primary="Chiffre d'Affaire" />
             </ListItem>
             <ListItem
-              button
-              component={Link}
-              to="/vehicule-livreurs"
-              style={{ color: "grey" }}
+                button
+                component={Link}
+                to="/reclamations"
+                style={{ color: "grey" }}
             >
               <ListItemIcon>
-                <TimeToLeaveIcon   />
+                <ReportTwoToneIcon   />
               </ListItemIcon>
-              <ListItemText primary="vehicule-livreurs" />
+              <ListItemText primary="Réclamation" />
+            </ListItem>
+            <ListItem
+                button
+                component={Link}
+                to="/banques"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <AccountBalanceTwoToneIcon />
+
+              </ListItemIcon>
+              <ListItemText primary="Banque" />
             </ListItem>
             <ListItem
               button
@@ -271,17 +291,6 @@ const Navigation = () => {
                 <PeopleIcon   />
               </ListItemIcon>
               <ListItemText primary="Clients" />
-            </ListItem>
-            <ListItem
-              button
-              component={Link}
-              to="/objectifs"
-              style={{ color: "grey" }}
-            >
-              <ListItemIcon>
-                <StarHalfIcon   />
-              </ListItemIcon>
-              <ListItemText primary="Objectifs" />
             </ListItem>
             <ListItem
               button
@@ -331,10 +340,7 @@ const Navigation = () => {
           <List>
             <ListItem
               button
-              onClick={() => {
-                handleLogoutClick();
-                logout();
-              }}
+              onClick={handleLogoutClick}
               style={{ color: "red", background: "white" }}
             >
               <ListItemIcon>

@@ -13,11 +13,9 @@ const exportToPdf = (produits, selectedItems) => {
   const pdf = new jsPDF();
 
   const columns = [
-    "Code Produit",
-    "Designation",
+    "Nom",
     "Type de Quantité",
     "Calibre",
-    "Categorie",
   ];
 
   const selectedProduits = produits.filter((produit) =>
@@ -25,12 +23,9 @@ const exportToPdf = (produits, selectedItems) => {
   );
 
   const rows = selectedProduits.map((produit) => [
-
-    produit.Code_produit,
-    produit.designation,
+    produit.nom,
     produit.type_quantite,
     produit.calibre,
-    produit.categorie.categorie,
   ]);
 
   const margin = 10;
@@ -64,7 +59,6 @@ const exportToPdf = (produits, selectedItems) => {
       0: { fillColor: [200, 220, 255] }, // Couleur de remplissage de la première colonne
       1: { fillColor: [255, 255, 255] }, // Couleur de remplissage de la deuxième colonne
       2: { fillColor: [200, 220, 255] }, // Couleur de remplissage de la troisième colonne
-      3: { fillColor: [200, 220, 255] }, // Couleur de remplissage de la quatrieme colonne
     },
     theme: 'striped', // Thème de la table
     headStyles: {
@@ -81,15 +75,10 @@ const exportToPdf = (produits, selectedItems) => {
   pdf.save(filename);
 };
 
-const ExportPdfButton = ({ produits, selectedItems }) => {
-    const isDisabled = !selectedItems || selectedItems.length === 0;
-return(
-  <Button onClick={() => exportToPdf(produits, selectedItems)} className="btn btn-danger btn btn-sm"  disabled={isDisabled}>
+const ExportPdfButton = ({ produits, selectedItems }) => (
+    <Button onClick={() => exportToPdf(produits, selectedItems)} className="btn btn-danger btn btn-sm">
       <FontAwesomeIcon icon={faFilePdf} className="me-2" />
     </Button>
-)
-   
-}
- 
+);
 
 export default ExportPdfButton;

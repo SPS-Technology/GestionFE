@@ -1,22 +1,37 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import Avatar from "@mui/material/Avatar";
-import Button from "@mui/material/Button";
-import CssBaseline from "@mui/material/CssBaseline";
-import TextField from "@mui/material/TextField";
-import FormControlLabel from "@mui/material/FormControlLabel";
-import Checkbox from "@mui/material/Checkbox";
-import Link from "@mui/material/Link";
-import Grid from "@mui/material/Grid";
-import Box from "@mui/material/Box";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import Typography from "@mui/material/Typography";
-import Container from "@mui/material/Container";
-import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { useAuth } from "../AuthContext";
+
+
+ import React, { useState } from "react";
+ import { useNavigate } from "react-router-dom";
+ import axios from "axios";
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import CssBaseline from '@mui/material/CssBaseline';
+import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Link from '@mui/material/Link';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Typography from '@mui/material/Typography';
+import Container from '@mui/material/Container';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+ import { useAuth } from "../AuthContext";
+
+// function Copyright(props) {
+//   return (
+//     <Typography variant="body2" color="text.secondary" align="center" {...props}>
+//       {'Copyright © '}
+//       <Link color="inherit" href="https://mui.com/">
+//         Your Website
+//       </Link>{' '}
+//       {new Date().getFullYear()}
+//       {'.'}
+//     </Typography>
+//   );
+// }
+
+// TODO remove, this demo shouldn't need to reset the theme.
 
 const defaultTheme = createTheme();
 
@@ -26,7 +41,6 @@ export default function Login() {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -42,10 +56,6 @@ export default function Login() {
 
   const handleEror = () => {
     setError("");
-  };
-
-  const handleTogglePasswordVisibility = () => {
-    setShowPassword((prevShowPassword) => !prevShowPassword);
   };
 
   const handleLogin = async (e) => {
@@ -88,14 +98,7 @@ export default function Login() {
         } else if (error.response.status === 401) {
           navigate("/login");
         } else if (error.response && error.response.status === 400) {
-          // Check specific error messages from the server
-          if (error.response.data.message === "Email not found") {
-            setEmailError("Email not found");
-          } else if (error.response.data.message === "Incorrect password") {
-            setPasswordError("Incorrect password");
-          } else {
-            setError("Email or password incorrect");
-          }
+          setError("Email or password incorrect");
         } else if (error.response.status === 200) {
           navigate("/");
         }
@@ -110,12 +113,12 @@ export default function Login() {
         <Box
           sx={{
             marginTop: 8,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
           }}
         >
-          <Avatar sx={{ m: 1, bgcolor: "secondary.main" }}>
+          <Avatar sx={{ m: 1, bgcolor: 'secondary.main' }}>
             <LockOutlinedIcon />
           </Avatar>
           <Typography component="h1" variant="h5">
@@ -142,32 +145,13 @@ export default function Login() {
               fullWidth
               name="password"
               label="Password"
-              type={showPassword ? "text" : "password"}
+              type="password"
               value={password}
               onChange={handlePasswordChange}
               error={Boolean(passwordError)}
               helperText={passwordError}
               id="password"
               autoComplete="current-password"
-              InputProps={{
-                endAdornment: (
-                  <button
-                    type="button"
-                    onClick={handleTogglePasswordVisibility}
-                    style={{
-                      background: "none",
-                      border: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                    {showPassword ? (
-                      <VisibilityOffIcon />
-                    ) : (
-                      <VisibilityIcon />
-                    )}
-                  </button>
-                ),
-              }}
             />
             <FormControlLabel
               control={<Checkbox value="remember" color="primary" />}
@@ -186,6 +170,7 @@ export default function Login() {
             </Typography>
           </Box>
         </Box>
+        {/* <Copyright sx={{ mt: 8, mb: 4 }} /> */}
       </Container>
     </ThemeProvider>
   );

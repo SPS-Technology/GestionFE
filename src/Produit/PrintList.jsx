@@ -86,21 +86,17 @@ const PrintList = ({ tableId, title, produitList, filteredProduits }) => {
       <table>
         <thead>
           <tr>
-            <th>Code de produit</th>
-            <th>designation</th>
+            <th>Nom</th>
             <th>Type de Quantité</th>
             <th>Calibre</th>
-            <th>Categorie</th>
           </tr>
         </thead>
         <tbody>
           ${filteredProduits.map((produit) => `
             <tr key=${produit.id}>
-              <td>${produit.Code_produit}</td>
-              <td>${produit.designation}</td>
+              <td>${produit.nom}</td>
               <td>${produit.type_quantite}</td>
               <td>${produit.calibre}</td>
-              <td>${produit.categorie.categorie}</td>
 
             </tr>
           `).join("")}

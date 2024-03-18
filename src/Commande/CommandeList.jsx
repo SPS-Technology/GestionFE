@@ -5,10 +5,16 @@ import TablePagination from "@mui/material/TablePagination";
 import Search from "../Acceuil/Search";
 import Navigation from "../Acceuil/Navigation";
 
-import "./commande.css";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faFileExcel, faPrint, faCircleInfo }
-  from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faFilePdf,
+  faFileExcel,
+  faPrint,
+  faPlus,
+  faMinus,
+} from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -16,7 +22,7 @@ import CommandeDetails from "./CommandeDetails ";
 import Modal from "react-modal"; // Import the Modal component
 import AddCommande from "./AddCommande ";
 import EditCommande from "./EditCommande ";
-import "../style.css"
+import "../style.css";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
@@ -24,7 +30,6 @@ import { Toolbar } from "@mui/material";
 const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
-  //const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredCommandes, setFilteredCommandes] = useState([]);
   const [page, setPage] = useState(0);
@@ -42,35 +47,10 @@ const CommandeList = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [isAddCommandeDrawerOpen, setIsAddCommandeDrawerOpen] = useState(false);
   const [isEditCommandeDrawerOpen, setIsEditCommandeDrawerOpen] =
-    useState(false);
-  const mainContentClasses = `main-content ${drawerOpen ? "collapsed" : ""}`;
-  const [formContainerStyle, setFormContainerStyle] = useState({ right: '-500px' });
-  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
+      useState(false);
 
   const [expandedRows, setExpandedRows] = useState([]);
-  const toggleDetails = (index) => {
-    const updatedRows = [...expandedRows];
-    if (updatedRows.includes(index)) {
-      updatedRows.splice(updatedRows.indexOf(index), 1);
-    } else {
-      updatedRows.push(index);
-    }
-    setExpandedRows(updatedRows);
-  };
-  const handleDrawerOpen = () => {
-    setDrawerOpen(true);
-  };
 
-  const handleDrawerClose = () => {
-    setDrawerOpen(false);
-  };
-  const handleToggleRow = (index) => {
-    if (expandedRows.includes(index)) {
-      setExpandedRows(expandedRows.filter((rowIndex) => rowIndex !== index));
-    } else {
-      setExpandedRows([...expandedRows, index]);
-    }
-  };
   const handleOpenAddCommandeDrawer = () => {
     setIsEditCommandeDrawerOpen(true);
   };
@@ -98,7 +78,7 @@ const CommandeList = () => {
       setUsers(userResponse.data);
 
       const produitResponse = await axios.get(
-        "http://localhost:8000/api/produits"
+          "http://localhost:8000/api/produits"
       );
 
       console.log("API Response for Produits:", produitResponse.data.produit);
@@ -106,7 +86,7 @@ const CommandeList = () => {
       setProduits(produitResponse.data.produit);
 
       const clientResponse = await axios.get(
-        "http://localhost:8000/api/clients"
+          "http://localhost:8000/api/clients"
       );
       console.log("API Response for Clients:", clientResponse.data.client);
       setClients(clientResponse.data.client);
@@ -117,7 +97,7 @@ const CommandeList = () => {
   const fetchLigneCommandes = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8000/api/ligneCommandes"
+          "http://localhost:8000/api/ligneCommandes"
       );
 
       console.log("API Response for ligneCommandes:", response.data);
@@ -130,7 +110,7 @@ const CommandeList = () => {
   const fetchStatusCommandes = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:8000/api/statusCommande"
+          "http://localhost:8000/api/statusCommande"
       );
 
       console.log("API Response for ligneCommandes:", response.data);
@@ -148,7 +128,7 @@ const CommandeList = () => {
   useEffect(() => {
     // Filter commandes based on the search term
     const filtered = commandes.filter((commande) =>
-      commande.reference.toLowerCase().includes(searchTerm.toLowerCase())
+        commande.reference.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredCommandes(filtered);
@@ -181,6 +161,52 @@ const CommandeList = () => {
     selectedItems.forEach((id) => {
       if (isConfirmed) {
         axios
+            .delete(`http://localhost:8000/api/commandes/${id}`)
+            .then(() => {
+              fetchCommandes();
+              Swal.fire({
+                icon: "success",
+                title: "Succès!",
+                text: "Commande supprimé avec succès.",
+              });
+            })
+            .catch((error) => {
+              console.error("Erreur lors de la suppression du commande:", error);
+              Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du commande.",
+              });
+            });
+      } else {
+        console.log("Suppression annulée");
+      }
+    });
+    fetchCommandes();
+
+    setSelectedItems([]);
+  };
+
+  const handleShowDetails = (commande) => {
+    setExpandedRows((prevRows) =>
+        prevRows.includes(commande)
+            ? prevRows.filter((row) => row !== commande)
+            : [...prevRows, commande]
+    );
+  };
+
+  const handleModalClose = () => {
+    setModalIsOpen(false); // Close the modal
+    setSelectedCommande(null);
+  };
+
+  const handleDelete = (id) => {
+    const isConfirmed = window.confirm(
+        "Êtes-vous sûr de vouloir supprimer ce commande ?"
+    );
+
+    if (isConfirmed) {
+      axios
           .delete(`http://localhost:8000/api/commandes/${id}`)
           .then(() => {
             fetchCommandes();
@@ -198,52 +224,6 @@ const CommandeList = () => {
               text: "Échec de la suppression du commande.",
             });
           });
-      } else {
-        console.log("Suppression annulée");
-      }
-    });
-    fetchCommandes();
-
-    setSelectedItems([]);
-  };
-
-  const handleShowDetails = (commande) => {
-    setExpandedRows((prevRows) =>
-      prevRows.includes(commande)
-        ? prevRows.filter((row) => row !== commande)
-        : [...prevRows, commande]
-    );
-  };
-
-  const handleModalClose = () => {
-    setModalIsOpen(false); // Close the modal
-    setSelectedCommande(null);
-  };
-
-  const handleDelete = (id) => {
-    const isConfirmed = window.confirm(
-      "Êtes-vous sûr de vouloir supprimer ce commande ?"
-    );
-
-    if (isConfirmed) {
-      axios
-        .delete(`http://localhost:8000/api/commandes/${id}`)
-        .then(() => {
-          fetchCommandes();
-          Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: "Commande supprimé avec succès.",
-          });
-        })
-        .catch((error) => {
-          console.error("Erreur lors de la suppression du commande:", error);
-          Swal.fire({
-            icon: "error",
-            title: "Erreur!",
-            text: "Échec de la suppression du commande.",
-          });
-        });
     } else {
       console.log("Suppression annulée");
     }
@@ -390,7 +370,7 @@ const CommandeList = () => {
       "Zone",
     ];
     const selectedCommandes = commandes.filter((commande) =>
-      selectedItems.includes(commande.id)
+        selectedItems.includes(commande.id)
     );
     const rows = selectedCommandes.map((commande) => [
       commande.raison_sociale,
@@ -407,7 +387,7 @@ const CommandeList = () => {
 
     // Calculate the width of the columns
     const columnWidths = columns.map(
-      (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
+        (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
     );
     const tableWidth = columnWidths.reduce((total, width) => total + width, 0);
 
@@ -464,7 +444,7 @@ const CommandeList = () => {
 
   const exportToExcel = () => {
     const selectedCommandes = commandes.filter((commande) =>
-      selectedItems.includes(commande.id)
+        selectedItems.includes(commande.id)
     );
     const ws = XLSX.utils.json_to_sheet(selectedCommandes);
     const wb = XLSX.utils.book_new();
@@ -475,190 +455,263 @@ const CommandeList = () => {
   const getClientNameById = (clientId) => {
     console.log("clients", clients);
     const client = clients.find((c) => c.id === clientId);
-    return client ? client.raison_sociale : "... loading";
+    return client ? client.raison_sociale : "";
   };
   //------------formatDate----------//
   function formatDate(dateString) {
-    const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
-    return new Date(dateString).toLocaleDateString('fr-FR', options);
+    const options = { year: "numeric", month: "2-digit", day: "2-digit" };
+    return new Date(dateString).toLocaleDateString("fr-FR", options);
   }
 
   return (
-    <ThemeProvider theme={createTheme()}>
-      <Box sx={{ display: 'flex' }}>
-        <Navigation />
-        <Box component="main"  sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-          <Toolbar />
-    <div className="container">
-      <div>
-        <h3>Liste des Commandes</h3>
-      </div>
-      {filteredCommandes && filteredCommandes.length > 0 ? (
-        <div className="table-container">
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
+      <ThemeProvider theme={createTheme()}>
+        <Box sx={{ display: "flex" }}>
+          <Navigation />
+          <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
+            <Toolbar />
             <div>
-              <AddCommande produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} open={isAddCommandeDrawerOpen} onClose={handleCloseAddCommandeDrawer} />
-            </div>
-            <div className="search-container mb-1">
-              <Search onSearch={handleSearch} />
-            </div>
-          </div>
-          <div className="">
-            <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-              <table className="table table-hover">
-                {/* Table headers */}
-                <thead className="text-center">
-                  <tr>
-                    <th className="no-print">
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAllChange}
-                      />
-                    </th>
-                    <th>Reference</th>
-                    <th>Date Commande</th>
-                    <th>Status</th>
-                    <th>Client</th>
-                    <th className="no-print">Action</th>
-                  </tr>
-                </thead>
-                {/* Table body */}
-                <tbody className="text-center">
-                  {filteredCommandes
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((filteredCommandes, index) => (
-                      <React.Fragment key={filteredCommandes.id}>
-                        <tr key={filteredCommandes.id}>
-                          <td className="no-print">
-                            <input
-                              type="checkbox"
-                              checked={selectedItems.includes(filteredCommandes.id)}
-                              onChange={() =>
-                                handleCheckboxChange(filteredCommandes.id)
-                              }
-                            />
-                          </td>
-                          <td>{filteredCommandes.reference}</td>
-                          <td>{formatDate(filteredCommandes.dateCommande)}</td>
-                          <td>{filteredCommandes.status}</td>
-                          <td>{getClientNameById(filteredCommandes.client_id)}</td>
-                          <td className="d-inline-flex no-print">
-                            <EditCommande className="no-print m-1" produits={produits} clients={clients} users={users} csrfToken={csrfToken} fetchCommandes={fetchCommandes} editCommandeId={filteredCommandes.id} open={isEditCommandeDrawerOpen} onClose={handleCloseEditCommandeDrawer} />
-                            <button className="btn btn-danger m-1 no-print" onClick={() => handleDelete(filteredCommandes.id)}>
-                              <FontAwesomeIcon icon={faTrash} />{" "}
-                            </button>
-                            <button className="btn btn-info m-1 no-print" onClick={() => handleShowDetails(filteredCommandes.id)}>
-                              <FontAwesomeIcon icon={faCircleInfo} />
-                            </button>
-                          </td>
-                        </tr>
-                        {expandedRows.includes(filteredCommandes.id) && (
+              <div>
+                <h3>Liste des Commandes</h3>
+              </div>
+              {filteredCommandes && filteredCommandes.length > 0 ? (
+                  <div className="table-container">
+                    <div
+                        style={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <div>
+                        <AddCommande
+                            produits={produits}
+                            clients={clients}
+                            users={users}
+                            csrfToken={csrfToken}
+                            fetchCommandes={fetchCommandes}
+                            open={isAddCommandeDrawerOpen}
+                            onClose={handleCloseAddCommandeDrawer}
+                        />
+                      </div>
+                      <div className="search-container mb-1">
+                        <Search onSearch={handleSearch} />
+                      </div>
+                    </div>
+                    <div className="d-flex flex-row justify-content-end">
+                      <div className="btn-group col-2">
+                        <button
+                        className="btn btn-secondary"
+                        onClick={() =>
+                            printList(
+                                "commande",
+                                "commandes Liste",
+                                "commandes Liste"
+                            )
+                        }
+                    >
+                          <FontAwesomeIcon icon={faPrint} />
+                    </button>
+                    <button className="btn btn-danger" onClick={exportToPdf}>
+                      <FontAwesomeIcon icon={faFilePdf} />{" "}
+                    </button>
+                    <button className="btn btn-success" onClick={exportToExcel}>
+                      <FontAwesomeIcon icon={faFileExcel} />{" "}
+                    </button>
+                  </div>
+                </div>
+                    <div className="">
+                      <div id="tableContainer" className="table-responsive-sm">
+                        <table className="table table-hover table-bordered">
+                          {/* Table headers */}
+                          <thead className="text-center">
                           <tr>
-                            <td colSpan="8">
-                              <div>
-                                <CommandeDetails
-                                  produits={produits}
-                                  commande={filteredCommandes}
-                                  ligneCommandes={ligneCommandes}
-                                  statusCommandes={statusCommandes}
-                                  fetchLigneCommandes={fetchLigneCommandes}
-                                  fetchStatusCommandes={fetchStatusCommandes}
-                                  onBackToList={() =>
-                                    handleShowDetails(filteredCommandes.id)
-                                  }
-                                />
-                              </div>
-                            </td>
+                            <th></th>
+                            <th className="no-print">
+                              <input
+                                  type="checkbox"
+                                  checked={selectAll}
+                                  onChange={handleSelectAllChange}
+                              />
+                            </th>
+
+                            <th>Reference</th>
+                            <th>Date Commande</th>
+                            <th>Mode Paiement</th>
+                            <th>Status</th>
+                            <th>Client</th>
+                            <th className="no-print">Action</th>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    ))}
-                </tbody>
-              </table>
+                          </thead>
+                          {/* Table body */}
+                          <tbody className="text-center">
+                          {filteredCommandes
+                              .slice(
+                                  page * rowsPerPage,
+                                  page * rowsPerPage + rowsPerPage
+                              )
+                              .map((filteredCommande, index) => (
+                                  <React.Fragment key={filteredCommande.id}>
+                                    <tr key={filteredCommande.id}>
+                                      <td className="no-print">
+                                        <button
+                                            className="no-print"
+                                            onClick={() =>
+                                                handleShowDetails(filteredCommande.id)
+                                            }
+                                        >
+                                          <FontAwesomeIcon
+                                              icon={
+                                                expandedRows.includes(
+                                                    filteredCommande.id
+                                                )
+                                                    ? faMinus
+                                                    : faPlus
+                                              }
+                                          />
+                                        </button>
+                                      </td>
+                                      <td className="no-print">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedItems.includes(
+                                                filteredCommande.id
+                                            )}
+                                            onChange={() =>
+                                                handleCheckboxChange(filteredCommande.id)
+                                            }
+                                        />
+                                      </td>
+
+                                      <td>{filteredCommande.reference}</td>
+                                      <td>
+                                        {formatDate(filteredCommande.dateCommande)}
+                                      </td>
+
+                                      <td>{filteredCommande.mode_payement}</td>
+                                      <td>{filteredCommande.status}</td>
+                                      <td>
+                                        {getClientNameById(
+                                            filteredCommande.client_id
+                                        )}
+                                      </td>
+                                      <td className="d-inline-flex no-print">
+                                        <EditCommande
+                                            className="no-print"
+                                            produits={produits}
+                                            clients={clients}
+                                            users={users}
+                                            csrfToken={csrfToken}
+                                            fetchCommandes={fetchCommandes}
+                                            editCommandeId={filteredCommande.id}
+                                            open={isEditCommandeDrawerOpen}
+                                            onClose={handleCloseEditCommandeDrawer}
+                                        />
+                                        <button
+                                            className="no-print"
+                                            onClick={() =>
+                                                handleDelete(filteredCommande.id)
+                                            }
+                                        >
+                                          <FontAwesomeIcon icon={faTrash} />{" "}
+                                        </button>
+                                      </td>
+                                    </tr>
+                                    {expandedRows.includes(filteredCommande.id) && (
+                                        <tr>
+                                          <td colSpan="8">
+                                            <div>
+                                              <CommandeDetails
+                                                  produits={produits}
+                                                  commande={filteredCommande}
+                                                  ligneCommandes={ligneCommandes}
+                                                  statusCommandes={statusCommandes}
+                                                  fetchLigneCommandes={
+                                                    fetchLigneCommandes
+                                                  }
+                                                  fetchStatusCommandes={
+                                                    fetchStatusCommandes
+                                                  }
+                                                  onBackToList={() =>
+                                                      handleShowDetails(filteredCommande.id)
+                                                  }
+                                              />
+                                            </div>
+                                          </td>
+                                        </tr>
+                                    )}
+                                  </React.Fragment>
+                              ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <TablePagination
+                        rowsPerPageOptions={[5, 10, 25]}
+                        component="div"
+                        count={filteredCommandes.length}
+                        rowsPerPage={rowsPerPage}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                    />
+
+                        <button
+                            className="btn btn-danger"
+                            onClick={handleDeleteSelected}
+                        >
+                          <FontAwesomeIcon icon={faTrash} />{" "}
+                        </button>
+
+                    {/* Render the Modal component */}
+                    <Modal
+                        isOpen={modalIsOpen}
+                        onRequestClose={handleModalClose}
+                        contentLabel="Commande Details"
+                    >
+                      {selectedCommande && (
+                          <CommandeDetails
+                              commande={selectedCommande}
+                              produits={produits}
+                              onBackToList={handleModalClose}
+                          />
+                      )}
+                    </Modal>
+                  </div>
+              ) : (
+                  <div className="table-container">
+                    <div
+                        style={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <div>
+                        <AddCommande
+                            produits={produits}
+                            clients={clients}
+                            users={users}
+                            csrfToken={csrfToken}
+                            fetchCommandes={fetchCommandes}
+                            open={isAddCommandeDrawerOpen}
+                            onClose={handleCloseAddCommandeDrawer}
+                        />
+                      </div>
+                      <div className="search-container mb-1">
+                        <Search onSearch={handleSearch} />
+                      </div>
+                    </div>
+                    <table className="table" id="commande">
+                      {/* Table headers */}
+                      <thead>
+                      <tr>
+                        <th>Reference</th>
+                        <th>Date Commande</th>
+                        <th>Date Saisie</th>
+                        <th>Mode Paiement</th>
+                        <th>Status</th>
+                        <th>Client</th>
+                      </tr>
+                      </thead>
+                    </table>
+                  </div>
+              )}
             </div>
-          </div>
-          <TablePagination
-            rowsPerPageOptions={[5, 10, 25]}
-            component="div"
-            count={filteredCommandes.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-          />
-          <div className="d-flex flex-row">
-            <div className="btn-group col-2">
-              <button className="btn btn-danger" onClick={handleDeleteSelected}>
-                <FontAwesomeIcon icon={faTrash} />{" "}
-              </button>
-              <button
-                className="btn btn-secondary" onClick={() => printList("commande","commandes Liste","commandes Liste")} >
-                <FontAwesomeIcon icon={faPrint} />
-              </button>
-              <button className="btn btn-danger" onClick={exportToPdf}>
-                <FontAwesomeIcon icon={faFilePdf} />{" "}
-              </button>
-              <button className="btn btn-success" onClick={exportToExcel} >
-                <FontAwesomeIcon icon={faFileExcel} />{" "}
-              </button>
-            </div>
-          </div>
-          {/* Render the Modal component */}
-          <Modal isOpen={modalIsOpen} onRequestClose={handleModalClose} contentLabel="Commande Details">
-            {selectedCommande && (
-              <CommandeDetails
-                commande={selectedCommande}
-                produits={produits}
-                onBackToList={handleModalClose}
-              />
-            )}
-          </Modal>
-        </div>
-      ) : (
-        <div className="table-container">
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <div>
-              <AddCommande
-                produits={produits}
-                clients={clients}
-                users={users}
-                csrfToken={csrfToken}
-                fetchCommandes={fetchCommandes}
-                open={isAddCommandeDrawerOpen}
-                onClose={handleCloseAddCommandeDrawer}
-              />
-            </div>
-            <div className="search-container mb-1">
-              <Search onSearch={handleSearch} />
-            </div>
-          </div>
-          <table className="table" id="commande">
-            {/* Table headers */}
-            <thead>
-              <tr>
-                <th className="no-print">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={handleSelectAllChange}
-                  />
-                </th>
-                <th>Reference</th>
-                <th>Date Commande</th>
-                <th>Status</th>
-                <th>Client</th>
-                <th>User</th>
-                <th className="no-print">Action</th>
-              </tr>
-            </thead>
-          </table>
-        </div>
-      )}
-    </div>
-    </Box>
-      </Box>
-    </ThemeProvider>
+          </Box>
+        </Box>
+      </ThemeProvider>
   );
 };
 export default CommandeList;

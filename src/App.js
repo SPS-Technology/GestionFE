@@ -11,14 +11,14 @@ import AddUser from './Users/Adduser';
 import Users from './Users/Users';
 import EditUser from './Users/EditUsers';
 import Dashboard from './Acceuil/Dashboard';
-import LivreurList from './Livreur/LivreurList';
-import VehiculeList from './Vehicule/VehiculeList';
-import ObjectifList from './objectif/ObjectifList';
-import Vehicule_livreur from './Vehicule_Livreur/Vehicule_livreur';
+import RecouverementList from "./etat de recouvrement/RecouverementList";
+import ChiffreAffaireList from "./Chiffre D'Affaire/ChiffreAffaireList";
+import ReclamationList from "./Reclamations/ReclamationList";
+import BanqueList from "./Banques/BanqueList";
 
 
 const App = () => {
- 
+
   return (
     <div>
     <AuthProvider>
@@ -27,15 +27,15 @@ const App = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
-        <Route path="/livreurs" element={<LivreurList />} />
-        <Route path="/objectifs" element={<ObjectifList />} />
-        <Route path="/vehicules" element={<VehiculeList />} />
         <Route path="/produits" element={<ProduitList />} />
         <Route path="/commandes" element={<CommandeList />} />
-        <Route path="/vehicule-livreurs" element={<Vehicule_livreur />} />
-        {/* <Route path="/add-user" element={<AddUser />} /> */}
+        <Route path="/add-user" element={<AddUser />} />
         <Route path="/users" element={<Users />} />
-        {/* <Route path="/users/edit/:id" element={<EditUser />} /> */}
+        <Route path="/users/edit/:id" element={<EditUser />} />
+        <Route path="/recouverements" element={<RecouverementList />} />
+        <Route path="/chiffreaffaires" element={<ChiffreAffaireList/>}/>
+        <Route path="/reclamations" element={<ReclamationList/>}/>
+        <Route path="/banques" element={<BanqueList/>}/>
       </Routes>
       </AuthProvider>
     </div>

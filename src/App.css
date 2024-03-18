@@ -5,4 +5,7 @@ body {
   .app-container {
     min-height: calc(100vh - 110px); /* Calculez la hauteur minimale de votre contenu pour s'adapter à l'écran */
   }
-  
+
+.beige-appbar {
+    background-color: beige;
+}
