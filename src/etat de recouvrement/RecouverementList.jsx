@@ -30,6 +30,8 @@ const RecouverementList = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredRecouvrements, setFilteredRecouvrements] = useState([]);
+    const [factures, setFactures] = useState([]);
+
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [user, setUser] = useState({});
@@ -43,7 +45,9 @@ const RecouverementList = () => {
     const [clients, setClients] = useState([]);
     const [expandedDetailsRows, setExpandedDetailsRows] = useState([]);
    const [expandedRows , setExpandedRows]=useState([]);
+
     const [totalTTC, setTotalTTC] = useState(0);
+
     const [showAvanceDetails, setShowAvanceDetails] = useState(false);
 
 
@@ -65,6 +69,10 @@ const RecouverementList = () => {
 
     const fetchRecouvrements = async () => {
         try {
+            const responseFactures = await axios.get(
+                "http://localhost:8000/api/factures");
+            setFactures(responseFactures.data.facture);
+            console.log("response",responseFactures);
             const response = await axios.get(
                 "http://localhost:8000/api/etat-recouvrements");
             setRecouvrements(response.data.etat_recouvrements);
@@ -174,22 +182,8 @@ const RecouverementList = () => {
         return client ? client.raison_sociale : "";
     };
 
-   const gettotalttcByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
 
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.total_ttc);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-
+    // Fonction pour calculer le total des valeurs TTC des factures pour un client donné
     const getReferenceByIdClient = (clientId) => {
         // Assuming you have a `clients` array containing client objects
         const client = clients.find((c) => c.id === clientId);
@@ -221,19 +215,32 @@ const RecouverementList = () => {
             return []; // or handle accordingly if client not found
         }
     };
-    const calculateTotalMontant = (clientId) => {
-        const client = clients.find((c) => c.id === clientId); // Trouver le client
+
+
+    const gettotalttcByIdClient = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
+
+        // Check if the client is found
         if (client) {
-            const invoices = client.invoices; // Récupérer les factures du client
-            const totalMontant = invoices.reduce((total, invoice) => {
-                // Ajouter le montant TTC de chaque facture au total
-                return total + parseFloat(invoice.total_ttc);
-            }, 0);
-            return totalMontant;
+            // Assuming each client object has an `invoices` property which is an array
+            const invoices = client.invoices;
+            console.log("invoices", invoices);
+            // Return an array of invoice references or any other property you want
+            return invoices.map((invoice) => invoice.total_ttc);
         } else {
-            return 0; // Retourner 0 si le client n'est pas trouvé
+            return []; // or handle accordingly if client not found
         }
     };
+
+   // Calcul du total des total_ttc affichés pour un client donné
+    const calculateTotalTTCByIdClient = (clientId) => {
+        const total_ttc_list = gettotalttcByIdClient(clientId);
+        // Additionner tous les total_ttc
+        const total = total_ttc_list.reduce((acc, val) => acc + parseFloat(val), 0);
+        return total;
+    };
+
 
 
     const getDatedeBanqueByIdClient = (clientId) => {
@@ -281,12 +288,19 @@ const RecouverementList = () => {
             return []; // or handle accordingly if client not found
         }
     };
-    const calculerTotalMontantBanques = (clientId) => {
-        const montants = getAvancedeBanqueByIdClient(clientId);
-        const total = montants.reduce((acc, montant) => acc + montant, 0);
-        return total;
+    const calculateTotalAvanceByIdClient = (clientId) => {
+        const total_avance_list = getAvancedeBanqueByIdClient(clientId);
+        // Additionner tous les total_ttc
+        const totale = total_avance_list.reduce((acc, val) => acc + parseFloat(val), 0);
+        return totale;
     };
-        // Fonction pour calculer la somme totale des montants TTC
+    const calculateResteByIdClient = (clientId) => {
+        const totalTTC = calculateTotalTTCByIdClient(clientId);
+        const avance = calculateTotalAvanceByIdClient(clientId);
+
+        const reste = totalTTC - avance;
+        return reste;
+    };
 
     //------------------------- fournisseur print ---------------------//
 
@@ -761,14 +775,7 @@ const RecouverementList = () => {
                         <div className="search-container d-flex flex-row-reverse mb-3">
                             <Search onSearch={handleSearch} />
                         </div>
-                        <Button
-                            id="showFormButton"
-                            onClick={handleShowFormButtonClick}
-                            style={{ backgroundColor: 'white', color: 'black' }}
-                        >
-                            <IoIosPersonAdd  style={{ fontSize: '24px' }} />
-                            {/*{showForm ? "Modifier le formulaire" : <IoIosPersonAdd />}*/}
-                        </Button>
+
                         <div className="d-flex flex-row justify-content-end">
                             <div className="btn-group col-2">
                                 <PrintList
@@ -787,40 +794,7 @@ const RecouverementList = () => {
                                 </Button>
                             </div>
                         </div>
-                        <div id="formContainer" className="mt-2" style={formContainerStyle}>
-                            <Form className="col row" onSubmit={handleSubmit}>
-                                <Form.Label className="text-center m-2"><h5>{editingRecouverement ? 'Modifier recouverement' : 'Ajouter un recouverement'}</h5></Form.Label>
-                                {/*<Form.Group className="col-sm-5 m-2 ">*/}
-                                {/*    <Form.Label>N°</Form.Label>*/}
-                                {/*    <Form.Control type="text" placeholder="Numero" name="numero" value={formData.numero} onChange={handleChange} />*/}
-                                {/*</Form.Group>*/}
-                                <Form.Group className="col-sm-5 m-2" controlId="client_id">
 
-                                    <Form.Label>Client</Form.Label>
-
-                                    <Form.Select
-                                        name="client_id"
-                                        value={formData.client_id}
-                                        onChange={handleChange}
-                                        className="form-select form-select-sm"
-                                    >
-                                        <option value="">Sélectionner un client</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>
-                                                {client.raison_sociale}
-                                            </option>
-                                        ))}
-                                    </Form.Select>
-                                </Form.Group>
-
-                                <Form.Group className="col m-3 text-center">
-                                    <Button type="submit" className="btn btn-success col-6">
-                                        {editingRecouverement ? 'Modifier' : 'Ajouter'}
-                                    </Button>
-                                    <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
-                                </Form.Group>
-                            </Form>
-                        </div>
 
                         <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                             <table className="table table-responsive table-bordered " id="recouverementTable">
@@ -833,60 +807,54 @@ const RecouverementList = () => {
                                     <th style={tableHeaderStyle}>Montant</th>
                                     <th style={tableHeaderStyle}>Avance</th>
                                     <th style={tableHeaderStyle}>Reste</th>
-                                    <th style={tableHeaderStyle}>Action</th>
+
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {filteredRecouvrements && filteredRecouvrements.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((recouvrements) => (
-                                    <React.Fragment key={recouvrements.id}>
+                                {clients && clients.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((client) => (
+                                    <React.Fragment key={client.id}>
                                         <tr>
                                             <td></td>
                                             <td>
                                                 <button
                                                     className="btn btn-sm btn-light"
-                                                    onClick={() => toggleRow(recouvrements.id)}
+                                                    onClick={() => toggleRow(client.id)}
                                                 >
                                                     <FontAwesomeIcon
                                                         icon={
-                                                            expandedRows.includes(recouvrements.id)
+                                                            expandedRows.includes(client.id)
                                                                 ? faMinus
                                                                 : faPlus
                                                         }
                                                     />
                                                 </button>
-                                                {getClientNameById(
-                                                    recouvrements.client_id
-                                                )}
+                                                {/*{getClientNameById(*/}
+                                                {/*    recouvrements.client_id*/}
+                                                {/*)}*/}
+                                                {client.raison_sociale}
                                             </td>
 
-                                            <td>{calculateTotalMontant(recouvrements)}</td>
+                                            <td>{calculateTotalTTCByIdClient(client.id)}</td>
                                             <td>
                                                 <button
                                                     className="btn btn-sm btn-light ml-2"
-                                                    onClick={() => toggleDetailsRow(recouvrements.id)}
+                                                    onClick={() => toggleDetailsRow(client.id)}
                                                 >
                                                     <FontAwesomeIcon
                                                         icon={
-                                                            expandedDetailsRows.includes(recouvrements.id)
+                                                            expandedDetailsRows.includes(client.id)
                                                                 ? faMinus
                                                                 : faPlus
                                                         }
                                                     />
                                                 </button>
-                                                {calculerTotalMontantBanques(recouvrements)}
+                                                {calculateTotalAvanceByIdClient(client.id)}
                                             </td>
-                                            <td>{recouvrements.reste}</td>
-                                            <td className="d-inline-flex">
-                                                <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(recouvrements)}>
-                                                    <i className="fas fa-edit"></i>
-                                                </Button>
-                                                <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(recouvrements.id)}>
-                                                    <FontAwesomeIcon icon={faTrash} />
-                                                </Button>
-                                            </td>
+                                            <td>{calculateResteByIdClient(client.id)}</td>
+
                                         </tr>
 
-                                        {expandedRows.includes(recouvrements.id) && (
+                                        {expandedRows.includes(client.id) && (
                                             <tr>
                                                 <td colSpan="8">
                                                     <div>
@@ -899,11 +867,11 @@ const RecouverementList = () => {
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {getReferenceByIdClient(recouvrements.client_id).map((facture, index) => (
+                                                            {getReferenceByIdClient(client.id).map((facture, index) => (
                                                                 <tr key={index}>
                                                                     <td>{facture}</td>
-                                                                    <td>{gettotalttcByIdClient(recouvrements.client_id)[index]}</td>
-                                                                    <td>{getDatedeFactureByIdClient(recouvrements.client_id)[index]}</td>
+                                                                    <td>{gettotalttcByIdClient(client.id)[index]}</td>
+                                                                    <td>{getDatedeFactureByIdClient(client.id)[index]}</td>
                                                                 </tr>
                                                             ))}
                                                             </tbody>
@@ -913,7 +881,7 @@ const RecouverementList = () => {
                                             </tr>
                                         )}
 
-                                        {expandedDetailsRows.includes(recouvrements.id) && (
+                                        {expandedDetailsRows.includes(client.id) && (
                                             <tr>
                                                 <td colSpan="6">
                                                     <div>
@@ -926,11 +894,11 @@ const RecouverementList = () => {
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {getDatedeBanqueByIdClient(recouvrements.client_id).map((date, index) => (
+                                                            {getDatedeBanqueByIdClient(client.id).map((date, index) => (
                                                                 <tr key={index}>
-                                                                    <td>{getAvancedeBanqueByIdClient(recouvrements.client_id)[index]}</td>
+                                                                    <td>{getAvancedeBanqueByIdClient(client.id)[index]}</td>
                                                                     <td>{date}</td>
-                                                                    <td>{getModepaiementdeBanqueByIdClient(recouvrements.client_id)[index]}</td>
+                                                                    <td>{getModepaiementdeBanqueByIdClient(client.id)[index]}</td>
                                                                 </tr>
                                                             ))}
                                                             </tbody>
@@ -944,13 +912,11 @@ const RecouverementList = () => {
                                 ))}
 
 
+
                                 </tbody>
                             </table>
 
 
-
-                            <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                                <FontAwesomeIcon icon={faTrash} /></Button>
 
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
@@ -963,13 +929,13 @@ const RecouverementList = () => {
                             />
                         </div>
                     </div>
-                    <div className="mt-4"> {/* Ajout de la classe mt-4 pour ajouter de la marge au-dessus */}
-                        <div className="border p-3"> {/* Utilisation de la classe border et p-3 pour encadrer et ajouter du padding */}
-                            <p><strong>Total à recouvrer:</strong> <span>{calculateTotalMontantHt(recouvrements)}</span></p>
-                            <p><strong>Total recouvré:</strong> <span>{calculateTotalAvance(recouvrements)}</span></p>
-                            <p><strong>Reste à recouvrer:</strong> <span>{calculateTotalReste(recouvrements)}</span></p>
-                        </div>
-                    </div>
+                    {/*<div className="mt-4"> /!* Ajout de la classe mt-4 pour ajouter de la marge au-dessus *!/*/}
+                    {/*    <div className="border p-3"> /!* Utilisation de la classe border et p-3 pour encadrer et ajouter du padding *!/*/}
+                    {/*        <p><strong>Total à recouvrer:</strong> <span>{calculateTotalTTCByIdClient(recouvrements.client_id)}</span></p>*/}
+                    {/*        <p><strong>Total recouvré:</strong> <span> {calculateTotalAvanceByIdClient(recouvrements.client_id)}</span></p>*/}
+                    {/*        <p><strong>Reste à recouvrer:</strong> <span>{calculateResteByIdClient(recouvrements.client_id)}</span></p>*/}
+                    {/*    </div>*/}
+                    {/*</div>*/}
 
                 </Box>
             </Box>

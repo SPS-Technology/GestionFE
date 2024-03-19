@@ -633,14 +633,8 @@ const ChiffreAffaireList = () => {
                         <div className="search-container d-flex flex-row-reverse mb-3">
                             <Search onSearch={handleSearch} />
                         </div>
-                        <Button
-                            id="showFormButton"
-                            onClick={handleShowFormButtonClick}
-                            style={{ backgroundColor: 'white', color: 'black' }}
-                        >
-                            <IoIosPersonAdd  style={{ fontSize: '24px' }} />
-                            {/*{showForm ? "Modifier le formulaire" : <IoIosPersonAdd />}*/}
-                        </Button>
+
+
                         <div className="d-flex flex-row justify-content-end">
                             <div className="btn-group col-2">
                                 <PrintList
@@ -659,37 +653,37 @@ const ChiffreAffaireList = () => {
                                 </Button>
                             </div>
                         </div>
-                        <div id="formContainer" className="mt-2" style={formContainerStyle}>
-                            <Form className="col row" onSubmit={handleSubmit}>
-                                <Form.Label className="text-center m-2"><h5>{editingChiffreaffaire ? 'Modifier chiffreaffaire' : 'Ajouter un chiffreaffaire'}</h5></Form.Label>
-                                <Form.Group className="col-sm-5 m-2" controlId="client_id">
+                        {/*<div id="formContainer" className="mt-2" style={formContainerStyle}>*/}
+                        {/*    <Form className="col row" onSubmit={handleSubmit}>*/}
+                        {/*        <Form.Label className="text-center m-2"><h5>{editingChiffreaffaire ? 'Modifier chiffreaffaire' : 'Ajouter un chiffreaffaire'}</h5></Form.Label>*/}
+                        {/*        <Form.Group className="col-sm-5 m-2" controlId="client_id">*/}
 
-                                    <Form.Label>Client</Form.Label>
+                        {/*            <Form.Label>Client</Form.Label>*/}
 
-                                    <Form.Select
-                                        name="client_id"
-                                        value={formData.client_id}
-                                        onChange={handleChange}
-                                        className="form-select form-select-sm"
-                                    >
-                                        <option value="">Sélectionner un client</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>
-                                                {client.raison_sociale}
-                                            </option>
-                                        ))}
-                                    </Form.Select>
-                                </Form.Group>
+                        {/*            <Form.Select*/}
+                        {/*                name="client_id"*/}
+                        {/*                value={formData.client_id}*/}
+                        {/*                onChange={handleChange}*/}
+                        {/*                className="form-select form-select-sm"*/}
+                        {/*            >*/}
+                        {/*                <option value="">Sélectionner un client</option>*/}
+                        {/*                {clients.map((client) => (*/}
+                        {/*                    <option key={client.id} value={client.id}>*/}
+                        {/*                        {client.raison_sociale}*/}
+                        {/*                    </option>*/}
+                        {/*                ))}*/}
+                        {/*            </Form.Select>*/}
+                        {/*        </Form.Group>*/}
 
 
-                                <Form.Group className="col m-3 text-center">
-                                    <Button type="submit" className="btn btn-success col-6">
-                                        {editingChiffreaffaire ? 'Modifier' : 'Ajouter'}
-                                    </Button>
-                                    <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
-                                </Form.Group>
-                            </Form>
-                        </div>
+                        {/*        <Form.Group className="col m-3 text-center">*/}
+                        {/*            <Button type="submit" className="btn btn-success col-6">*/}
+                        {/*                {editingChiffreaffaire ? 'Modifier' : 'Ajouter'}*/}
+                        {/*            </Button>*/}
+                        {/*            <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>*/}
+                        {/*        </Form.Group>*/}
+                        {/*    </Form>*/}
+                        {/*</div>*/}
 
                         <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                             <table className="table table-responsive table-bordered" id="chiffreaffaireTable">
@@ -699,10 +693,10 @@ const ChiffreAffaireList = () => {
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
                                     <th style={tableHeaderStyle}>Client</th>
-                                    <th>N° Facture</th>
-                                    <th>Total TTC</th>
-                                    <th>Date de Facture</th>
-                                    <th style={tableHeaderStyle}>Action</th>
+                                    <th style={tableHeaderStyle}>N° Facture</th>
+                                    <th style={tableHeaderStyle}>Total TTC</th>
+                                    <th style={tableHeaderStyle}>Date de Facture</th>
+                                    {/*<th style={tableHeaderStyle}>Action</th>*/}
                                 </tr>
                                 </thead>
                                 <tbody>
@@ -720,23 +714,23 @@ const ChiffreAffaireList = () => {
                                             <td>{facture.total_ttc}</td>
                                             <td>{facture.date}</td>
 
-                                            <td className="d-inline-flex">
-                                                <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(facture)}>
-                                                    <i className="fas fa-edit"></i>
-                                                </Button>
-                                                <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(facture.id)}>
-                                                    <FontAwesomeIcon icon={faTrash} />
-                                                </Button>
-                                            </td>
+                                            {/*<td className="d-inline-flex">*/}
+                                            {/*    <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(facture)}>*/}
+                                            {/*        <i className="fas fa-edit"></i>*/}
+                                            {/*    </Button>*/}
+                                            {/*    <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(facture.id)}>*/}
+                                            {/*        <FontAwesomeIcon icon={faTrash} />*/}
+                                            {/*    </Button>*/}
+                                            {/*</td>*/}
                                         </tr>
 
 
                                 ))}
                                 </tbody>
                             </table>
-                            <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
-                                <FontAwesomeIcon icon={faTrash} />
-                            </Button>
+                            {/*<Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>*/}
+                            {/*    <FontAwesomeIcon icon={faTrash} />*/}
+                            {/*</Button>*/}
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"

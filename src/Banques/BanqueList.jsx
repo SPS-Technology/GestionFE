@@ -157,11 +157,7 @@ const BanqueList = () => {
 
 
 
-    const getFactureNameById = (id_facture) => {
-        console.log("factures", factures);
-        const facture = factures.find((c) => c.id === id_facture);
-        return facture ? facture.reference : "";
-    };
+
     const getReferenceByIdClient = (clientId) => {
         // Assuming you have a `clients` array containing client objects
         const client = clients.find((c) => c.id === clientId);
