@@ -20,6 +20,8 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
 import BusinessIcon from "@mui/icons-material/Business";
+import ExportPdfButton from "./exportToPdf";
+import PrintList from "./PrintList";
 const FournisseurList = () => {
   // const [existingFournisseur, setExistingFournisseur] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -319,101 +321,7 @@ const FournisseurList = () => {
       console.error("Error opening print window.");
     }
   };
-  //------------------------- fournisseur export to pdf ---------------------//
 
-  const exportToPdf = () => {
-    const pdf = new jsPDF();
-
-    // Define the columns and rows for the table
-    const columns = [
-      "ID",
-      "CodeFournisseur",
-      "Raison Sociale",
-      "Adresse",
-      "Téléphone",
-      "Ville",
-      "Abréviation",
-      "ice",
-      "User",
-    ];
-    const selectedFournisseurs = fournisseurs.filter((fournisseur) =>
-      selectedItems.includes(fournisseur.id)
-    );
-    const rows = selectedFournisseurs.map((fournisseur) => [
-      fournisseur.id,
-      fournisseur.CodeFournisseur,
-      fournisseur.raison_sociale,
-      fournisseur.adresse,
-      fournisseur.tele,
-      fournisseur.ville,
-      fournisseur.abreviation,
-      fournisseur.ice,
-      fournisseur.user_id,
-    ]);
-
-    // Set the margin and padding
-    const margin = 10;
-    const padding = 5;
-
-    // Calculate the width of the columns
-    const columnWidths = columns.map(
-      (col) => pdf.getStringUnitWidth(col) * 5 + padding * 2
-    );
-    const tableWidth = columnWidths.reduce((total, width) => total + width, 0);
-
-    // Calculate the height of the rows
-    const rowHeight = 10;
-    const tableHeight = rows.length * rowHeight;
-
-    // Set the table position
-    const startX = (pdf.internal.pageSize.width - tableWidth) / 2;
-    const startY = margin;
-
-    // Add the table headers
-    pdf.setFont("helvetica", "bold");
-    pdf.setFillColor(200, 220, 255);
-    pdf.rect(startX, startY, tableWidth, rowHeight, "F");
-    pdf.autoTable({
-      head: [columns],
-      startY: startY + padding,
-      styles: {
-        fillColor: [200, 220, 255],
-        textColor: [0, 0, 0],
-        fontSize: 10,
-      },
-      columnStyles: {
-        0: { cellWidth: columnWidths[0] },
-        1: { cellWidth: columnWidths[1] },
-        2: { cellWidth: columnWidths[2] },
-        3: { cellWidth: columnWidths[3] },
-        4: { cellWidth: columnWidths[4] },
-        5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
-      },
-    });
-
-    // Add the table rows
-    pdf.setFont("helvetica", "");
-    pdf.autoTable({
-      body: rows,
-      startY: startY + rowHeight + padding * 2,
-      styles: { fontSize: 8 },
-      columnStyles: {
-        0: { cellWidth: columnWidths[0] },
-        1: { cellWidth: columnWidths[1] },
-        2: { cellWidth: columnWidths[2] },
-        3: { cellWidth: columnWidths[3] },
-        4: { cellWidth: columnWidths[4] },
-        5: { cellWidth: columnWidths[5] },
-        6: { cellWidth: columnWidths[6] },
-        7: { cellWidth: columnWidths[7] },
-      },
-    });
-
-    // Save the PDF
-    pdf.save("fournisseurs.pdf");
-  };
   //------------------------- fournisseur export to excel ---------------------//
 
   const exportToExcel = () => {
@@ -653,27 +561,20 @@ const FournisseurList = () => {
           </h3>
           <div className="d-flex flex-row justify-content-end">
             <div className="btn-group col-2">
-              <Button
-                className="btn btn-secondary btn-sm"
-                onClick={() =>
-                  printList(
-                    "fournisseurTable",
-                    "Liste des Fournisseurs",
-                    fournisseurs
-                  )
-                }
-              >
-                <FontAwesomeIcon icon={faPrint} />
-              </Button>
-              <Button
-                className="btn btn-danger btn-sm ml-2"
-                onClick={exportToPdf}
-              >
-                <FontAwesomeIcon icon={faFilePdf} />
-              </Button>
-              <Button
+            <PrintList
+                tableId="fournisseurTable"
+                title="Liste des Fournisseurs"
+                FournisseurList={fournisseurs}
+                filtredFournisseurs={filteredFournisseurs}
+              />
+              <ExportPdfButton
+                fournisseurs={fournisseurs}
+                selectedItems={selectedItems}
+              />
+             <Button
                 className="btn btn-success btn-sm ml-2"
                 onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
               >
                 <FontAwesomeIcon icon={faFileExcel} />
               </Button>

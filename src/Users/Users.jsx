@@ -9,6 +9,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import { Link, useNavigate } from "react-router-dom";
 import { Modal } from "react-bootstrap";
+import SupervisorAccountIcon from "@mui/icons-material/SupervisorAccount";
 
 const Users = () => {
   const isAuthenticated = localStorage.getItem("isAuthenticated");
@@ -37,8 +38,9 @@ const Users = () => {
 
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
+
   const [formContainerStyle, setFormContainerStyle] = useState({
-    right: "-900px",
+    right: "-500px",
   });
   const [tableContainerStyle, setTableContainerStyle] = useState({
     marginRight: "0px",
@@ -50,10 +52,6 @@ const Users = () => {
     borderBottom: "1px solid #ddd",
   };
 
-  const tableCellStyle = {
-    padding: "10px",
-    borderBottom: "1px solid #ddd",
-  };
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -406,16 +404,38 @@ const Users = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
+          <h3 className="text-left" style={{ color: "#A31818" }}>
+          <SupervisorAccountIcon
+                style={{
+                  fontSize: "24px",
+                  marginRight: "8px",
+                  verticalAlign: "middle",
+                }}
+              />
+            Gestion des utilisateurs
+          </h3> 
           <div className="container-d-flex justify-content-start">
-            <Button
+            {/* <Button
               variant="primary"
               className="col-2 btn btn-sm m-2"
               id="showFormButton"
               onClick={handleShowFormButtonClick}
             >
               {isEditing ? "Modifier Utilisateur" : "Ajouter Utilisateur"}{" "}
-              <i className="fas fa-user-plus" aria-hidden="true"></i>
-            </Button>
+            </Button> */}
+            <Button
+                id="showFormButton"
+                onClick={handleShowFormButtonClick}
+                style={{
+                  backgroundColor: "white",
+                  color: "black",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+              <i style={{ fontSize: "24px", marginRight: "8px" }} className="fas fa-user-plus" aria-hidden="true"></i>
+                Mise a jour Utilisateurs
+              </Button>
             <div id="formContainer" style={formContainerStyle}>
               <Form className="col row" onSubmit={handleFormSubmit}>
                 <div>
@@ -431,6 +451,7 @@ const Users = () => {
                   >
                     <i style={{ fontSize: "24px" }} className="fas fa-key"></i>
                   </Button>
+                  
                   <Form.Label
                     className="text-center m-2"
                     style={{
@@ -515,13 +536,15 @@ const Users = () => {
                 </Button>
               </Form>
             </div>
-            <div className="container" style={tableContainerStyle}>
-              <h2 style={{ marginBottom: "20px", textAlign: "center" }}>
-                Gestion des utilisateurs
-              </h2>
+            <div
+              id="tableContainer"
+              className="table-responsive-sm"
+              style={tableContainerStyle}
+            >
+             
               <table
-                className="table table-hover table-responsive"
-                id="clientsTable"
+              className="table table-responsive table-bordered "
+              id="clientsTable"
               >
                 <thead>
                   <tr>
@@ -537,14 +560,14 @@ const Users = () => {
                   {users &&
                     users.map((user) => (
                       <tr key={user.id}>
-                        <td style={tableCellStyle}>{user.name}</td>
-                        <td style={tableCellStyle}>{user.email}</td>
-                        <td style={tableCellStyle}>
+                        <td>{user.name}</td>
+                        <td>{user.email}</td>
+                        <td>
                           {user.roles.length > 0
                             ? user.roles[0].name
                             : "No Role"}
                         </td>
-                        <td style={tableCellStyle}>
+                        <td>
                           {user.photo && (
                             <img
                               src={user.photo}
@@ -557,8 +580,8 @@ const Users = () => {
                             />
                           )}
                         </td>
-                        <td style={tableCellStyle}>{user.password}</td>{" "}
-                        <td style={tableCellStyle}>
+                        <td>{user.password}</td>{" "}
+                        <td>
                           <Button
                             variant="warning"
                             onClick={() => handleEditUser(user)}

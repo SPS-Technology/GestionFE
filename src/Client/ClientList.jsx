@@ -199,11 +199,10 @@ const ClientList = () => {
         return false;
       })
     );
-  
+
     setFilteredclients(filtered);
   }, [clients, searchTerm]);
-  
-  
+
   const handleSearch = (term) => {
     setSearchTerm(term);
   };
@@ -868,9 +867,11 @@ const ClientList = () => {
                 clients={clients}
                 selectedItems={selectedItems}
               />
+
               <Button
-                className="btn btn-success btn-sm "
+                className="btn btn-success btn-sm ml-2"
                 onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
               >
                 <FontAwesomeIcon icon={faFileExcel} />
               </Button>

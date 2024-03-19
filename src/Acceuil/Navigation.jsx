@@ -31,9 +31,14 @@ import CssBaseline from "@mui/material/CssBaseline";
 import TimeToLeaveIcon from '@mui/icons-material/TimeToLeave';
 import MuiAppBar from "@mui/material/AppBar";
 import Swal from "sweetalert2";
+import Select from "@mui/material/Select";
+import MenuItem from "@mui/material/MenuItem";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../AuthContext";
-
+import StoreIcon from "@mui/icons-material/Store";
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EditNoteIcon from '@mui/icons-material/EditNote';
 const drawerWidth = 240;
 
 const AppBar = styled(MuiAppBar, {
@@ -84,6 +89,7 @@ const Drawer = styled(MuiDrawer, {
 const defaultTheme = createTheme();
 
 const Navigation = () => {
+  const [selectedOption, setSelectedOption] = useState("");
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [open, setOpen] = React.useState(true);
   const [user, setUser] = useState(null);
@@ -93,7 +99,19 @@ const Navigation = () => {
   axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
   const { logout } = useAuth();
   const [openDrawer, setOpenDrawer] = useState(false);
+  const handleOptionChange = (event) => {
+    const selectedValue = event.target.value;
+    setSelectedOption(selectedValue);
 
+    // Redirect to the corresponding route based on the selected option
+    if (selectedValue === "charging") {
+      navigate("/chargingCommand"); // Replace with your actual route
+    } else if (selectedValue === "preparing") {
+      navigate("/preparingCommand"); // Replace with your actual route
+    } else if (selectedValue === "list") {
+      navigate("/commandes"); // Replace with your actual route
+    }
+  };
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
@@ -297,13 +315,75 @@ const Navigation = () => {
             <ListItem
               button
               component={Link}
-              to="/commandes"
-              style={{ color: "grey" }}
+              to="/stock"
+              style={{ color: "black" }}
             >
+              <ListItemIcon>
+                <StoreIcon />
+              </ListItemIcon>
+
+              <ListItemText primary="Stock" />
+            </ListItem>
+            <ListItem button style={{ color: "black", display: "flex" }}>
               <ListItemIcon>
                 <ShoppingBasketIcon />
               </ListItemIcon>
-              <ListItemText primary="Gestion Commandes" />
+
+              <Select
+                value={selectedOption}
+                onChange={handleOptionChange}
+                displayEmpty
+                style={{
+                  marginLeft: "-10px",
+                  border: "none",
+                  borderBottom: "none",
+                  textDecoration: "none",
+                }}
+                variant="standard"
+              >
+                <MenuItem value="" disabled>
+                  <ListItemText
+                    primary="Gestion commandes"
+                    style={{ marginLeft: "10px" }}
+                  />
+                </MenuItem>
+                <MenuItem value="list">Liste des Commandes</MenuItem>
+                <MenuItem value="charging">Chargement Commandes</MenuItem>
+                <MenuItem value="preparing">Préparation Commandes</MenuItem>
+              </Select>
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/devis"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <ReceiptIcon />
+              </ListItemIcon>
+              <ListItemText primary="Devis" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/factures"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <DescriptionIcon />
+              </ListItemIcon>
+              <ListItemText primary="Factures" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
+              to="/livraisons"
+              style={{ color: "#696969" }}
+            >
+              <ListItemIcon>
+                <EditNoteIcon />
+              </ListItemIcon>
+              <ListItemText primary="Bon Livraison" />
             </ListItem>
             {/*<ListItem*/}
             {/*  button*/}

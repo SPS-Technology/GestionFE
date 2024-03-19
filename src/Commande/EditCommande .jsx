@@ -5,10 +5,24 @@ import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import swal from "sweetalert2";
-const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editCommandeId,}) => {
+const EditCommande = ({
+  produits,
+  clients,
+  users,
+  csrfToken,
+  fetchCommandes,
+  editCommandeId,
+}) => {
   const [open, setOpen] = useState(false);
   const [selectedProducts, setSelectedProducts] = useState([]);
-  const [commandeData, setCommandeData] = useState({client_id: "",user_id: "",status: "",reference: "",dateCommande: "",});
+  const [commandeData, setCommandeData] = useState({
+    client_id: "",
+    user_id: "",
+    status: "",
+    reference: "",
+    dateCommande: "",
+    mode_payement: "",
+  });
   const [existingLigneCommandes, setExistingLigneCommandes] = useState([]);
   const [modifiedPrixValues, setModifiedPrixValues] = useState({});
   const [modifiedQuantiteValues, setModifiedQuantiteValues] = useState({});
@@ -23,6 +37,7 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
             client_id: existingCommandeData.client_id.toString(),
             user_id: existingCommandeData.user_id.toString(),
             status: existingCommandeData.status.toString(),
+            mode_payement: existingCommandeData.mode_payement.toString(),
             reference: existingCommandeData.reference.toString(),
             dateCommande: existingCommandeData.dateCommande.toString(),
             // Populate other properties as needed
@@ -84,13 +99,15 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
 
   const handleEditCommande = async (id) => {
     try {
+      console.log(getElementValueById("client_id"));
       // Step 1: Update the Commande
       await axios.put(
         `http://localhost:8000/api/commandes/${editCommandeId}`,
         {
-          client_id: findClientId(getElementValueById("client_id")),
-          user_id: findUserId(getElementValueById("user_id")),
+          client_id: getElementValueById("client_id"),
+          //user_id: findUserId(getElementValueById("user_id")),
           status: getElementValueById("status"),
+          mode_payement: getElementValueById("modePaiement"),
         },
         {
           withCredentials: true,
@@ -101,8 +118,18 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
       );
 
       // Step 2: Update the LigneCommande
+      const existingLigneCommandesResponse = await axios.get(
+        `http://localhost:8000/api/ligneCommandes/${editCommandeId}`
+      );
+      const existingLigneCommandes =
+        existingLigneCommandesResponse.data.ligneCommandes;
       const selectedProductsData = selectedProducts.map((productId) => {
+        const existingLigneCommande = existingLigneCommandes.find(
+          (ligneCommande) => ligneCommande.produit_id === productId
+        );
+
         return {
+          id: existingLigneCommande ? existingLigneCommande.id : undefined,
           commande_id: editCommandeId,
           produit_id: productId,
           quantite: getElementValueById(`quantite_${productId}`),
@@ -113,14 +140,13 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
 
       for (const ligneCommandeData of selectedProductsData) {
         // Check if ligneCommande already exists for this produit_id and update accordingly
-        const existingLigneCommande = await axios.get(
-          `http://localhost:8000/api/ligneCommandes/${editCommandeId}`
-        );
 
-        if (existingLigneCommande.data.ligneCommandes.length > 0) {
+        console.log("existing LigneCommande:", ligneCommandeData);
+
+        if (ligneCommandeData.id) {
           // If exists, update the existing ligneCommande
           await axios.put(
-            `http://localhost:8000/api/ligneCommandes/${existingLigneCommande.data.ligneCommandes[0].id}`,
+            `http://localhost:8000/api/ligneCommandes/${ligneCommandeData.id}`,
             ligneCommandeData,
             {
               withCredentials: true,
@@ -146,11 +172,21 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
 
       // Step 3: Update the StatusCommande
       // Assuming statusCommandeData is fetched from somewhere
+      const existingStatusesResponse = await axios.get(
+        "http://localhost:8000/api/statusCommande"
+      );
+      const existingStatuses = existingStatusesResponse.data.StatusCommande;
+
+      const selectedStatus = getElementValueById("status");
+      const statusExists = existingStatuses.some(
+        (status) => status.status === selectedStatus
+      );
       const statusCommandeData = {
         commande_id: editCommandeId,
         status: getElementValueById("status"),
         // Update other properties as needed
       };
+      // if (!statusExists) {
       await axios.post(
         `http://localhost:8000/api/statusCommande/`,
         statusCommandeData,
@@ -161,11 +197,11 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
           },
         }
       );
-
+      //}
       // Step 4: Fetch updated commandes
       swal.fire({
         icon: "success",
-        title: "Commande added successfully!",
+        title: "Commande modifiee avec succe!",
         showConfirmButton: false,
         timer: 1500, // Adjust the duration as needed
       });
@@ -174,7 +210,7 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
       handleDrawerClose();
       fetchCommandes();
 
-      console.log("Commande updated successfully!");
+      console.log("Commande modifiee avec succe!");
     } catch (error) {
       handleDrawerClose();
       console.error("Error updating commande:", error);
@@ -184,15 +220,6 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
         title: "Error updating commande",
       });
     }
-  };
-
-  const findClientId = (raisonSociale) => {
-    return clients.find((client) => client.raison_sociale === raisonSociale)
-      ?.id;
-  };
-
-  const findUserId = (userName) => {
-    return users.find((user) => user.name === userName)?.id;
   };
 
   const populateProductInputs = (productId, inputType) => {
@@ -220,9 +247,9 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
             onChange={() => handleProductCheckboxChange(produit.id)}
           />
         </td>
-        <td>{produit.nom}</td>
+        <td>{produit.designation}</td>
         <td>{produit.type_quantite}</td>
-        <td>{produit.calibre}</td>
+        <td>{produit.calibre.calibre}</td>
         <td>
           <input
             type="text"
@@ -259,21 +286,19 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
 
   return (
     <div>
-      <Button
-        variant="info"
-        onClick={handleDrawerOpen}
-        startIcon={<FontAwesomeIcon icon={faPenToSquare}></FontAwesomeIcon>}
-      ></Button>
+      <button onClick={handleDrawerOpen} className="btn btn-sm btn-info">
+        <i className="fas fa-edit"></i>
+      </button>
       <Drawer anchor="right" open={open} onClose={handleDrawerClose}>
         <div style={{ padding: "20px" }}>
           <h3 className="text-center mb-5">Edit Commande</h3>
-          <table className="table table-hover mb-5" >
+          <table className="table table-hover mb-5">
             <thead className="text-center">
               <tr>
                 <th>Reference</th>
                 <th>Status</th>
+                <th>Mode Paiement</th>
                 <th>Client</th>
-                <th>User</th>
                 <th>Date Commande</th>
               </tr>
             </thead>
@@ -284,29 +309,58 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
                   id="status"
                   className="form-select"
                   value={commandeData.status}
+                  onChange={(event) =>
+                    setCommandeData((prevData) => ({
+                      ...prevData,
+                      status: event.target.value,
+                    }))
+                  }
                 >
                   <option disabled>Status</option>
                   <option value="EN COURS">En Cours</option>
                   <option value="VALIDE">Valide</option>
                   <option value="NON VALIDE">Non Valide</option>
                 </select>
-                {/* {commandeData.status} */}
+              </td>
+              <td>
+                <select
+                  id="modePaiement"
+                  className="form-select"
+                  value={commandeData.mode_payement}
+                  onChange={(event) =>
+                    setCommandeData((prevData) => ({
+                      ...prevData,
+                      mode_payement: event.target.value,
+                    }))
+                  }
+                >
+                  <option disabled>Mode Paiement</option>
+                  <option value="Espece">Espece</option>
+                  <option value="Tpe">Tpe</option>
+                  <option value="Cheque">Cheque</option>
+                </select>
               </td>
               <td>
                 <select
                   id="client_id"
                   className="form-select"
                   value={commandeData.client_id}
+                  onChange={(event) =>
+                    setCommandeData((prevData) => ({
+                      ...prevData,
+                      client_id: event.target.value,
+                    }))
+                  }
                 >
-                  <option disabled selected>
-                    Client
-                  </option>
+                  <option disabled>Select Client</option>
                   {clients.map((client) => (
-                    <option key={client.id}>{client.raison_sociale}</option>
+                    <option key={client.id} value={client.id}>
+                      {client.raison_sociale}
+                    </option>
                   ))}
                 </select>
               </td>
-              <td>
+              {/* <td>
                 <select
                   id="user_id"
                   className="form-select"
@@ -319,7 +373,7 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
                     <option key={user.id}>{user.name}</option>
                   ))}
                 </select>
-              </td>
+              </td> */}
               <td>{commandeData.dateCommande}</td>
             </tbody>
           </table>
@@ -336,10 +390,13 @@ const EditCommande = ({produits,clients,users,csrfToken,fetchCommandes,editComma
             </thead>
             <tbody className="text-center">{renderProductInputs()}</tbody>
           </table>
-          <div>
-          </div>
+          <div></div>
           <div className="text-center">
-            <Button variant="contained" className="col-3" onClick={handleEditCommande}>
+            <Button
+              variant="contained"
+              className="col-3"
+              onClick={handleEditCommande}
+            >
               modifier
             </Button>
           </div>

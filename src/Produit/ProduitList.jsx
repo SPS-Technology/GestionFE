@@ -111,7 +111,6 @@ const ProduitList = () => {
       setFilteredProduits(filtered);
     }
   }, [produits, searchTerm]);
-  
 
   const handleSearch = (term) => {
     setSearchTerm(term);
@@ -378,7 +377,7 @@ const ProduitList = () => {
                 editingProduit ? "modifier" : "ajouter"
               } un produit.`,
             });
-          } 
+          }
         } else {
           console.error(error); // Gérez les erreurs qui ne proviennent pas de la réponse du serveur
         }
@@ -744,7 +743,10 @@ const ProduitList = () => {
                 className="table-responsive-sm"
                 style={tableContainerStyle}
               >
-                <table className="table" id="produitsTable">
+                <table
+                  className="table table-responsive table-bordered "
+                  id="produitsTable"
+                >
                   <thead className="text-center">
                     <tr>
                       <th
@@ -793,18 +795,16 @@ const ProduitList = () => {
                               onChange={() => handleCheckboxChange(produit.id)}
                             />
                           </td>
-                          <td style={tableCellStyle}>{produit.Code_produit}</td>
-                          <td style={tableCellStyle}>{produit.designation}</td>
-                          <td style={tableCellStyle}>
-                            {produit.type_quantite}
-                          </td>
-                          <td style={tableCellStyle}>{produit.calibre}</td>
-                          <td style={tableCellStyle}>
+                          <td>{produit.Code_produit}</td>
+                          <td>{produit.designation}</td>
+                          <td>{produit.type_quantite}</td>
+                          <td>{produit.calibre}</td>
+                          <td>
                             {produit.categorie
                               ? produit.categorie.categorie
                               : "no categorie"}
                           </td>
-                          <td style={tableCellStyle}>{produit.user.name}</td>
+                          <td>{produit.user.name}</td>
 
                           <td
                             className="d-inline-flex"

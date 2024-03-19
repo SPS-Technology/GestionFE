@@ -88,10 +88,14 @@ const exportToPdf = (clients, selectedItems) => {
 };
 
 
-const ExportPdfButton = ({ clients, selectedItems }) => (
-  <Button onClick={() => exportToPdf(clients, selectedItems)} className="btn btn-danger btn-sm ml-2">
+const ExportPdfButton = ({ clients, selectedItems }) => {
+const isDisabled = !selectedItems || selectedItems.length === 0;
+  return(
+    <Button onClick={() => exportToPdf(clients, selectedItems)} className="btn btn-danger btn-sm ml-2" disabled={isDisabled}>
     <FontAwesomeIcon icon={faFilePdf} className="" />
   </Button>
 );
+}
+  
 
 export default ExportPdfButton;

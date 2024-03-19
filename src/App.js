@@ -15,6 +15,12 @@ import LivreurList from './Livreur/LivreurList';
 import VehiculeList from './Vehicule/VehiculeList';
 import ObjectifList from './objectif/ObjectifList';
 import Vehicule_livreur from './Vehicule_Livreur/Vehicule_livreur';
+import LivraisonList from './Livraison/LivraisonList';
+import FactureList from './Facture/FactureList';
+import DevisList from './Devis/DevisList';
+import StockList from './Stock/StockList';
+import PrepareCommande from './Commande/PrepareCommande';
+import ChargeCommande from './Commande/ChargeCommade';
 
 
 const App = () => {
@@ -31,6 +37,12 @@ const App = () => {
         <Route path="/objectifs" element={<ObjectifList />} />
         <Route path="/vehicules" element={<VehiculeList />} />
         <Route path="/produits" element={<ProduitList />} />
+        <Route path="/stock" element={<StockList />} />
+        <Route path="/preparingCommand" element={<PrepareCommande />} />
+        <Route path="/chargingCommand" element={<ChargeCommande />} />
+        <Route path="/livraisons" element={<LivraisonList />} />
+        <Route path="/devis" element={<DevisList />} />
+        <Route path="/factures" element={<FactureList />} />
         <Route path="/commandes" element={<CommandeList />} />
         <Route path="/vehicule-livreurs" element={<Vehicule_livreur />} />
         {/* <Route path="/add-user" element={<AddUser />} /> */}
