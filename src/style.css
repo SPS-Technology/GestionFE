@@ -11,7 +11,7 @@
 #formContainer1SC{
     position: fixed;
     right: -900px; /* Débutera hors de l'écran */
-    width: 400px;
+    width: 45%;
     height: 100%;
     transition: right 0.3s ease; /* Effet de glissement du formulaire */
     border: 2px;

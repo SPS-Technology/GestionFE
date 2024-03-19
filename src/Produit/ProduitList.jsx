@@ -233,16 +233,16 @@ const ProduitList = () => {
     });
   };
   const handleShowFormButtonClick = () => {
-    if (formContainerStyle.right === "-500px") {
+    if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeForm();
     }
   };
 
   const closeForm = () => {
-    setFormContainerStyle({ right: "-500px" });
+    setFormContainerStyle({ right: "-100%" });
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
     setFormData({
@@ -270,9 +270,9 @@ const ProduitList = () => {
       calibre_id: produit.calibre_id,
       user_id: produit.user_id,
     });
-    if (formContainerStyle.right === "-500px") {
+    if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeForm();
     }
@@ -280,7 +280,7 @@ const ProduitList = () => {
   useEffect(() => {
     if (editingProduitId !== null) {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     }
   }, [editingProduitId]);
 
@@ -342,9 +342,9 @@ const ProduitList = () => {
         }
       });
 
-    if (formContainerStyle.right === "-500px") {
+    if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeForm();
     }
