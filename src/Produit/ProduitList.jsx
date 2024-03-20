@@ -42,7 +42,7 @@ const ProduitList = () => {
   const [editingProduitId, setEditingProduitId] = useState(null);
 
   const [formContainerStyle, setFormContainerStyle] = useState({
-    right: "-500px",
+    right: "-100%",
   });
   const [tableContainerStyle, setTableContainerStyle] = useState({
     marginRight: "0px",

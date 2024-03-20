@@ -159,6 +159,7 @@ const CommandeList = () => {
   //     }
   //   });
   // }, [commandes]);
+
   const fetchData = async () => {
     try {
       const [commandesResponse, clientsResponse, produitsResponse] =
@@ -283,11 +284,120 @@ const CommandeList = () => {
             user_id: authenticatedUserId,
           }
         );
+        const existingLigneCommandesResponse = await axios.get(
+          `http://localhost:8000/api/ligneCommandes/${editingCommandes.id}`
+        );
+        const existingLigneCommandes =
+          existingLigneCommandesResponse.data.ligneCommandes;
+        const selectedPrdsData = selectedProductsData.map((selectedProduct) => {
+          const existingLigneCommande = existingLigneCommandes.find(
+            (ligneCommande) => ligneCommande.produit_id === selectedProduct.id
+          );
+
+          return {
+            id: existingLigneCommande ? existingLigneCommande.id : undefined,
+            commande_id: editingCommandes.id,
+            produit_id: selectedProduct.id,
+            quantite: getElementValueById(`quantite_${selectedProduct.id}`),
+            prix_unitaire: getElementValueById(
+              `prix_unitaire_${selectedProduct.id}`
+            ),
+            // Update other properties as needed
+          };
+        });
+        for (const ligneCommandeData of selectedPrdsData) {
+          // Check if ligneCommande already exists for this produit_id and update accordingly
+
+          console.log("existing LigneCommande:", ligneCommandeData);
+
+          if (ligneCommandeData.id) {
+            // If exists, update the existing ligneCommande
+            await axios.put(
+              `http://localhost:8000/api/ligneCommandes/${ligneCommandeData.id}`,
+              ligneCommandeData,
+              {
+                withCredentials: true,
+                headers: {
+                  "X-CSRF-TOKEN": csrfToken,
+                },
+              }
+            );
+          } else {
+            // If doesn't exist, create a new ligneCommande
+            await axios.post(
+              "http://localhost:8000/api/ligneCommandes",
+              ligneCommandeData,
+              {
+                withCredentials: true,
+                headers: {
+                  "X-CSRF-TOKEN": csrfToken,
+                },
+              }
+            );
+          }
+        }
+        const existingStatusesResponse = await axios.get(
+          "http://localhost:8000/api/statusCommande"
+        );
+        const existingStatuses = existingStatusesResponse.data.StatusCommande;
+
+        const selectedStatus = getElementValueById("status");
+        const statusExists = existingStatuses.some(
+          (status) => status.status === selectedStatus
+        );
+        const statusCommandeData = {
+          commande_id: editingCommandes.id,
+          status: getElementValueById("status"),
+          // Update other properties as needed
+        };
+        // if (!statusExists) {
+        await axios.post(
+          `http://localhost:8000/api/statusCommande/`,
+          statusCommandeData,
+          {
+            withCredentials: true,
+            headers: {
+              "X-CSRF-TOKEN": csrfToken,
+            },
+          }
+        );
       } else {
         // Créer un nouveau Commandes
         response = await axios.post(
           "http://localhost:8000/api/commandes",
           CommandesData
+        );
+        const selectedPrdsData = selectedProductsData.map((selectProduct) => {
+          return {
+            commande_id: response.data.commande.id,
+            produit_id: selectProduct.id,
+            quantite: getElementValueById(`quantite_${selectProduct.id}`),
+            prix_unitaire: getElementValueById(
+              `prix_unitaire_${selectProduct.id}`
+            ),
+          };
+        });
+        console.log("selectedPrdsData", selectedPrdsData);
+        for (const ligneCommandesData of selectedPrdsData) {
+          // Sinon, il s'agit d'une nouvelle ligne de Commandes
+          await axios.post(
+            "http://localhost:8000/api/ligneCommandes",
+            ligneCommandesData
+          );
+        }
+        const statusCommandeData = {
+          commande_id: response.data.commande.id,
+          status: "En cours",
+        };
+        await axios.post(
+          "http://localhost:8000/api/statusCommande",
+          statusCommandeData,
+          {
+            withCredentials: true,
+            headers: {
+              "X-CSRF-TOKEN": csrfToken,
+            },
+          }
         );
       }
       console.log("response of postCommande: ", response);
@@ -302,55 +412,8 @@ const CommandeList = () => {
       // }
 
       // Préparer les données des lignes de Commandes
-      const selectedPrdsData = selectedProductsData.map((selectProduct) => {
-        if (editingCommandes) {
-          return {
-            commande_id: editingCommandes.id,
-            produit_id: selectProduct.id,
-            quantite: getElementValueById(`quantite_${selectProduct.id}`),
-            prix_unitaire: getElementValueById(`prix_${selectProduct.id}`),
-          };
-        } else {
-          return {
-            commande_id: response.data.commande.id,
-            produit_id: selectProduct.id,
-            quantite: getElementValueById(`quantite_${selectProduct.id}`),
-            prix_unitaire: getElementValueById(`prix_${selectProduct.id}`),
-          };
-        }
-      });
 
-      console.log("selectedPrdsData", selectedPrdsData);
-
-      for (const ligneCommandesData of selectedPrdsData) {
-        if (ligneCommandesData.id) {
-          // Si l'ID existe, il s'agit d'une modification
-          await axios.put(
-            `http://localhost:8000/api/ligneCommandes/${ligneCommandesData.id}`,
-            ligneCommandesData
-          );
-        } else {
-          // Sinon, il s'agit d'une nouvelle ligne de Commandes
-          await axios.post(
-            "http://localhost:8000/api/ligneCommandes",
-            ligneCommandesData
-          );
-        }
-      }
-      const statusCommandeData = {
-        commande_id: response.data.commande.id,
-        status: "En cours",
-      };
-      await axios.post(
-        "http://localhost:8000/api/statusCommande",
-        statusCommandeData,
-        {
-          withCredentials: true,
-          headers: {
-            "X-CSRF-TOKEN": csrfToken,
-          },
-        }
-      );
+      // console.log("selectedProductsData11", selectedProductsData);
 
       // Récupérer les données mises à jour
       fetchData();
@@ -415,11 +478,20 @@ const CommandeList = () => {
 
     console.log("formData,", formData);
 
-    const selectedProducts = commande.ligne_commandes.map((ligneCommande) => ({
-      produit_id: ligneCommande.produit_id,
-      quantite: ligneCommande.quantite,
-      prix_unitaire: ligneCommande.prix_unitaire,
-    }));
+    const selectedProducts = commande.ligne_commandes.map((ligneCommande) => {
+      const product = produits.find(
+        (produit) => produit.id === ligneCommande.produit_id
+      );
+      return {
+        id: product.id,
+        Code_produit: product.Code_produit,
+        calibre_id: product.calibre_id,
+        designation: product.designation,
+        produit_id: ligneCommande.produit_id,
+        quantite: ligneCommande.quantite,
+        prix_unitaire: ligneCommande.prix_unitaire,
+      };
+    });
     setSelectedProductsData(selectedProducts);
 
     if (formContainerStyle.right === "-100%") {
@@ -510,9 +582,7 @@ const CommandeList = () => {
     setSelectedClientId(selected[0].value);
   };
 
-  const handleProductSelection = (productId, designation) => {
-    console.log("selectedProductData before: ", selectedProductsData);
-
+  const handleProductSelection = (productId) => {
     const selectedProduct = produits.find(
       (product) => product.id === productId
     );
@@ -520,7 +590,7 @@ const CommandeList = () => {
     if (selectedProduct) {
       setSelectedProductsData((prevData) => [...prevData, selectedProduct]);
     }
-    console.log("selectedProductData after: ", selectedProductsData);
+    console.log("selectedProductData ", selectedProductsData);
 
     setSelectedProductId(null); // Clear the selected product ID
   };
@@ -835,41 +905,30 @@ const CommandeList = () => {
                         {selectedProductsData.map((productData, index) => (
                           <tr key={index}>
                             <td>
-                              {getProduitValue(
-                                productData.produit_id,
-                                "Code_produit"
-                              )}
+                              {getProduitValue(productData.id, "Code_produit")}
                             </td>
                             <td>
-                              {getProduitValue(
-                                productData.produit_id,
-                                "designation"
-                              )}
+                              {getProduitValue(productData.id, "designation")}
                             </td>
                             <td>
-                              {getProduitValue(
-                                productData.produit_id,
-                                "calibre_id"
-                              )}
+                              {getProduitValue(productData.id, "calibre_id")}
                             </td>
                             <td>
                               <input
                                 type="text"
-                                id={`quantite_${productData.produit_id}`}
+                                id={`quantite_${productData.id}`}
                                 className="quantiteInput"
                                 placeholder="Quantite"
                                 value={
-                                  modifiedQuantiteValues[
-                                    productData.produit_id
-                                  ] ||
+                                  modifiedQuantiteValues[productData.id] ||
                                   populateProductInputs(
-                                    productData.produit_id,
+                                    productData.id,
                                     "quantite"
                                   )
                                 }
                                 onChange={(event) =>
                                   handleInputChange(
-                                    productData.produit_id,
+                                    productData.id,
                                     "quantite",
                                     event
                                   )
@@ -879,19 +938,19 @@ const CommandeList = () => {
                             <td>
                               <input
                                 type="text"
-                                id={`prix_unitaire_${productData.produit_id}`}
+                                id={`prix_unitaire_${productData.id}`}
                                 className="prixInput"
                                 placeholder="Prix"
                                 value={
-                                  modifiedPrixValues[productData.produit_id] ||
+                                  modifiedPrixValues[productData.id] ||
                                   populateProductInputs(
-                                    productData.produit_id,
+                                    productData.id,
                                     "prix_unitaire"
                                   )
                                 }
                                 onChange={(event) =>
                                   handleInputChange(
-                                    productData.produit_id,
+                                    productData.id,
                                     "prix_unitaire",
                                     event
                                   )
@@ -900,11 +959,10 @@ const CommandeList = () => {
                             </td>
                             <td>
                               <Button
-                                variant="danger"
-                                size="sm"
+                                className=" btn btn-danger btn-sm m-1"
                                 onClick={() => handleDeleteProduct(index)}
                               >
-                                Delete
+                                <FontAwesomeIcon icon={faTrash} />
                               </Button>
                             </td>
                           </tr>
@@ -933,7 +991,7 @@ const CommandeList = () => {
               <table className="table table-bordered">
                 <thead
                   className="text-center "
-                  style={{ backgroundColor: "#adb5bd" }}
+                  style={{ backgroundColor: "#ddd" }}
                 >
                   <tr>
                     <th>
@@ -1059,10 +1117,10 @@ const CommandeList = () => {
                               >
                                 <div id="lignesCommandes">
                                   <table
-                                    className="table-bordered"
+                                    className=" table-bordered"
                                     style={{
                                       borderCollapse: "collapse",
-
+                                      backgroundColor: "#f2f2f2",
                                       width: "100%",
                                     }}
                                   >
@@ -1118,6 +1176,7 @@ const CommandeList = () => {
                                 className="table-bordered"
                                 style={{
                                   borderCollapse: "collapse",
+                                  backgroundColor: "#f2f2f2",
                                   width: "100%",
                                 }}
                               >
@@ -1191,7 +1250,7 @@ const CommandeList = () => {
                                     className="table-bordered"
                                     style={{
                                       borderCollapse: "collapse",
-
+                                      backgroundColor: "#f2f2f2",
                                       width: "100%",
                                     }}
                                   >

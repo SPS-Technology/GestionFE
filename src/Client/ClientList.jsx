@@ -44,7 +44,7 @@ const ClientList = () => {
     code_postal: "",
   });
   const [formContainerStyle, setFormContainerStyle] = useState({
-    right: "-500px",
+    right: "-100%",
   });
   const [tableContainerStyle, setTableContainerStyle] = useState({
     marginRight: "0px",
@@ -81,7 +81,7 @@ const ClientList = () => {
     client_id: "",
   });
   const [formContainerStyleSC, setFormContainerStyleSC] = useState({
-    right: "-500px",
+    right: "-100%",
   });
   const [expandedRows, setExpandedRows] = useState([]);
   const [filteredsiteclients, setFilteredsiteclients] = useState([]);
@@ -207,9 +207,9 @@ const ClientList = () => {
       ice: client.ice,
       code_postal: client.code_postal,
     });
-    if (formContainerStyle.right === "-500px") {
+    if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeForm();
     }
@@ -217,7 +217,7 @@ const ClientList = () => {
   useEffect(() => {
     if (editingClientId !== null) {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     }
   }, [editingClientId]);
 
@@ -274,16 +274,16 @@ const ClientList = () => {
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
-    if (formContainerStyle.right === "-500px") {
+    if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeForm();
     }
   };
 
   const closeForm = () => {
-    setFormContainerStyle({ right: "-500px" });
+    setFormContainerStyle({ right: "-100%" });
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
     setFormData({
@@ -405,9 +405,9 @@ const ClientList = () => {
         ? siteClient.selectedClientIds.join(", ")
         : "", // Join selectedClientIds if available
     });
-    if (formContainerStyleSC.right === "-500px") {
+    if (formContainerStyleSC.right === "-100%") {
       setFormContainerStyleSC({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeFormSC();
     }
@@ -461,16 +461,16 @@ const ClientList = () => {
       console.error("Aucun client sélectionné pour ajouter un site client.");
       return;
     }
-    if (formContainerStyleSC.right === "-500px") {
+    if (formContainerStyleSC.right === "-100%") {
       setFormContainerStyleSC({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "100%" });
     } else {
       closeFormSC();
     }
   };
 
   const closeFormSC = () => {
-    setFormContainerStyleSC({ right: "-500px" });
+    setFormContainerStyleSC({ right: "-100%" });
     setTableContainerStyle({ marginRight: "0" });
     setShowFormSC(false); // Hide the form
     setFormDataSC({
@@ -1043,7 +1043,7 @@ const ClientList = () => {
                     ))}
                   </Form.Control>
                 </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                <Form.Group className="col-sm-4 m-2" controlId="code_postal">
                   <Form.Label>Code Postal</Form.Label>
                   <Form.Control
                     type="text"
@@ -1054,7 +1054,7 @@ const ClientList = () => {
                     className="form-control-sm"
                   />
                 </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                <Form.Group className="col-sm-4 m-2" controlId="ice">
                   <Form.Label>ICE</Form.Label>
                   <Form.Control
                     type="text"
