@@ -29,6 +29,7 @@ const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
   const [selectedClientId, setSelectedClientId] = useState(null);
+
   useState(null);
   const [formData, setFormData] = useState({
     reference: "",
@@ -501,14 +502,42 @@ const CommandeList = () => {
       closeForm();
     }
   };
-  const handleInputChange = (productId, inputType, event) => {
+  const handleInputChange = (index, inputType, event) => {
     const newValue = event.target.value;
+    console.log(selectedProductsData[0]);
+    const productId = selectedProductsData[index].id;
+
     if (inputType === "prix_unitaire") {
-      setModifiedPrixValues((prev) => ({ ...prev, [productId]: newValue }));
+      setModifiedPrixValues((prev) => {
+        const updatedValues = { ...prev, [`${productId}_${index}`]: newValue };
+        console.log("Modified prix values:", updatedValues);
+        return updatedValues;
+      });
     } else if (inputType === "quantite") {
-      setModifiedQuantiteValues((prev) => ({ ...prev, [productId]: newValue }));
+      setModifiedQuantiteValues((prev) => {
+        const updatedValues = { ...prev, [`${productId}_${index}`]: newValue };
+        console.log("Modified quantite values:", updatedValues);
+        return updatedValues;
+      });
     }
   };
+
+  // const handleInputChange = (index, inputType, event) => {
+  //   const newValue = event.target.value;
+  //   const productId = selectedProductsData[index].id;
+
+  //   if (inputType === "prix_unitaire") {
+  //     setModifiedPrixValues((prev) => ({
+  //       ...prev,
+  //       [`${productId}_${index}`]: newValue,
+  //     }));
+  //   } else if (inputType === "quantite") {
+  //     setModifiedQuantiteValues((prev) => ({
+  //       ...prev,
+  //       [`${productId}_${index}`]: newValue,
+  //     }));
+  //   }
+  // };
   const handleDelete = (id) => {
     Swal.fire({
       title: "Êtes-vous sûr de vouloir supprimer ce Commandes ?",
@@ -582,17 +611,12 @@ const CommandeList = () => {
     setSelectedClientId(selected[0].value);
   };
 
-  const handleProductSelection = (productId) => {
-    const selectedProduct = produits.find(
-      (product) => product.id === productId
-    );
-
-    if (selectedProduct) {
-      setSelectedProductsData((prevData) => [...prevData, selectedProduct]);
-    }
-    console.log("selectedProductData ", selectedProductsData);
-
-    setSelectedProductId(null); // Clear the selected product ID
+  const handleProductSelection = (selectedProduct, index) => {
+    console.log("selectedProduct", selectedProduct);
+    const updatedSelectedProductsData = [...selectedProductsData];
+    updatedSelectedProductsData[index] = selectedProduct;
+    setSelectedProductsData(updatedSelectedProductsData);
+    console.log("selectedProductsData", selectedProductsData);
   };
 
   useEffect(() => {
@@ -783,13 +807,17 @@ const CommandeList = () => {
   //     getTotalHT(ligneCommandes) + calculateTVA(getTotalHT(ligneCommandes))
   //   );
   // };
+  const handleAddEmptyRow = () => {
+    setSelectedProductsData([...selectedProductsData, {}]);
+    console.log("selectedProductData", selectedProductsData);
+  };
 
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-          <h2 className="mt-3">Liste des Commandes</h2>
+          <h2 className="mt-4">Liste des Commandes</h2>
           <div className="container">
             <Button
               variant="primary"
@@ -797,7 +825,7 @@ const CommandeList = () => {
               id="showFormButton"
               onClick={handleShowFormButtonClick}
             >
-              {showForm ? "Modifier le formulaire" : "Ajouter un Commandes"}
+              {showForm ? "Modifier le formulaire" : "Passer une Commande"}
             </Button>
             <div
               id="formContainer"
@@ -871,29 +899,19 @@ const CommandeList = () => {
                     />
                   </Form.Group>
                 </div>
-
+                <div className="mt-4">
+                  <Button variant="primary" onClick={handleAddEmptyRow}>
+                    <FontAwesomeIcon icon={faPlus} />
+                    Produit
+                  </Button>
+                </div>
                 <div className="col-md-12">
                   {console.log("selectedProductsData:", selectedProductsData)}
                   <Form.Group controlId="selectedProduitTable">
-                    <table className="table table-bordered table-responsive-sm">
+                    <table className="table-bordered table-responsive-sm">
                       <thead>
                         <tr>
-                          <th>
-                            <Select
-                              options={produits.map((produit) => ({
-                                value: produit.id,
-                                label: produit.Code_produit,
-                                placeholder: "Code Produit",
-                              }))}
-                              onChange={(selected) =>
-                                handleProductSelection(
-                                  selected[0].value,
-                                  selected[0].designation
-                                )
-                              }
-                              value={selectedProductId}
-                            />
-                          </th>
+                          <th>Code Produit</th>
                           <th>Designation</th>
                           <th>Calibre</th>
                           <th>Quantité</th>
@@ -905,13 +923,33 @@ const CommandeList = () => {
                         {selectedProductsData.map((productData, index) => (
                           <tr key={index}>
                             <td>
-                              {getProduitValue(productData.id, "Code_produit")}
+                              <Select
+                                options={produits.map((produit) => ({
+                                  value: produit.id,
+                                  label: produit.Code_produit,
+                                }))}
+                                onChange={(selected) => {
+                                  const produit = produits.find(
+                                    (prod) => prod.id === selected[0].value
+                                  );
+                                  handleProductSelection(
+                                    {
+                                      id: selected[0].value,
+                                      Code_produit: produit.Code_produit,
+                                      designation: produit.designation,
+                                      calibre: produit.calibre,
+                                    },
+                                    index
+                                  );
+                                }}
+                                value={selectedProductId}
+                              />
                             </td>
+                            <td>{productData.designation}</td>
                             <td>
-                              {getProduitValue(productData.id, "designation")}
-                            </td>
-                            <td>
-                              {getProduitValue(productData.id, "calibre_id")}
+                              {productData.calibre
+                                ? productData.calibre.calibre
+                                : ""}
                             </td>
                             <td>
                               <input
@@ -927,11 +965,7 @@ const CommandeList = () => {
                                   )
                                 }
                                 onChange={(event) =>
-                                  handleInputChange(
-                                    productData.id,
-                                    "quantite",
-                                    event
-                                  )
+                                  handleInputChange(index, "quantite", event)
                                 }
                               />
                             </td>
@@ -1002,8 +1036,9 @@ const CommandeList = () => {
                       />
                     </th>
                     <th colSpan="2">reference</th>
-                    <th>dateCommande</th>
                     <th>Client</th>
+                    <th>Date Commande</th>
+
                     <th>Mode de Paiement</th>
 
                     <th colSpan="2">Status</th>
@@ -1050,8 +1085,9 @@ const CommandeList = () => {
                             </div>
                           </td>
                           <td>{commande.reference}</td>
-                          <td>{commande.dateCommande}</td>
                           <td>{commande.client_id}</td>
+                          <td>{commande.dateCommande}</td>
+
                           <td>{commande.mode_payement}</td>
                           <td>
                             <button
@@ -1183,18 +1219,16 @@ const CommandeList = () => {
                                 <thead>
                                   <tr>
                                     <th></th>
-                                    {produits
-                                      .filter((produit) =>
-                                        commande.ligne_commandes.some(
-                                          (ligne) =>
-                                            ligne.produit_id === produit.id
-                                        )
-                                      )
-                                      .map((produit) => (
+                                    {commande.ligne_commandes.map((ligne) => {
+                                      const produit = produits.find(
+                                        (prod) => prod.id === ligne.produit_id
+                                      );
+                                      return (
                                         <th key={produit.designation}>
                                           {produit.designation}
                                         </th>
-                                      ))}
+                                      );
+                                    })}
                                     <th>Total (Unité) / Calibre</th>
                                   </tr>
                                 </thead>
@@ -1204,14 +1238,11 @@ const CommandeList = () => {
                                       <td>
                                         <strong>calibre : [{calibre}]</strong>
                                       </td>
-                                      {produits
-                                        .filter((produit) =>
-                                          commande.ligne_commandes.some(
-                                            (ligne) =>
-                                              ligne.produit_id === produit.id
-                                          )
-                                        )
-                                        .map((produit) => (
+                                      {commande.ligne_commandes.map((ligne) => {
+                                        const produit = produits.find(
+                                          (prod) => prod.id === ligne.produit_id
+                                        );
+                                        return (
                                           <td key={produit.designation}>
                                             {getQuantity(
                                               commande.ligne_commandes,
@@ -1219,7 +1250,9 @@ const CommandeList = () => {
                                               produit.designation
                                             )}
                                           </td>
-                                        ))}
+                                        );
+                                      })}
+
                                       <td>
                                         <strong>
                                           {getTotalForCalibre(

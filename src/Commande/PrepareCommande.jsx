@@ -993,7 +993,7 @@ const CommandeList = () => {
   useEffect(() => {
     if (editingCommandesId) {
       fetchExistingLigneCommandes(editingCommandesId);
-      console.log(existingLignePreparationCommandes);
+      fetchExistingLignePreparationCommandes(editingCommandesId);
     }
   }, [editingCommandesId]);
 
@@ -1005,6 +1005,16 @@ const CommandeList = () => {
           ligneCommandesResponse.data.ligneCommandes;
 
         setExistingLigneCommandes(existingLigneCommandes);
+      });
+  };
+  const fetchExistingLignePreparationCommandes = async (commandId) => {
+    axios
+      .get(`http://localhost:8000/api/lignePreparationCommandes/${commandId}`)
+      .then((lignePreparationCommandesResponse) => {
+        const existingLignePreparationCommandes =
+          lignePreparationCommandesResponse.data.lignePreparationCommandes;
+
+        setExistingLignePreparationCommandes(existingLignePreparationCommandes);
       });
   };
 
@@ -1088,12 +1098,26 @@ const CommandeList = () => {
 
     return correspondingLigneCommande ? correspondingLigneCommande.quantite : 0;
   };
+  const populateProductLotInputs = (productId, inputType) => {
+    console.log("productId", productId);
+    const existingLignePreparationCommande =
+      existingLignePreparationCommandes.find(
+        (lignePreparationCommande) =>
+          lignePreparationCommande.produit_id === productId
+      );
+    console.log("existing LigneCommande", existingLigneCommandes);
+
+    if (existingLignePreparationCommande) {
+      return existingLignePreparationCommande[inputType];
+    }
+    return "";
+  };
   const populateProductInputs = (productId, inputType) => {
     console.log("productId", productId);
+    console.log("existing LigneCommande", existingLigneCommandes);
     const existingLigneCommande = existingLigneCommandes.find(
       (ligneCommande) => ligneCommande.produit_id === productId
     );
-    console.log("existing LigneCommande", existingLigneCommandes);
 
     if (existingLigneCommande) {
       return existingLigneCommande[inputType];
@@ -1152,30 +1176,38 @@ const CommandeList = () => {
             user_id: authenticatedUserId,
           }
         );
-        const existingLigneCommandesResponse = await axios.get(
-          `http://localhost:8000/api/ligneCommandes/${editingCommandes.id}`
+        const existingLignePreparationCommandesResponse = await axios.get(
+          `http://localhost:8000/api/lignePreparationCommandes/${editingCommandes.id}`
         );
-        const existingLigneCommandes =
-          existingLigneCommandesResponse.data.ligneCommandes;
+        const existingLignePreparationCommandes =
+          existingLignePreparationCommandesResponse.data
+            .lignePreparationCommandes;
         const selectedPrdsData = selectedProductsData.map((selectedProduct) => {
-          const existingLigneCommande = existingLigneCommandes.find(
-            (ligneCommande) => ligneCommande.produit_id === selectedProduct.id
-          );
+          const existingLignePreparationCommande =
+            existingLignePreparationCommandes.find(
+              (ligneCommande) => ligneCommande.produit_id === selectedProduct.id
+            );
 
           return {
-            id: existingLigneCommande ? existingLigneCommande.id : undefined,
+            id: existingLignePreparationCommande
+              ? existingLignePreparationCommande.id
+              : undefined,
             commande_id: editingCommandes.id,
             produit_id: selectedProduct.id,
-            prix_unitaire: existingLigneCommande.prix_unitaire,
+            prix_unitaire: existingLignePreparationCommande.prix_unitaire,
             quantite: getElementValueById(`quantite_${selectedProduct.id}`),
             lot: getElementValueById(`lot_${selectedProduct.id}`),
             // Update other properties as needed
           };
         });
+        console.log("selectedPrdsData", selectedPrdsData);
         for (const lignePreparationCommandeData of selectedPrdsData) {
           // Check if lignePreparationCommande already exists for this produit_id and update accordingly
 
-          console.log("existing LigneCommande:", lignePreparationCommandeData);
+          console.log(
+            "existing lignePreparationCommandeData:",
+            lignePreparationCommandeData
+          );
 
           if (lignePreparationCommandeData.id) {
             // If exists, update the existing lignePreparationCommande
@@ -1190,7 +1222,7 @@ const CommandeList = () => {
               }
             );
           } else {
-            // If doesn't exist, create a new lignePreparationCommande
+            //   // If doesn't exist, create a new lignePreparationCommande
             await axios.post(
               "http://localhost:8000/api/lignePreparationCommandes",
               lignePreparationCommandeData,
@@ -1432,16 +1464,16 @@ const CommandeList = () => {
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-          <h2 className="mt-3">Prepration des Commandes</h2>
+          <h2 className="mt-4">Preparation des Commandes</h2>
           <div className="container">
-            <Button
+            {/* <Button
               variant="primary"
               className="col-2 btn btn-sm m-2"
               id="showFormButton"
               onClick={handleShowFormButtonClick}
             >
               {showForm ? "Modifier le formulaire" : "Ajouter un Commandes"}
-            </Button>
+            </Button> */}
             <div
               id="formContainer"
               className="col"
@@ -1492,7 +1524,15 @@ const CommandeList = () => {
                       </thead>
                       <tbody>
                         {selectedProductsData.map((productData, index) => (
-                          <tr key={index}>
+                          <tr
+                            key={index}
+                            className={
+                              productData.quantity ===
+                              getElementValueById(`quantite_${productData.id}`)
+                                ? "green-row"
+                                : "yellow-row"
+                            }
+                          >
                             <td>
                               {getProduitValue(productData.id, "Code_produit")}
                             </td>
@@ -1532,7 +1572,10 @@ const CommandeList = () => {
                                 placeholder="Lot"
                                 value={
                                   modifiedLotValues[productData.id] ||
-                                  populateProductInputs(productData.id, "lot")
+                                  populateProductLotInputs(
+                                    productData.id,
+                                    "lot"
+                                  )
                                 }
                                 onChange={(event) =>
                                   handleInputChange(
@@ -1545,11 +1588,10 @@ const CommandeList = () => {
                             </td>
                             <td>
                               <Button
-                                variant="danger"
-                                size="sm"
+                                className=" btn btn-danger btn-sm m-1"
                                 onClick={() => handleDeleteProduct(index)}
                               >
-                                Supprimer
+                                <FontAwesomeIcon icon={faTrash} />
                               </Button>
                             </td>
                           </tr>
@@ -1588,10 +1630,11 @@ const CommandeList = () => {
                         onChange={handleSelectAllChange}
                       />
                     </th>
-                    <th colSpan="2">reference</th>
-                    <th>dateCommande</th>
-                    <th>date Preparation Commande</th>
+                    <th colSpan="2">Reference</th>
                     <th>Client</th>
+                    <th>Date Commande</th>
+                    <th>Date Preparation Commande</th>
+
                     <th>Mode de Paiement</th>
 
                     <th colSpan="2">Status</th>
@@ -1638,9 +1681,10 @@ const CommandeList = () => {
                             </div>
                           </td>
                           <td>{commande.reference}</td>
+                          <td>{commande.client_id}</td>
                           <td>{commande.dateCommande}</td>
                           <td>{commande.datePreparationCommande}</td>
-                          <td>{commande.client_id}</td>
+
                           <td>{commande.mode_payement}</td>
                           <td>
                             <button

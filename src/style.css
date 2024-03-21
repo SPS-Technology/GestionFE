@@ -83,3 +83,10 @@ background-color: #f1f1f1;
   margin-top: 3%;
 }
 
+.green-row {
+  background-color: #c8e6c9; /* Light green */
+}
+
+.yellow-row {
+  background-color: #fff9c4; /* Light yellow */
+}
