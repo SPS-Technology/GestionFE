@@ -861,9 +861,9 @@ const RecouverementList = () => {
                                                         <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
                                                             <thead>
                                                             <tr>
-                                                                <th>N° Facture</th>
-                                                                <th>Total TTC</th>
-                                                                <th>Date de Facture</th>
+                                                                <th  style={tableHeaderStyle}>N° Facture</th>
+                                                                <th  style={tableHeaderStyle}>Total TTC</th>
+                                                                <th  style={tableHeaderStyle}>Date de Facture</th>
                                                             </tr>
                                                             </thead>
                                                             <tbody>
@@ -888,9 +888,9 @@ const RecouverementList = () => {
                                                         <table className="table table-bordered">
                                                             <thead>
                                                             <tr>
-                                                                <th>Montant</th>
-                                                                <th>Date</th>
-                                                                <th>Mode de paiement</th>
+                                                                <th  style={tableHeaderStyle}>Montant</th>
+                                                                <th  style={tableHeaderStyle}>Date</th>
+                                                                <th  style={tableHeaderStyle}>Mode de paiement</th>
                                                             </tr>
                                                             </thead>
                                                             <tbody>

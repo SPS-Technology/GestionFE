@@ -7,7 +7,7 @@ import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
 import TablePagination from '@mui/material/TablePagination';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus, faMinus,} from "@fortawesome/free-solid-svg-icons";
+import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus, faMinus, faFilter,} from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -20,26 +20,9 @@ import ExportPdfButton from "./ExportPdfButton";
 const ChiffreAffaireList = () => {
 
 
-    const calculateTotalMontantfacture = (chiffreaffaires) => {
-        console.log("chiffreaffaires", chiffreaffaires);
-        return chiffreaffaires.reduce((total, chiffreaffaires) => {
-            return total + parseFloat(chiffreaffaires.montant_facture);
-        }, 0);
-    };
-    // const handleCalculateTotalAvance = () => {
-    //     alert(`Total des avances: ${totalAvance}`);
-    // };
 
-    // const handleCalculateTotalReste = () => {
-    //     alert(`Total du reste: ${totalReste}`);
-    // };
 
-    // const [existingFournisseur, setExistingFournisseur] = useState([]);
-    const getClientNameById = (clientId) => {
-        console.log("clients", clients);
-        const client = clients.find((c) => c.id === clientId);
-        return client ? client.raison_sociale : "";
-    };
+
     const [clients, setClients] = useState([]);
 
     const [searchTerm, setSearchTerm] = useState("");
@@ -56,13 +39,23 @@ const ChiffreAffaireList = () => {
     const [editingChiffreaffaire, setEditingChiffreaffaire] = useState(null); // State to hold the chiffreaffaire being edited
     const [editingChiffreaffaireId, setEditingChiffreaffaireId] = useState(null);
 
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [filterFormData, setFilterFormData] = useState({
+       client_id:"",
+    });
+    const [isFiltering, setIsFiltering] = useState(false);
+
+    const [isFilter, setIsFilter] = useState(false);
+
+
+
     //---------------form-------------------//
+
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         client_id: "",
-
-
     });
+
     const [expandedDetailsRows, setExpandedDetailsRows] = useState([]);
     const [expandedRows , setExpandedRows]=useState([]);
     const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
@@ -74,6 +67,11 @@ const ChiffreAffaireList = () => {
         borderBottom: "1px solid #ddd",
     };
 
+    const getClientNameById = (clientId) => {
+        console.log("clients", clients);
+        const client = clients.find((c) => c.id === clientId);
+        return client ? client.raison_sociale : "";
+    };
 
     const fetchChiffreaffaires = async () => {
         try {
@@ -126,53 +124,7 @@ const ChiffreAffaireList = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
-    //------------------------- chiffreaffaire Delete Selected ---------------------//
 
-    const handleDeleteSelected = () => {
-        Swal.fire({
-            title: 'Êtes-vous sûr de vouloir supprimer ?',
-            showDenyButton: true,
-            showCancelButton: false,
-            confirmButtonText: 'Oui',
-            denyButtonText: 'Non',
-            customClass: {
-                actions: 'my-actions',
-                cancelButton: 'order-1 right-gap',
-                confirmButton: 'order-2',
-                denyButton: 'order-3',
-            },
-        }).then((result) => {
-            if (result.isConfirmed) {
-                selectedItems.forEach((id) => {
-                    axios
-                        .delete(`http://localhost:8000/api/chiffre-affaire/${id}`)
-                        .then((response) => {
-                            fetchChiffreaffaires();
-                            Swal.fire({
-                                icon: "success",
-                                title: "Succès!",
-                                text: 'chiffreaffaire supprimé avec succès.',
-                            });
-                        })
-                        .catch((error) => {
-                            console.error(
-                                "Erreur lors de la suppression du chiffreaffaire:", error);
-                            Swal.fire({
-                                icon: "error",
-                                title: "Erreur!",
-                                text: 'Échec de la suppression du chiffreaffaire.',
-                            });
-                        });
-                });
-            }
-        });
-
-        setSelectedItems([]);
-    };
-
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
 
     const handleSelectAllChange = () => {
         setSelectAll(!selectAll);
@@ -182,6 +134,39 @@ const ChiffreAffaireList = () => {
             setSelectedItems(chiffreaffaires.map((chiffreaffaire) => chiffreaffaire.id));
         }
     };
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilterFormData({
+            ...filterFormData,
+            [name]: value,
+        });
+    };
+
+    const handleClientNameFilterSubmit = (e) => {
+        e.preventDefault();
+
+        const { clientName } = filterFormData;
+
+        const filteredChiffreAffaires = chiffreaffaires.filter((chiffreaffaire) => {
+            const client = getClientNameById(chiffreaffaire.client_id);
+            return !clientName || client.toLowerCase().includes(clientName.toLowerCase());
+        });
+
+        setFilteredChiffreaffaires(filteredChiffreAffaires);
+
+        if (filteredChiffreAffaires.length === 0) {
+            Swal.fire({
+                icon: "info",
+                title: "Aucun résultat trouvé",
+                text: "Veuillez ajuster vos filtres.",
+            });
+        }
+
+        console.log("filterFormData:", filterFormData);
+        console.log("filteredChiffreAffaires:", filteredChiffreAffaires);
+        setShowFilterModal(false);
+    };
+
     //------------------------- fournisseur print ---------------------//
 
     const printList = (tableId, title, chiffreaffaireList) => {
@@ -400,226 +385,8 @@ const ChiffreAffaireList = () => {
         XLSX.writeFile(wb, "chiffreaffaires.xlsx");
     };
 
-    //------------------------- chiffreaffaire Delete---------------------//
-    const handleDelete = (id) => {
-        Swal.fire({
-            title: 'Êtes-vous sûr de vouloir supprimer ce chiffreaffaire ?',
-            showDenyButton: true,
-            showCancelButton: false,
-            confirmButtonText: 'Oui',
-            denyButtonText: 'Non',
-            customClass: {
-                actions: 'my-actions',
-                cancelButton: 'order-1 right-gap',
-                confirmButton: 'order-2',
-                denyButton: 'order-3',
-            },
-        }).then((result) => {
-            if (result.isConfirmed) {
-                axios
-                    .delete(`http://localhost:8000/api/chiffre-affaire/${id}`)
-                    .then((response) => {
-                        if (response.data) {
-                            // Successful deletion
-                            fetchChiffreaffaires();
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Succès!',
-                                text: "chiffreaffaire supprimé avec succès",
-                            });
-                        } else if (response.data.error) {
-                            // Error occurred
-                            if (response.data.error.includes("Impossible de supprimer ou de mettre à jour une ligne parent : une contrainte de clé étrangère échoue")) {
-                                // Violated integrity constraint error
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Erreur!',
-                                    text: "Impossible de supprimer le chiffreaffaire car il a des produits associés.",
-                                });
-                            }
-                        }
-                    })
-                    .catch((error) => {
-                        // Request error
-                        console.error("Erreur lors de la suppression du chiffreaffaire:", error);
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Erreur!',
-                            text: `Échec de la suppression du chiffreaffaire. Veuillez consulter la console pour plus d'informations.`,
-                        });
-                    });
-            } else {
-                console.log("Suppression annulée");
-            }
-        });
-    }
-    //------------------------- chiffreaffaire EDIT---------------------//
-
-    const handleEdit = (chiffreaffaires) => {
-        setEditingChiffreaffaire(chiffreaffaires); // Set the chiffreaffaires to be edited
-        // Populate form data with chiffreaffaires details
-        setFormData({
-            client_id: chiffreaffaires.client_id,
-        });
-        if (formContainerStyle.right === '-500px') {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
-        } else {
-            closeForm();
-        }
-        // Show form
-        // setShowForm(true);
-    };
-    useEffect(() => {
-        if (editingChiffreaffaireId !== null) {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
-        }
-    }, [editingChiffreaffaireId]);
-
-    //------------------------- chiffreaffaire SUBMIT---------------------//
-
-    useEffect(() => {
-        fetchChiffreaffaires();
-    }, []);
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-
-        const url = editingChiffreaffaire ? `http://localhost:8000/api/chiffre-affaire/${editingChiffreaffaire.id}` : 'http://localhost:8000/api/chiffre-affaire';
-        const method = editingChiffreaffaire ? 'put' : 'post';
-        axios({
-            method: method,
-            url: url,
-            data: formData,
-        }).then(() => {
-            fetchChiffreaffaires();
-            Swal.fire({
-                icon: 'success',
-                title: 'Succès!',
-                text: `chiffre d'affaire ${editingChiffreaffaire ? 'modifié' : 'ajouté'} avec succès.`,
-            });
-
-            // Effacer le formulaire
-            setFormData({
-                client_id: '',
-
-            });
-
-            setEditingChiffreaffaire(null); // Clear editing fournisseur
-            // closeForm();
-        })
-        .catch((error) => {
-                console.error(`Erreur lors de ${editingChiffreaffaire ? 'la modification' : "l'ajout"} du chiffre d'affaire:`, error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: `Échec de ${editingChiffreaffaire ? 'la modification' : "l'ajout"} du chiffre d'affaire.`,
-                });
-            });
-            if (formContainerStyle.right === "-500px") {
-                setFormContainerStyle({ right: "0" });
-                setTableContainerStyle({ marginRight: "500px" });
-            } else {
-                closeForm();
-            }
-        };
-
-        //------------------------- chiffreaffaire FORM---------------------//
-
-    const handleShowFormButtonClick = () => {
-        if (formContainerStyle.right === '-500px') {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
-        } else {
-            closeForm();
-        }
-    };
-    const toggleRow = async (Clients) => {
-        if (expandedRows.includes(Clients)) {
-            setExpandedRows(expandedRows.filter((id) => id !== Clients));
-        } else {
-            try {
-                // Récupérer les lignes de Commandes associées à ce Commandes
-                const facture = await fetchChiffreaffaires(Clients);
-
-                // Mettre à jour l'état pour inclure les lignes de Commandes récupérées
-                setClients((prevClients) =>
-                    prevClients.map((Clients) =>
-                        Clients.id === Clients
-                            ? { ...Clients, chiffreaffaires }
-                            : Clients
-                    )
-                );
-
-                // Ajouter l'ID du Commandes aux lignes étendues
-                setExpandedRows([...expandedRows, Clients]);
-            } catch (error) {
-                console.error(
-                    "Erreur lors de la récupération des lignes de Commandes :",
-                    error
-                );
-            }
-        }
-    };
-    const gettotalttcByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
-
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.total_ttc);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-
-    const getReferenceByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
-
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.reference);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-    const getDatedeFactureByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
-
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.date);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
 
 
-    const closeForm = () => {
-        setFormContainerStyle({ right: '-500px' });
-        setTableContainerStyle({ marginRight: '0' });
-        setShowForm(false); // Hide the form
-        setFormData({ // Clear form data
-            client_id: '',
-
-        });
-        setEditingChiffreaffaire(null); // Clear editing chiffreaffaire
-    };
 
     return (
         <ThemeProvider theme={createTheme()}>
@@ -633,6 +400,71 @@ const ChiffreAffaireList = () => {
                         <div className="search-container d-flex flex-row-reverse mb-3">
                             <Search onSearch={handleSearch} />
                         </div>
+
+
+                        <div className="d-flex align-items-start">
+                            {isFilter && (
+                                <div className="filter-container">
+                                    <Form onSubmit={handleClientNameFilterSubmit}>
+                                        <table className="table table-borderless">
+                                            <thead>
+                                            <tr>
+                                                <th>Nom du Client</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            <tr>
+                                                <td>
+                                                    <Form.Control
+                                                        type="text"
+                                                        name="clientName"
+                                                        value={filterFormData.clientName}
+                                                        onChange={handleFilterChange}
+                                                        className="form-control form-control-sm"
+                                                    />
+                                                </td>
+                                                <td>
+                                                    <Button
+                                                        variant="primary"
+                                                        type="submit"
+                                                        className="btn-sm"
+                                                    >
+                                                        Appliquer le filtre par nom du client
+                                                    </Button>
+                                                </td>
+                                            </tr>
+                                            </tbody>
+                                        </table>
+                                    </Form>
+                                </div>
+                            )}
+                        </div>
+                        <Button
+                            variant="info"
+                            className="col-2 btn btn-sm m-2"
+                            id="filterButton"
+                            onClick={() => {
+                                if (isFilter) {
+                                    // Annuler le filtrage
+                                    setIsFilter(false);
+                                    // Réinitialiser les données filtrées et les données de formulaire
+                                    setFilterFormData(chiffreaffaires);
+                                    setFilterFormData({
+                                       client_id: "",
+                                    });
+                                } else {
+                                    // Activer le filtrage
+                                    setIsFilter(true);
+                                }
+                            }}
+                            disabled={isFiltering && filterFormData.length === 0}
+                        >
+                            <FontAwesomeIcon
+                                icon={faFilter}
+                                style={{ verticalAlign: "middle" }}
+                            />{" "}
+                            {isFilter ? "Annuler le filtre" : "Filtrer"}
+                        </Button>
 
 
                         <div className="d-flex flex-row justify-content-end">
@@ -689,7 +521,7 @@ const ChiffreAffaireList = () => {
                             <table className="table table-responsive table-bordered" id="chiffreaffaireTable">
                                 <thead>
                                 <tr>
-                                    <th style={tableHeaderStyle}>
+                                        <th style={tableHeaderStyle}>
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
                                     <th style={tableHeaderStyle}>Client</th>
@@ -752,7 +584,9 @@ const ChiffreAffaireList = () => {
                 </Box>
             </Box>
         </ThemeProvider>
+
     );
 };
+
 
 export default ChiffreAffaireList;

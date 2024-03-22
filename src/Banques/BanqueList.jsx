@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Form, Button } from "react-bootstrap";
+import {Form, Button, Table} from "react-bootstrap";
 import "../style.css";
 import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
@@ -19,10 +19,12 @@ import PrintList from "./PrintList";
 import ExportPdfButton from "./ExportPdfButton";
 const BanqueList = () => {
 
-    const [banques, setBanques] = useState([]);
-    const [filteredBanques, setFilteredBanques] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+
+
+    const [filteredBanques, setFilteredBanques] = useState([]);
+    const [banques, setBanques] = useState([]);
 
     const [user, setUser] = useState({});
     // const [users, setUsers] = useState([]);
@@ -33,11 +35,15 @@ const BanqueList = () => {
     const [editingBanqueId, setEditingBanqueId] = useState(null);
     const [clients, setClients] = useState([]);
     const [factures, setFactures] = useState([]);
+    const [filteredFactures, setFilteredFactures] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
+    const [selectedClientId, setSelectedClientId] = useState(null);
+
 
 
     const [searchTerm, setSearchTerm] = useState("");
 
+const [clientId,setClientId] = useState(null);
 
 
 
@@ -69,6 +75,9 @@ const BanqueList = () => {
         Montant:"",
         Status:"",
         remarque: "",
+        reference: {},
+        total_ttc:{},
+        date:{},
     });
     const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
     const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px", });
@@ -154,6 +163,28 @@ const BanqueList = () => {
         const client = clients.find((c) => c.id === clientId);
         return client ? client.raison_sociale : "";
     };
+    const handleClientSelection = (target) => {
+        const clientId = target.value;
+        setFormData({ ...formData, [target.name]: clientId });
+    console.log("formData",formData);
+        // Filtrer les factures en fonction de l'ID du client sélectionné
+        const facturesForClient = factures.filter(facture => facture.client_id === parseInt(clientId));
+        setFilteredFactures(facturesForClient);
+        console.log("filtered Factures",filteredFactures);
+    };
+
+    const handleAvanceChange = (factureId, montant) => {
+        setFormData({
+            ...formData,
+            factures: {
+                ...formData.factures,
+                [factureId]: montant
+            }
+        });
+    };
+
+
+
 
 
 
@@ -169,6 +200,36 @@ const BanqueList = () => {
             console.log("invoices", invoices);
             // Return an array of invoice references or any other property you want
             return invoices.map((invoice) => invoice.reference);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getAvancebyFacture = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
+
+        // Check if the client is found
+        if (client) {
+            // Assuming each client object has an `invoices` property which is an array
+            const invoices = client.invoices;
+            console.log("invoices", invoices);
+            // Return an array of invoice references or any other property you want
+            return invoices.map((invoice) => invoice.total_ttc);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getDateFactureByIdClient = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
+
+        // Check if the client is found
+        if (client) {
+            // Assuming each client object has an `invoices` property which is an array
+            const invoices = client.invoices;
+            console.log("invoices", invoices);
+            // Return an array of invoice references or any other property you want
+            return invoices.map((invoice) => invoice.date);
         } else {
             return []; // or handle accordingly if client not found
         }
@@ -247,9 +308,17 @@ const BanqueList = () => {
         setSelectedItems([]);
     };
 
-    const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleChange = (event) => {
+        console.log("handleChange called");
+        // Extraction des données du champ de formulaire modifié
+        const { name, value } = event.target;
+
+        // Mise à jour de l'état du formulaire avec la nouvelle valeur sélectionnée
+        setFormData({ ...formData, [name]: value });
+
+
     };
+
 
     const handleSelectAllChange = () => {
         setSelectAll(!selectAll);
@@ -576,48 +645,67 @@ const BanqueList = () => {
         fetchBanques();
     }, []);
 
-    const handleSubmit =  (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
         const url = editingBanque ? `http://localhost:8000/api/banques/${editingBanque.id}` : 'http://localhost:8000/api/banques';
         const method = editingBanque ? 'put' : 'post';
+
         axios({
             method: method,
             url: url,
             data: formData,
         }).then(() => {
             fetchBanques();
+
+            // Mise à jour de filteredBanques pour inclure la nouvelle entrée ou la mise à jour
+            if (editingBanque) {
+                // Si c'est une mise à jour, trouvez l'index de l'élément modifié dans filteredBanques et mettez à jour cet élément
+                const index = filteredBanques.findIndex(banque => banque.id === editingBanque.id);
+                if (index !== -1) {
+                    const updatedBanques = [...filteredBanques];
+                    updatedBanques[index] = formData;
+                    setFilteredBanques(updatedBanques);
+                }
+            } else {
+                // Si c'est un ajout, ajoutez simplement la nouvelle entrée à filteredBanques
+                setFilteredBanques(prevBanques => [...prevBanques, formData]);
+            }
+
             Swal.fire({
                 icon: 'success',
                 title: 'Succès!',
                 text: `banque ${editingBanque ? 'modifié' : 'ajouté'} avec succès.`,
             });
+
             setFormData({
                 client_id: "",
-
                 numero_cheque: "",
                 mode_de_paiement: "",
                 datee: "",
                 Montant:"",
                 Status:"",
                 remarque: "",
+                facture:{},
+                reference: {},
+                total_ttc:{},
+                date:{},
             });
             setEditingBanque(null); // Clear editing banque
-            // closeForm();
-        })
-            .catch((error) => {
-                console.error(`Erreur lors de ${editingBanque ? 'la modification' : "l'ajout"} du banque:`, error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: `Échec de ${editingBanque ? 'la modification' : "l'ajout"} du banque.`,
-                });
+
+            if (formContainerStyle.right === "-500px") {
+                setFormContainerStyle({ right: "0" });
+                setTableContainerStyle({ marginRight: "500px" });
+            } else {
+                closeForm();
+            }
+        }).catch((error) => {
+            console.error(`Erreur lors de ${editingBanque ? 'la modification' : "l'ajout"} du banque:`, error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur!',
+                text: `Échec de ${editingBanque ? 'la modification' : "l'ajout"} du banque.`,
             });
-        if (formContainerStyle.right === "-500px") {
-            setFormContainerStyle({ right: "0" });
-            setTableContainerStyle({ marginRight: "500px" });
-        } else {
-            closeForm();
-        }
+        });
     };
 
     //------------------------- banque FORM---------------------//
@@ -639,14 +727,17 @@ const BanqueList = () => {
         setShowForm(false); // Hide the form
         setFormData({ // Clear form data
             client_id: '',
-            reference: '',
+
             numero_cheque: '',
             mode_de_paiement: '',
             datee: '',
-            total_ttc:'',
+
             Montant:'',
             Status:'',
             remarque: '',
+            reference: {},
+            total_ttc:{},
+            date:{},
         });
         setEditingBanque(null); // Clear editing banque
     };
@@ -660,8 +751,8 @@ const BanqueList = () => {
 
                     <div>
                         <h3>Banques</h3>
-                        <div className="search-container d-flex flex-row-reverse mb-3">
-                            <Search onSearch={handleSearch} />
+                        <div className="search-container d-flex flex-row-reverse " role="search">
+                            <Search onSearch={handleSearch} type="search" />
                         </div>
                         <Button
                             id="showFormButton"
@@ -671,35 +762,16 @@ const BanqueList = () => {
                             <IoIosPersonAdd  style={{ fontSize: '24px' }} />
                             {/*{showForm ? "Modifier le formulaire" : <IoIosPersonAdd />}*/}
                         </Button>
-                        <div className="d-flex flex-row justify-content-end">
-                            <div className="btn-group col-2">
-                                <PrintList
-                                    tableId="banqueTable"
-                                    title="Liste des recouvrement"
-                                    BanqueList={banques}
-                                    filtredbanques={filteredBanques}
-                                />
-
-                                <ExportPdfButton
-                                    banques={banques}
-                                    selectedItems={selectedItems}
-                                />
-                                <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
-                                    <FontAwesomeIcon icon={faFileExcel} />
-                                </Button>
-                            </div>
-                        </div>
                         <div id="formContainer" className="mt-2" style={formContainerStyle}>
                             <Form className="col row" onSubmit={handleSubmit}>
                                 <Form.Label className="text-center m-2"><h5>{editingBanque ? 'Modifier ' : 'Ajouter '}</h5></Form.Label>
                                 <Form.Group className="col-sm-5 m-2" controlId="client_id">
 
                                     <Form.Label>Client</Form.Label>
-
                                     <Form.Select
                                         name="client_id"
                                         value={formData.client_id}
-                                        onChange={handleChange}
+                                        onChange={(e) => handleClientSelection(e.target)}
                                         className="form-select form-select-sm"
                                     >
                                         <option value="">Sélectionner un client</option>
@@ -758,10 +830,10 @@ const BanqueList = () => {
                                     <Form.Label>date </Form.Label>
                                     <Form.Control type="date" placeholder="datee" name="datee" value={formData.datee} onChange={handleChange} />
                                 </Form.Group>
-                                <Form.Group className="col-sm-4 m-2">
-                                    <Form.Label>Montant </Form.Label>
-                                    <Form.Control type="text" placeholder="Montant" name="Montant" value={formData.Montant} onChange={handleChange} />
-                                </Form.Group>
+                                {/*<Form.Group className="col-sm-4 m-2">*/}
+                                {/*    <Form.Label>Montant </Form.Label>*/}
+                                {/*    <Form.Control type="text" placeholder="Montant" name="Montant" value={formData.Montant} onChange={handleChange} />*/}
+                                {/*</Form.Group>*/}
                                 <Form.Group className="col-sm-5 m-2">
                                     <Form.Label>Status </Form.Label>
                                     <Form.Control as="select" name="Status" value={formData. Status} onChange={handleChange}>
@@ -777,25 +849,61 @@ const BanqueList = () => {
                                     <Form.Label>Remarque </Form.Label>
                                     <Form.Control type="text" placeholder="remarque" name="remarque" value={formData.remarque} onChange={handleChange} />
                                 </Form.Group>
+                                {/*<Form.Group className="col m-3 text-center">*/}
+                                {/*    <Button type="submit" className="btn btn-success col-6">*/}
+                                {/*        {editingBanque ? 'Modifier' : 'Ajouter'}*/}
+                                {/*    </Button>*/}
+                                {/*    <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>*/}
+                                {/*</Form.Group>*/}
 
+                                <div className="col-md-12">
+                                    <Form.Group controlId="selectedFactureTable">
+                                        <Form.Label>Factures du client sélectionné:</Form.Label>
+                                        <Table striped bordered hover>
+                                            <thead>
+                                            <tr>
+                                                <th>Numéro de Facture</th>
+                                                <th>Total TTC</th>
+                                                <th>Date de Facture</th>
+                                                <th>Montant à payer</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {filteredFactures.map((facture, index) => (
+                                                <tr key={index}>
+                                                    <td>{facture.reference}</td>
+                                                    <td>{facture.total_ttc}</td>
+                                                    <td>{facture.date}</td>
+                                                    <td>
+                                                        <Form.Control type="text" placeholder="Montant" name="Montant" value={formData.Montant} onChange={handleChange} />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </Table>
+                                    </Form.Group>
+                                </div>
                                 <Form.Group className="col m-3 text-center">
                                     <Button type="submit" className="btn btn-success col-6">
                                         {editingBanque ? 'Modifier' : 'Ajouter'}
                                     </Button>
                                     <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
                                 </Form.Group>
+
                             </Form>
                         </div>
-
                         <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-                            <table className="table table-responsive table-bordered " id="banqueTable">
-                                <thead >
+                           <table className="table table-responsive table-bordered " id="banqueTable">
+                                <thead>
                                 <tr>
                                     <th style={tableHeaderStyle}>
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
                                     <th style={tableHeaderStyle}>Client</th>
-                                    {/*<th style={tableHeaderStyle}>N° de Facture</th>*/}
+                                    <th style={tableHeaderStyle}>N° de Facture</th>
+                                    <th style={tableHeaderStyle}>Total TTC</th>
+                                    <th style={tableHeaderStyle}>Date de Facture</th>
+
                                     <th style={tableHeaderStyle}>N° de Chéque</th>
                                     <th style={tableHeaderStyle}>Mode de Paiement</th>
                                     <th style={tableHeaderStyle}>date</th>
@@ -805,77 +913,89 @@ const BanqueList = () => {
                                     <th style={tableHeaderStyle}>Action</th>
                                 </tr>
                                 </thead>
-                                <tbody>
-                                {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
-                                    <React.Fragment key={banques.id}>
-                                        <tr>
-                                            <td>
+                               <tbody>
+                               {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
+                                   <React.Fragment key={banques.id}>
+                                       <tr>
+                                           <td>
 
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-light"
-                                                    onClick={() => toggleRow(banques.id)}
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={
-                                                            expandedRows.includes(banques.id)
-                                                                ? faMinus
-                                                                : faPlus
-                                                        }
-                                                    />
-                                                </button>
-                                                {getClientNameById(
-                                                    banques.client_id
-                                                )}
-                                            </td>
-                                        <td>{banques.numero_cheque}</td>
-                                        <td>{banques.mode_de_paiement}</td>
-                                        <td>{banques.datee}</td>
-                                            <td>{banques.Montant}</td>
-                                         <td>{banques.Status}</td>
-                                        <td>{banques.remarque}</td>
-                                        <td className="d-inline-flex">
-                                            <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(banques)}>
-                                                <i className="fas fa-edit"></i>
-                                            </Button>
-                                            <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(banques.id)}>
-                                                <FontAwesomeIcon icon={faTrash} />
-                                            </Button>
-                                        </td>
-                                    </tr>
+                                           </td>
+                                           <td>
 
-                                        {expandedRows.includes(banques.id) && (
-                                            <tr>
-                                                <td colSpan="8">
-                                                    <div>
-                                                        <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
-                                                            <thead>
-                                                            <tr>
-                                                                <th>N° Facture</th>
-                                                                <th>Total TTC</th>
-                                                            </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                            {getReferenceByIdClient(banques.client_id).map((facture, index) => (
-                                                                <tr key={index}>
-                                                                    <td>{facture}</td>
-                                                                    <td>{gettotalttcByIdClient(banques.client_id)[index]}</td>
-                                                                </tr>
-                                                            ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
+                                               {getClientNameById(
+                                                   banques.client_id
+                                               )}
+                                           </td>
+                                           <td>
+                                           {getReferenceByIdClient(banques.client_id).length > 1
+                                               ?  <button
+                                                   className="btn btn-sm btn-light"
+                                                   onClick={() => toggleRow(banques.id)}
+                                               >
+                                                   <FontAwesomeIcon
+                                                       icon={
+                                                           expandedRows.includes(banques.id)
+                                                               ? faMinus
+                                                               : faPlus
+                                                       }
+                                                   />
+                                               </button>
+                                               : ""}
 
-                                    </React.Fragment>
-))}
+                                           {getReferenceByIdClient(banques.client_id)[0]}</td>
+                                           <td>{gettotalttcByIdClient(banques.client_id)[0]}</td>
+                                           <td>{getDateFactureByIdClient(banques.client_id)[0]}</td>
+                                           <td>{banques.numero_cheque}</td>
+                                           <td>{banques.mode_de_paiement}</td>
+                                           <td>{banques.datee}</td>
+                                           <td>{banques.Montant}</td>
+                                           <td>{banques.Status}</td>
+                                           <td>{banques.remarque}</td>
+                                           <td className="d-inline-flex">
+                                               <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(banques)}>
+                                                   <i className="fas fa-edit"></i>
+                                               </Button>
+                                               <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(banques.id)}>
+                                                   <FontAwesomeIcon icon={faTrash} />
+                                               </Button>
+                                           </td>
+                                       </tr>
 
-                                </tbody>
+                                       {expandedRows.includes(banques.id) && (
+                                           <tr>
+                                               <td colSpan="8">
+                                                   <div>
+                                                       <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
+                                                           <thead>
+                                                           <tr>
+                                                               <th>N° Facture</th>
+                                                               <th>Total TTC</th>
+                                                               <th>Date</th>
+                                                               <th>Avance</th>
+
+                                                           </tr>
+                                                           </thead>
+                                                           <tbody>
+                                                           {getReferenceByIdClient(banques.client_id).map((facture, index) => (
+                                                               <tr key={index}>
+                                                                   <td>{facture}</td>
+                                                                   <td>{gettotalttcByIdClient(banques.client_id)[index]}</td>
+                                                                   <td>{getDateFactureByIdClient(banques.client_id)[index]}</td>
+                                                                   <td>{gettotalttcByIdClient(banques.client_id)[index]}</td>
+                                                               </tr>
+                                                           ))}
+                                                           </tbody>
+                                                       </table>
+                                                   </div>
+                                               </td>
+                                           </tr>
+                                       )}
+
+                                   </React.Fragment>
+                               ))}
+
+                               </tbody>
                             </table>
-
 
 
                             <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
