@@ -1007,7 +1007,7 @@ const Vehicule_livreur = () => {
                   <Form.Text className="text-danger">{errors.heure}</Form.Text>
                 </Form.Group>
 
-                <Form.Group className="col-7 m-3 text-center">
+                <Form.Group className="col-8 m-3 text-center">
                   <Button type="submit" className="btn btn-danger col-6">
                     {editingvehicule_livreur ? "Modifier" : "Ajouter"}
                   </Button>

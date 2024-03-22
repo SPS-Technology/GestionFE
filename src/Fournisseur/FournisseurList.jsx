@@ -732,8 +732,8 @@ const FournisseurList = () => {
                       className="form-control-sm"
                     />
                   </Form.Group> */}
-                  <Form.Group className="col m-3 text-center">
-                    <Button type="submit" className="btn btn-success col-6">
+                  <Form.Group className="col m-5 text-center">
+                    <Button type="submit" className="btn btn-danger col-6">
                       {editingFournisseur ? "Modifier" : "Ajouter"}
                     </Button>
                     <Button

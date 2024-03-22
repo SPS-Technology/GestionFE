@@ -21,6 +21,9 @@ import DevisList from './Devis/DevisList';
 import StockList from './Stock/StockList';
 import PrepareCommande from './Commande/PrepareCommande';
 import ChargeCommande from './Commande/ChargeCommade';
+import InterfaceLogo from './Client/InterfaceLogo';
+import SiteClientsPage from './Client/SiteClientsPage';
+import BonLivraisonInfo from './Client/BonLivraisonInfo ';
 
 
 const App = () => {
@@ -33,6 +36,9 @@ const App = () => {
         <Route path="/" element={<Dashboard />} />
         <Route path="/fournisseurs" element={<FournisseurList />} />
         <Route path="/clients" element={<ClientList />} />
+        <Route path="/clients_logo" element={<InterfaceLogo />} />
+        <Route path="/clients/:clientId/siteclients" element={<SiteClientsPage />} />
+        <Route path="/clients/:clientId/bonslivraison" element={<BonLivraisonInfo />} />
         <Route path="/livreurs" element={<LivreurList />} />
         <Route path="/objectifs" element={<ObjectifList />} />
         <Route path="/vehicules" element={<VehiculeList />} />

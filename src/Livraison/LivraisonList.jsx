@@ -11,34 +11,53 @@ import Search from "../Acceuil/Search";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faFilePdf, faPrint, faPlus, faMinus,} from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faFilePdf,
+  faPrint,
+  faPlus,
+  faMinus,
+} from "@fortawesome/free-solid-svg-icons";
 import TablePagination from "@mui/material/TablePagination";
 
 const LivraisonList = () => {
   const [livraisons, setLivraisons] = useState([]);
   const [clients, setClients] = useState([]);
   const [devises, setDevises] = useState([]);
-  const [formData, setFormData] = useState({ reference: "", date: "", ref_BC: "", client_id: "", user_id: ""});
-  const [formContainerStyle, setFormContainerStyle] = useState({ right: "-100%", });
-  const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px",});
+  const [formData, setFormData] = useState({
+    reference: "",
+    date: "",
+    ref_BC: "",
+    client_id: "",
+    user_id: "",
+  });
+  const [formContainerStyle, setFormContainerStyle] = useState({
+    right: "-100%",
+  });
+  const [tableContainerStyle, setTableContainerStyle] = useState({
+    marginRight: "0px",
+  });
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredlivraisons, setFilteredlivraisons] = useState([]);
 
-      // Pagination calculations
-      const [rowsPerPage, setRowsPerPage] = useState(5);
-      const [page, setPage] = useState(0);
-      const indexOfLastLivraison = (page + 1) * rowsPerPage;
-      const indexOfFirstLivraison = indexOfLastLivraison - rowsPerPage;
-      const currentLivraisons = livraisons.slice(indexOfFirstLivraison, indexOfLastLivraison);
+  // Pagination calculations
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0);
+  const indexOfLastLivraison = (page + 1) * rowsPerPage;
+  const indexOfFirstLivraison = indexOfLastLivraison - rowsPerPage;
+  const currentLivraisons = livraisons.slice(
+    indexOfFirstLivraison,
+    indexOfLastLivraison
+  );
 
-      const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-      };
-      const handleChangePage = (event, newPage) => {
-        setPage(newPage);
-      };
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
   const fetchLivraisons = async () => {
     try {
@@ -50,16 +69,17 @@ const LivraisonList = () => {
       );
       // console.log("API Response:", response.data);
       setClients(ClientResponse.data.client);
-
     } catch (error) {
       console.error("Error fetching factures:", error);
     }
   };
+
+  useEffect(() => {
+    fetchLivraisons();
+  }, []);
   useEffect(() => {
     const filtered = livraisons.filter((livraison) =>
-    livraison.reference
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase())
+      livraison.reference.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     setFilteredlivraisons(filtered);
@@ -104,7 +124,7 @@ const LivraisonList = () => {
       date: "",
       ref_BC: "",
       client_id: "",
-      user_id:"",
+      user_id: "",
     });
   };
 
@@ -157,11 +177,14 @@ const LivraisonList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-          <div  className="container">
-          <div className="search-container d-flex flex-row-reverse col-3" role="search">
+          <div className="container">
+            <div
+              className="search-container d-flex flex-row-reverse col-3"
+              role="search"
+            >
               <Search onSearch={handleSearch} type="search" />
-          </div>
-          <Button
+            </div>
+            <Button
               variant="primary"
               className="col-2 btn btn-sm m-2"
               id="showFormButton"
@@ -169,7 +192,7 @@ const LivraisonList = () => {
             >
               {showForm ? "Modifier le formulaire" : "Ajouter Bon Livraison"}
             </Button>
-          <div id="formContainer" className="" style={formContainerStyle} >
+            <div id="formContainer" className="" style={formContainerStyle}>
               <Form className="row" onSubmit={handleSubmit}>
                 <Form.Group className="m-2 col-4" controlId="reference">
                   <Form.Label>Reference:</Form.Label>
@@ -199,14 +222,21 @@ const LivraisonList = () => {
                   />
                 </Form.Group>
                 <Form.Group className="m-2 col-4" controlId="client_id">
-                  <Form.Label>client_id</Form.Label>
-                  <Form.Control
-                    type="text"
+                  <Form.Label>Client</Form.Label>
+                  <Form.Select
                     value={formData.client_id}
                     onChange={handleChange}
                     name="client_id"
-                  />
+                  >
+                    <option value="">Sélectionner un client</option>
+                    {clients.map((client) => (
+                      <option key={client.id} value={client.id}>
+                        {client.raison_sociale}
+                      </option>
+                    ))}
+                  </Form.Select>
                 </Form.Group>
+
                 <Form.Group className="m-2 col-4" controlId="user_id">
                   <Form.Label>User_id</Form.Label>
                   <Form.Control
@@ -241,17 +271,19 @@ const LivraisonList = () => {
                     <th>N° BL</th>
                     <th>Date</th>
                     <th>N° BC</th>
+                    <th>Client</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
-                {filteredlivraisons
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  {filteredlivraisons
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((livraison) => (
                       <tr key={livraison.id}>
                         <td>{livraison.reference}</td>
                         <td>{livraison.date}</td>
-                        <td>{livraison.clients.raison_sociale}</td>
+                        <td>{livraison.ref_BC}</td>
+                        <td>{livraison.client.raison_sociale}</td>
 
                         <td>
                           <button
@@ -272,14 +304,14 @@ const LivraisonList = () => {
                 </tbody>
               </table>
               <TablePagination
-                  rowsPerPageOptions={[5, 10, 25]}
-                  component="div"
-                  count={filteredlivraisons.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
-                />
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredlivraisons.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </div>
           </div>
         </Box>

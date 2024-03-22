@@ -293,6 +293,17 @@ const Navigation = () => {
             <ListItem
               button
               component={Link}
+              to="/clients_logo"
+              style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <PeopleIcon   />
+              </ListItemIcon>
+              <ListItemText primary="LogoClients" />
+            </ListItem>
+            <ListItem
+              button
+              component={Link}
               to="/objectifs"
               style={{ color: "grey" }}
             >

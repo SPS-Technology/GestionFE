@@ -107,29 +107,29 @@ const ChargeCommande = () => {
   useEffect(() => {
     fetchChargementCommandes();
   }, []);
-  useEffect(() => {
-    const filtered = chargementCommandes.filter((chargementCommande) => {
-      const isVehiculeMatch =
-        chargementCommande.veihicule_id
-          ?.toString()
-          .toLowerCase()
-          .includes(vehiculeFilter.toLowerCase()) ||
-        getVehiculesMarque(chargementCommande.veihicule_id)
-          .toLowerCase()
-          .includes(vehiculeFilter.toLowerCase());
+  // useEffect(() => {
+  //   const filtered = chargementCommandes.filter((chargementCommande) => {
+  //     const isVehiculeMatch =
+  //       chargementCommande.veihicule_id
+  //         ?.toString()
+  //         .toLowerCase()
+  //         .includes(vehiculeFilter.toLowerCase()) ||
+  //       getVehiculesMarque(chargementCommande.veihicule_id)
+  //         .toLowerCase()
+  //         .includes(vehiculeFilter.toLowerCase());
 
-      const isDateMatch =
-        chargementCommande.dateLivraisonReelle &&
-        chargementCommande.dateLivraisonReelle
-          .toString()
-          .toLowerCase()
-          .includes(dateLivraisonReeleFilter.toLowerCase());
+  //     const isDateMatch =
+  //       chargementCommande.dateLivraisonReelle &&
+  //       chargementCommande.dateLivraisonReelle
+  //         .toString()
+  //         .toLowerCase()
+  //         .includes(dateLivraisonReeleFilter.toLowerCase());
 
-      return isVehiculeMatch && isDateMatch;
-    });
+  //     return isVehiculeMatch && isDateMatch;
+  //   });
 
-    setFilteredChargementCommandes(filtered);
-  }, [chargementCommandes, vehiculeFilter, dateLivraisonReeleFilter]);
+  //   setFilteredChargementCommandes(filtered);
+  // }, [chargementCommandes, vehiculeFilter, dateLivraisonReeleFilter]);
 
   useEffect(() => {
     const filtered =

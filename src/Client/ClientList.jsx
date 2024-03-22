@@ -33,6 +33,7 @@ const ClientList = () => {
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
+    logoC: "",
     CodeClient: "",
     raison_sociale: "",
     abreviation: "",
@@ -44,6 +45,7 @@ const ClientList = () => {
     code_postal: "",
   });
   const [errors, setErrors] = useState({
+    logoC: "",
     CodeClient: "",
     raison_sociale: "",
     abreviation: "",
@@ -90,6 +92,7 @@ const ClientList = () => {
     ville: "",
     zone_id: "",
     ice: "",
+    logoSC: "",
     code_postal: "",
     client_id: "",
   });
@@ -212,12 +215,20 @@ const ClientList = () => {
   }, []);
 
   const handleChangeSC = (e) => {
-    setFormDataSC({ ...formDataSC, [e.target.name]: e.target.value });
+    setFormDataSC({ ...formDataSC, [e.target.name]: e.target.type === "file" ? e.target.files[0] : e.target.value,  });
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ ...formData, [e.target.name]:  e.target.type === "file" ? e.target.files[0] : e.target.value, });
   };
+
+  // const handleChange = (e) => {
+  //   setUser({
+  //     ...user,
+  //     [e.target.name]:
+  //       e.target.type === "file" ? e.target.files[0] : e.target.value,
+  //   });
+  // };
   //------------------------- CLIENT EDIT---------------------//
 
   const handleEdit = (client) => {
@@ -231,7 +242,7 @@ const ClientList = () => {
       tele: client.tele,
       ville: client.ville,
       zone_id: client.zone_id,
-      // user_id: client.user_id,
+      logoC: client.logoC,
       ice: client.ice,
       code_postal: client.code_postal,
     });
@@ -251,24 +262,152 @@ const ClientList = () => {
 
   //------------------------- CLIENT SUBMIT---------------------//
 
-  const handleSubmit = (e) => {
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   const url = editingClient
+  //     ? `http://localhost:8000/api/clients/${editingClient.id}`
+  //     : "http://localhost:8000/api/clients";
+  //   const method = editingClient ? "put" : "post";
+
+  //   const formDatad = new FormData(); // Créer un objet FormData pour envoyer les données du formulaire
+
+  //   // Ajouter les champs du formulaire à l'objet FormData
+  //   formDatad.append("CodeClient", formData.CodeClient);
+  //   formDatad.append("raison_sociale", formData.raison_sociale);
+  //   formDatad.append("abreviation", formData.abreviation);
+  //   formDatad.append("adresse", formData.adresse);
+  //   formDatad.append("tele", formData.tele);
+  //   formDatad.append("ville", formData.ville);
+  //   formDatad.append("zone_id", formData.zone_id);
+  //   formDatad.append("ice", formData.ice);
+  //   formDatad.append("code_postal", formData.code_postal);
+
+  //   // Ajouter le fichier du logo à l'objet FormData s'il existe
+  //   if (formData.logoC) {
+  //     formDatad.append("logoC", formData.logoC);
+  //   }
+
+  //   axios({
+  //     method: method,
+  //     url: url,
+  //     data: formDatad, 
+  //   })
+  //     .then(() => {
+  //       fetchClients();
+  //       Swal.fire({
+  //         icon: "success",
+  //         title: "Succès!",
+  //         text: `Client ${editingClient ? "modifié" : "ajouté"} avec succès.`,
+  //       });
+      
+  //       setFormData({
+  //         CodeClient: "",
+  //         raison_sociale: "",
+  //         abreviation: "",
+  //         adresse: "",
+  //         tele: "",
+  //         ville: "",
+  //         zone_id: "",
+  //         ice: "",
+  //         code_postal: "",
+  //         logoC: null, // Réinitialiser le fichier du logo après l'envoi
+  //       });
+  //       setErrors({
+  //         CodeClient: "",
+  //         raison_sociale: "",
+  //         abreviation: "",
+  //         adresse: "",
+  //         tele: "",
+  //         ville: "",
+  //         zone_id: "",
+  //         ice: "",
+  //         code_postal: "",
+  //       });
+  //       setEditingClient(null);
+  //       closeForm();
+  //     })
+  //     .catch((error) => {
+  //       if (error.response) {
+  //         const serverErrors = error.response.data.error;
+  //         console.log(serverErrors);
+  //         setErrors({
+  //           CodeClient: serverErrors.CodeClient
+  //             ? serverErrors.CodeClient[0]
+  //             : "",
+  //           raison_sociale: serverErrors.raison_sociale
+  //             ? serverErrors.raison_sociale[0]
+  //             : "",
+  //           abreviation: serverErrors.abreviation
+  //             ? serverErrors.abreviation[0]
+  //             : "",
+  //           adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
+  //           tele: serverErrors.tele ? serverErrors.tele[0] : "",
+  //           ville: serverErrors.ville ? serverErrors.ville[0] : "",
+  //           zone_id: serverErrors.zone_id ? serverErrors.zone_id[0] : "",
+  //           ice: serverErrors.ice ? serverErrors.ice[0] : "",
+  //           code_postal: serverErrors.code_postal
+  //             ? serverErrors.code_postal[0]
+  //             : "",
+  //         });
+  //       }
+  //     });
+  // };
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const url = editingClient
       ? `http://localhost:8000/api/clients/${editingClient.id}`
       : "http://localhost:8000/api/clients";
     const method = editingClient ? "put" : "post";
-    axios({
-      method: method,
-      url: url,
-      data: formData,
-    })
-      .then(() => {
+  
+    let requestData;
+  
+    if (editingClient) {
+      requestData = {
+        CodeClient: formData.CodeClient,
+        raison_sociale: formData.raison_sociale,
+        abreviation: formData.abreviation,
+        adresse: formData.adresse,
+        tele: formData.tele,
+        ville: formData.ville,
+        zone_id: formData.zone_id,
+        ice: formData.ice,
+        code_postal: formData.code_postal,
+      };
+    } else {
+      const formDatad = new FormData();
+      formDatad.append("CodeClient", formData.CodeClient);
+      formDatad.append("raison_sociale", formData.raison_sociale);
+      formDatad.append("abreviation", formData.abreviation);
+      formDatad.append("adresse", formData.adresse);
+      formDatad.append("tele", formData.tele);
+      formDatad.append("ville", formData.ville);
+      formDatad.append("zone_id", formData.zone_id);
+      formDatad.append("ice", formData.ice);
+      formDatad.append("code_postal", formData.code_postal);
+      if (formData.logoC) {
+             formDatad.append("logoC", formData.logoC);
+           }
+      requestData = formDatad;
+    }
+  
+    try {
+      const response = await axios({
+        method: method,
+        url: url,
+        data: requestData,
+      });
+  
+      if (response.status === 200) {
         fetchClients();
+        const successMessage = `Client ${
+          editingClient ? "modifié" : "ajouté"
+        } avec succès.`;
         Swal.fire({
           icon: "success",
           title: "Succès!",
-          text: `Client ${editingClient ? "modifié" : "ajouté"} avec succès.`,
+          text: successMessage,
         });
+  
         setFormData({
           CodeClient: "",
           raison_sociale: "",
@@ -279,6 +418,7 @@ const ClientList = () => {
           zone_id: "",
           ice: "",
           code_postal: "",
+          logoC: null, 
         });
         setErrors({
           CodeClient: "",
@@ -293,33 +433,34 @@ const ClientList = () => {
         });
         setEditingClient(null);
         closeForm();
-      })
-      .catch((error) => {
-        if (error.response) {
-          const serverErrors = error.response.data.error;
-          console.log(serverErrors);
-          setErrors({
-            CodeClient: serverErrors.CodeClient
-              ? serverErrors.CodeClient[0]
-              : "",
-            raison_sociale: serverErrors.raison_sociale
-              ? serverErrors.raison_sociale[0]
-              : "",
-            abreviation: serverErrors.abreviation
-              ? serverErrors.abreviation[0]
-              : "",
-            adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
-            tele: serverErrors.tele ? serverErrors.tele[0] : "",
-            ville: serverErrors.ville ? serverErrors.ville[0] : "",
-            zone_id: serverErrors.zone_id ? serverErrors.zone_id[0] : "",
-            ice: serverErrors.ice ? serverErrors.ice[0] : "",
-            code_postal: serverErrors.code_postal
-              ? serverErrors.code_postal[0]
-              : "",
-          });
-        }
-      });
+      }
+    } catch (error) {
+      if (error.response) {
+        const serverErrors = error.response.data.error;
+        console.log(serverErrors);
+        setErrors({
+          CodeClient: serverErrors.CodeClient
+            ? serverErrors.CodeClient[0]
+            : "",
+          raison_sociale: serverErrors.raison_sociale
+            ? serverErrors.raison_sociale[0]
+            : "",
+          abreviation: serverErrors.abreviation
+            ? serverErrors.abreviation[0]
+            : "",
+          adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
+          tele: serverErrors.tele ? serverErrors.tele[0] : "",
+          ville: serverErrors.ville ? serverErrors.ville[0] : "",
+          zone_id: serverErrors.zone_id ? serverErrors.zone_id[0] : "",
+          ice: serverErrors.ice ? serverErrors.ice[0] : "",
+          code_postal: serverErrors.code_postal
+            ? serverErrors.code_postal[0]
+            : "",
+        });
+      }
+    }
   };
+  
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
@@ -381,36 +522,66 @@ const ClientList = () => {
   const getSelectedClientIds = () => {
     return selectedItems.map((item) => item.id);
   };
-
-  const handleSubmitSC = (e) => {
+  const handleSubmitSC = async (e) => {
     e.preventDefault();
     const selectedClientIds = getSelectedClientIds();
-
     const url = editingSiteClient
-      ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}`
-      : "http://localhost:8000/api/siteclients";
-    const method = editingSiteClient ? "put" : "post";
-
-    // Ajoutez l'ID du client sélectionné au formulaire de site client
-    const formDataWithClientIds = {
-      ...formDataSC,
-      client_id: selectedClientIds.join(", "),
-    };
-    axios({
-      method: method,
-      url: url,
-      data: formDataWithClientIds,
-    })
-      .then(() => {
+    ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}`
+    : "http://localhost:8000/api/siteclients";
+  const method = editingSiteClient ? "put" : "post";
+  
+    let requestData;
+  
+    if (editingClient) {
+      requestData = {
+        CodeSiteclient: formDataSC.CodeSiteclient,
+        raison_sociale: formDataSC.raison_sociale,
+        abreviation: formDataSC.abreviation,
+        adresse: formDataSC.adresse,
+        tele: formDataSC.tele,
+        ville: formDataSC.ville,
+        zone_id: formDataSC.zone_id,
+        ice: formDataSC.ice,
+        code_postal: formDataSC.code_postal,
+        client_id: selectedClientIds.join(", "),
+      };
+    } else {
+      const formDataScd = new FormData();
+      formDataScd.append("CodeSiteclient", formDataSC.CodeSiteclient);
+      formDataScd.append("raison_sociale", formDataSC.raison_sociale);
+      formDataScd.append("abreviation", formDataSC.abreviation);
+      formDataScd.append("adresse", formDataSC.adresse);
+      formDataScd.append("tele", formDataSC.tele);
+      formDataScd.append("ville", formDataSC.ville);
+      formDataScd.append("zone_id", formDataSC.zone_id);
+      formDataScd.append("ice", formDataSC.ice);
+      formDataScd.append("code_postal", formDataSC.code_postal);
+      formDataScd.append("client_id", selectedClientIds.join(", "));
+      if (formDataSC.logoSC) {
+        formDataScd.append("logoSC", formDataSC.logoSC);
+           }
+      requestData = formDataScd;
+    }
+  
+    try {
+      const response = await axios({
+        method: method,
+        url: url,
+        data: requestData,
+      });
+  
+      if (response.status === 200) {
         fetchClients();
+        const successMessage = `SiteClient ${
+          editingClient ? "modifié" : "ajouté"
+        } avec succès.`;
         Swal.fire({
           icon: "success",
           title: "Succès!",
-          text: `Site Client ${
-            editingSiteClient ? "modifié" : "ajouté"
-          } avec succès.`,
+          text: successMessage,
         });
-        setFormDataSC({
+  
+        setFormData({
           CodeSiteclient: "",
           raison_sociale: "",
           abreviation: "",
@@ -418,12 +589,13 @@ const ClientList = () => {
           tele: "",
           ville: "",
           zone_id: "",
-          user_id: "",
           ice: "",
+          logoSC: null,
           code_postal: "",
+          client_id: "",
         });
         setErrors({
-          CodeSiteclient: "",
+          CodeClient: "",
           raison_sociale: "",
           abreviation: "",
           adresse: "",
@@ -433,35 +605,36 @@ const ClientList = () => {
           ice: "",
           code_postal: "",
         });
-        setEditingSiteClient(null); // Clear editing site client
+        setEditingClient(null);
         closeForm();
-      })
-      .catch((error) => {
-        if (error.response) {
-          const serverErrors = error.response.data.error;
-          console.log(serverErrors);
-          setErrors({
-            CodeSiteclient: serverErrors.CodeSiteclient
-              ? serverErrors.CodeSiteclient[0]
-              : "",
-            raison_sociale: serverErrors.raison_sociale
-              ? serverErrors.raison_sociale[0]
-              : "",
-            abreviation: serverErrors.abreviation
-              ? serverErrors.abreviation[0]
-              : "",
-            adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
-            tele: serverErrors.tele ? serverErrors.tele[0] : "",
-            ville: serverErrors.ville ? serverErrors.ville[0] : "",
-            zone_id: serverErrors.zone_id ? serverErrors.zone_id[0] : "",
-            ice: serverErrors.ice ? serverErrors.ice[0] : "",
-            code_postal: serverErrors.code_postal
-              ? serverErrors.code_postal[0]
-              : "",
-          });
-        }
-      });
+      }
+    } catch (error) {
+      if (error.response) {
+        const serverErrors = error.response.data.error;
+        console.log(serverErrors);
+        setErrors({
+          CodeSiteclient: serverErrors.CodeSiteclient
+            ? serverErrors.CodeSiteclient[0]
+            : "",
+          raison_sociale: serverErrors.raison_sociale
+            ? serverErrors.raison_sociale[0]
+            : "",
+          abreviation: serverErrors.abreviation
+            ? serverErrors.abreviation[0]
+            : "",
+          adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
+          tele: serverErrors.tele ? serverErrors.tele[0] : "",
+          ville: serverErrors.ville ? serverErrors.ville[0] : "",
+          zone_id: serverErrors.zone_id ? serverErrors.zone_id[0] : "",
+          ice: serverErrors.ice ? serverErrors.ice[0] : "",
+          code_postal: serverErrors.code_postal
+            ? serverErrors.code_postal[0]
+            : "",
+        });
+      }
+    }
   };
+ 
 
   const handleEditSC = (siteClient) => {
     setEditingSiteClient(siteClient); // Set the client to be edited
@@ -477,6 +650,7 @@ const ClientList = () => {
       user_id: siteClient.user_id,
       ice: siteClient.ice,
       code_postal: siteClient.code_postal,
+      logoSC: siteClient.logoSC,
       client_id: siteClient.client_id,
     });
     if (formContainerStyleSC.right === "-100%") {
@@ -935,6 +1109,16 @@ const ClientList = () => {
                 <Form.Label className="text-center m-2">
                   <h4>{editingClient ? "Modifier" : "Ajouter"} un Client</h4>
                 </Form.Label>
+                <Form.Group className="col-sm-5 m-2" controlId="logoC">
+                  <Form.Label>Logo du Client</Form.Label>
+                  <Form.Control
+                    type="file"
+                    name="logoC"
+                    onChange={handleChange} 
+                    className="form-control-sm"
+                  />
+                  <Form.Text className="text-danger">{errors.logoC}</Form.Text>
+                </Form.Group>
                 <Form.Group className="col-sm-5 m-2 " controlId="CodeClient">
                   <Form.Label>CodeClient</Form.Label>
                   <Form.Control
@@ -1070,7 +1254,7 @@ const ClientList = () => {
                   />
                   <Form.Text className="text-danger">{errors.ice}</Form.Text>
                 </Form.Group>
-                {/* <Form.Group className="col-sm-4 m-2" controlId="user_id">
+                <Form.Group className="col-sm-4 m-2" controlId="user_id">
                   <Form.Label>Utilisateur</Form.Label>
                   <Form.Control
                     type="text"
@@ -1080,9 +1264,9 @@ const ClientList = () => {
                     placeholder="user_id"
                     className="form-control-sm"
                   />
-                </Form.Group> */}
-                <Form.Group className="col-7 m-3">
-                  <Button className="col-6" variant="primary" type="submit">
+                </Form.Group>
+                <Form.Group className="col m-5 text-center">
+                  <Button className="btn btn-danger col-6" type="submit">
                     {editingClient ? "Modifier" : "Ajouter"}
                   </Button>
                   <Button
@@ -1105,6 +1289,14 @@ const ClientList = () => {
                     {editingSiteClient ? "Modifier" : "Ajouter"} Site Client
                   </h4>
                 </Form.Label>
+                <Form.Group className="col-sm-5 m-2" controlId="logoSC">
+                  <Form.Label>Logo du Site  Client</Form.Label>
+                  <Form.Control
+                    type="file"
+                    name="logoSC"
+                    onChange={handleChangeSC} 
+                    className="form-control-sm"
+                  />                </Form.Group>
                 <Form.Group
                   className="col-sm-5 m-2 "
                   controlId="CodeSiteclient"
@@ -1282,6 +1474,7 @@ const ClientList = () => {
                             onChange={handleSelectAllChange}
                           />
                         </th>
+                        <th>Logo</th>
                         <th>CodeClient</th>
                         <th>Raison Sociale</th>
                         <th>Abreviation</th>
@@ -1328,6 +1521,26 @@ const ClientList = () => {
                                   )}
                                   onChange={() => handleSelectItem(client)}
                                 />
+                              </td>
+                              <td>
+                                {/* {client.logoC && (
+                                  <img
+                                    src={`http://localhost:8000/storage/${client.logoC}`}
+                                    alt="Client Logo"
+                                    style={{ width: "50px", height: "50px" }}
+                                  />
+                                )} */}
+                                {client.logoC && (
+                                  <img
+                                    src={client.logoC}
+                                    alt="Logo"
+                                    style={{
+                                      width: "50px",
+                                      height: "50px",
+                                      borderRadius: "50%",
+                                    }}
+                                  />
+                                )}
                               </td>
                               <td>{client.CodeClient}</td>
                               <td>{client.raison_sociale}</td>
@@ -1381,6 +1594,19 @@ const ClientList = () => {
                                             (siteClient) => (
                                               <tr key={siteClient.id}>
                                                 <td colSpan={1}>Site</td>
+                                                <td>
+                                                  {siteClient.logoSC && (
+                                                    <img
+                                                      src={siteClient.logoSC}
+                                                      alt="Logo"
+                                                      style={{
+                                                        width: "50px",
+                                                        height: "50px",
+                                                        borderRadius: "50%",
+                                                      }}
+                                                    />
+                                                  )}
+                                                </td>
                                                 <td>
                                                   {siteClient.CodeSiteclient}
                                                 </td>

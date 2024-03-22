@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Form, Button, Table } from "react-bootstrap";
+import { Form, Button, Table, Row, Col } from "react-bootstrap";
 import "../style.css";
 import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
@@ -379,7 +379,7 @@ const LivreurList = () => {
       details: livreur.permis.map((permis) => ({
         n_permis: permis.n_permis,
         date_permis: permis.date_permis,
-        id_permis:permis.id
+        id_permis: permis.id,
       })),
     });
 
@@ -406,15 +406,15 @@ const LivreurList = () => {
 
   // const handleSubmit = (e) => {
   //   e.preventDefault();
-  
+
   //   // Déterminer si le livreur est mis à jour ou ajouté
   //   const method = editingLivreur ? "put" : "post";
-  
+
   //   // Endpoint pour le livreur
   //   const livreurUrl = editingLivreur
   //     ? `http://localhost:8000/api/livreurs/${editingLivreur.id}`
   //     : "http://localhost:8000/api/livreurs";
-  
+
   //   // Soumettre la requête pour le livreur
   //   axios({
   //     method: method,
@@ -427,13 +427,13 @@ const LivreurList = () => {
   //       cin: formData.cin,
   //     },
   //   })
-   
+
   //     .then((response) => {
   //       console.log(response.data);
   //       const livreurId = response.data.livreur.id;
   //       if (method === "put") {
   //         const updatePromises = formData.details.map((detail, index) => {
-  //           const permisId = detail.id_permis;             
+  //           const permisId = detail.id_permis;
   //           console.log(permisId);
   //           return axios.put(`http://localhost:8000/api/permis/${permisId}`, {
   //             livreur_id: livreurId,
@@ -467,7 +467,7 @@ const LivreurList = () => {
   //             });
   //         });
   //       }
-  
+
   //       // Réinitialisation du formulaire et des erreurs après une soumission réussie
   //       setFormData({
   //         nom: "",
@@ -499,7 +499,7 @@ const LivreurList = () => {
   //       fetchLivreurs();
   //       fetchPermis();
   //     })
-    
+
   //     .catch((error) => {
   //       if (error.response) {
   //         const serverErrors = error.response.data.error;
@@ -516,15 +516,15 @@ const LivreurList = () => {
   // };
   const handleSubmit = (e) => {
     e.preventDefault();
-  
+
     // Déterminer si le livreur est mis à jour ou ajouté
     const method = editingLivreur ? "put" : "post";
-  
+
     // Endpoint pour le livreur
     const livreurUrl = editingLivreur
       ? `http://localhost:8000/api/livreurs/${editingLivreur.id}`
       : "http://localhost:8000/api/livreurs";
-  
+
     // Soumettre la requête pour le livreur
     axios({
       method: method,
@@ -537,105 +537,105 @@ const LivreurList = () => {
         cin: formData.cin,
       },
     })
-    .then((response) => {
+      .then((response) => {
         console.log(response.data);
         const livreurId = response.data.livreur.id;
-        
+
         // Si la méthode est PUT, mettez à jour les permis existants
         if (method === "put") {
-            const updatePromises = formData.details.map((detail, index) => {
-                const permisId = detail.id_permis;             
-                console.log(permisId);
-                // Si le permis existe, effectuez une requête PUT pour le mettre à jour
-                if (permisId) {
-                    return axios.put(`http://localhost:8000/api/permis/${permisId}`, {
-                        livreur_id: livreurId,
-                        n_permis: detail.n_permis,
-                        type_permis: formData.type_permis[index],
-                        date_permis: detail.date_permis,
-                    });
-                } else {
-                    // Sinon, effectuez une requête POST pour ajouter un nouveau permis
-                    return axios.post("http://localhost:8000/api/permis", {
-                        livreur_id: livreurId,
-                        n_permis: formData.details[index].n_permis,
-                        type_permis: formData.type_permis[index],
-                        date_permis: formData.details[index].date_permis,
-                    });
-                }
-            });
-            
-            // Exécuter toutes les requêtes en parallèle
-            Promise.all(updatePromises)
+          const updatePromises = formData.details.map((detail, index) => {
+            const permisId = detail.id_permis;
+            console.log(permisId);
+            // Si le permis existe, effectuez une requête PUT pour le mettre à jour
+            if (permisId) {
+              return axios.put(`http://localhost:8000/api/permis/${permisId}`, {
+                livreur_id: livreurId,
+                n_permis: detail.n_permis,
+                type_permis: formData.type_permis[index],
+                date_permis: detail.date_permis,
+              });
+            } else {
+              // Sinon, effectuez une requête POST pour ajouter un nouveau permis
+              return axios.post("http://localhost:8000/api/permis", {
+                livreur_id: livreurId,
+                n_permis: formData.details[index].n_permis,
+                type_permis: formData.type_permis[index],
+                date_permis: formData.details[index].date_permis,
+              });
+            }
+          });
+
+          // Exécuter toutes les requêtes en parallèle
+          Promise.all(updatePromises)
             .then((results) => {
-                console.log("Permis mis à jour avec succès :", results);
+              console.log("Permis mis à jour avec succès :", results);
             })
             .catch((error) => {
-                console.error("Erreur lors de la mise à jour des permis :", error);
+              console.error(
+                "Erreur lors de la mise à jour des permis :",
+                error
+              );
             });
         } else {
-            // Sinon, si la méthode est POST, ajoutez de nouveaux permis
-            formData.type_permis.forEach((type_permis, index) => {
-                axios
-                .post("http://localhost:8000/api/permis", {
-                    livreur_id: livreurId,
-                    n_permis: formData.details[index].n_permis,
-                    type_permis: type_permis,
-                    date_permis: formData.details[index].date_permis,
-                })
-                .catch((error) => {
-                    console.error("Erreur lors de l'insertion du permis :", error);
-                });
-            });
+          // Sinon, si la méthode est POST, ajoutez de nouveaux permis
+          formData.type_permis.forEach((type_permis, index) => {
+            axios
+              .post("http://localhost:8000/api/permis", {
+                livreur_id: livreurId,
+                n_permis: formData.details[index].n_permis,
+                type_permis: type_permis,
+                date_permis: formData.details[index].date_permis,
+              })
+              .catch((error) => {
+                console.error("Erreur lors de l'insertion du permis :", error);
+              });
+          });
         }
-  
+
         // Réinitialisation du formulaire et des erreurs après une soumission réussie
         setFormData({
-            nom: "",
-            prenom: "",
-            adresse: "",
-            tele: "",
-            cin: "",
-            type_permis: [],
-            details: [],
+          nom: "",
+          prenom: "",
+          adresse: "",
+          tele: "",
+          cin: "",
+          type_permis: [],
+          details: [],
         });
         setErrors({
-            nom: "",
-            prenom: "",
-            adresse: "",
-            tele: "",
-            cin: "",
-            details: [],
-            type_permis: [],
+          nom: "",
+          prenom: "",
+          adresse: "",
+          tele: "",
+          cin: "",
+          details: [],
+          type_permis: [],
         });
         setEditingLivreur(null); // Clear editing livreur
         closeForm();
         Swal.fire({
-            icon: "success",
-            title: "Succès!",
-            text: `Livreur ${
-            editingLivreur ? "modifié" : "ajouté"
-            } avec succès.`,
+          icon: "success",
+          title: "Succès!",
+          text: `Livreur ${editingLivreur ? "modifié" : "ajouté"} avec succès.`,
         });
         fetchLivreurs();
         fetchPermis();
-    })
-    
-    .catch((error) => {
-        if (error.response) {
-            const serverErrors = error.response.data.error;
-            console.log(serverErrors);
-            setErrors({
-                nom: serverErrors.nom ? serverErrors.nom[0] : "",
-                prenom: serverErrors.prenom ? serverErrors.prenom[0] : "",
-                adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
-                tele: serverErrors.tele ? serverErrors.tele[0] : "",
-                cin: serverErrors.cin ? serverErrors.cin[0] : "",
-            });
-        }
-    });
-};
+      })
 
+      .catch((error) => {
+        if (error.response) {
+          const serverErrors = error.response.data.error;
+          console.log(serverErrors);
+          setErrors({
+            nom: serverErrors.nom ? serverErrors.nom[0] : "",
+            prenom: serverErrors.prenom ? serverErrors.prenom[0] : "",
+            adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
+            tele: serverErrors.tele ? serverErrors.tele[0] : "",
+            cin: serverErrors.cin ? serverErrors.cin[0] : "",
+          });
+        }
+      });
+  };
 
   //------------------------- fournisseur FORM---------------------//
 
@@ -917,9 +917,13 @@ const LivreurList = () => {
                     </Table>
                   </div>
 
-                  <Button variant="primary" onClick={handleAddPermis}>
-                    Ajouter un permis
-                  </Button>
+                  <Row className="justify-content-center">
+                    <Col xs={6} className="text-center">
+                      <Button onClick={handleAddPermis}>
+                        Ajouter un permis
+                      </Button>
+                    </Col>
+                  </Row>
                   <div className="mt-5">
                     <Form.Group className="col m-3 text-center">
                       <Button type="submit" className="btn btn-danger col-6">

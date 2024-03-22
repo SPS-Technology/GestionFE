@@ -49,12 +49,13 @@ const ProduitList = () => {
     marginRight: "0px",
   });
   const [showForm, setShowForm] = useState(false);
+  const [calibres, setCalibres] = useState([]);
 
   const [formData, setFormData] = useState({
     Code_produit: "",
     designation: "",
     type_quantite: "",
-    calibre: "",
+    calibre_id: "",
     user_id: "",
     categorie_id: "",
   });
@@ -62,14 +63,42 @@ const ProduitList = () => {
     Code_produit: "",
     designation: "",
     type_quantite: "",
-    calibre: "",
+    calibre_id: "",
     user_id: "",
-    categorie_id: "",
+    categorie_id: ""
   });
-  useEffect(() => {
-    fetchProduits();
-  }, []);
-
+  useEffect(
+    () => {
+      fetchCalibres();
+      fetchProduits();
+      fetchCategories();
+    },
+    [],
+    [],
+    []
+  );
+  const fetchCalibres = async () => {
+    try {
+      const responseCalibre = await axios.get(
+        "http://localhost:8000/api/calibres"
+      );
+      setCalibres(responseCalibre.data);
+      console.log("calibres", responseCalibre);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  const fetchCategories = async () => {
+    try {
+      const responseCategories = await axios.get(
+        "http://localhost:8000/api/categories"
+      );
+      setCategories(responseCategories.data);
+      console.log("categories", responseCategories);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
   const fetchProduits = async () => {
     try {
       const response = await axios.get("http://localhost:8000/api/produits");
@@ -256,20 +285,20 @@ const ProduitList = () => {
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
     setFormData({
-      designation: "",
       Code_produit: "",
-      type_quantite: "",
-      calibre: "",
-      categorie_id: "",
-      user_id: "",
+    designation: "",
+    type_quantite: "",
+    calibre_id: "",
+    user_id: "",
+    categorie_id: ""
     });
     setErrors({
       Code_produit: "",
       designation: "",
       type_quantite: "",
-      calibre: "",
+      calibre_id: "",
       user_id: "",
-      categorie_id: "",
+      categorie_id: ""
     });
     setEditingProduit(null); // Clear editing client
   };
@@ -280,7 +309,7 @@ const ProduitList = () => {
       Code_produit: produit.Code_produit,
       designation: produit.designation,
       type_quantite: produit.type_quantite,
-      calibre: produit.calibre,
+      calibre_id: produit.calibre_id,
       categorie_id: produit.categorie_id,
       user_id: user.id,
     });
@@ -334,17 +363,17 @@ const ProduitList = () => {
           Code_produit: "",
           designation: "",
           type_quantite: "",
-          calibre: "",
-          categorie_id: "",
+          calibre_id: "",
           user_id: "",
+          categorie_id: ""
         });
         setErrors({
           Code_produit: "",
           designation: "",
           type_quantite: "",
-          calibre: "",
+          calibre_id: "",
           user_id: "",
-          categorie_id: "",
+          categorie_id: ""
         });
         setEditingProduit(null);
         closeForm();
@@ -363,7 +392,7 @@ const ProduitList = () => {
             type_quantite: serverErrors.type_quantite
               ? serverErrors.type_quantite[0]
               : "",
-            calibre: serverErrors.calibre ? serverErrors.calibre[0] : "",
+            calibre_id: serverErrors.calibre_id ? serverErrors.calibre_id[0] : "",
             categorie_id: serverErrors.categorie_id
               ? serverErrors.categorie_id[0]
               : "",
@@ -554,6 +583,50 @@ const ProduitList = () => {
     }
   });
 
+
+  const handleAddCalibre = async () => {
+    const { value: calibreData } = await Swal.fire({
+      title: "Ajouter un Calibre",
+      html: `
+        <form id="addCalibreForm">
+          <input id="swal-input1" class="swal2-input" placeholder="Calibre" name="calibre">
+          
+        </form>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Ajouter",
+      cancelButtonText: "Annuler",
+      preConfirm: () => {
+        const calibre = Swal.getPopup().querySelector("#swal-input1").value;
+
+        return { calibre };
+      },
+    });
+
+    if (calibreData) {
+      try {
+        const response = await axios.post(
+          "http://localhost:8000/api/calibres",
+          calibreData
+        );
+
+        fetchProduits();
+        console.log(response.data);
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Calibre ajoutée avec succès.",
+        });
+      } catch (error) {
+        console.error("Error adding calibre:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Erreur!",
+          text: "Échec de l'ajout de la calibre.",
+        });
+      }
+    }
+  };
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
@@ -674,19 +747,40 @@ const ProduitList = () => {
                     {errors.type_quantite}
                   </Form.Text>
                 </Form.Group>
-                <Form.Group className="col-sm-5 m-2 " controlId="calibre">
+                <Form.Group className="col-sm-5 m-2" controlId="calibre_id">
+                  <FontAwesomeIcon
+                    icon={faPlus}
+                    className="ml-2 text-primary"
+                    style={{ cursor: "pointer" }}
+                    onClick={handleAddCalibre}
+                  />
                   <Form.Label>Calibre</Form.Label>
+
+                  <Form.Select
+                    name="calibre_id"
+                    value={formData.calibre_id}
+                    onChange={handleChange}
+                    className="form-select form-select-sm"
+                    required
+                  >
+                    <option value="">Sélectionner un calibre</option>
+                    {calibres.map((calibre) => (
+                      <option key={calibre.id} value={calibre.id}>
+                        {calibre.calibre}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="col-sm-5 m-2 " controlId="prix_vente">
+                  <Form.Label>Prix Vente</Form.Label>
                   <Form.Control
                     type="text"
-                    name="calibre"
-                    value={formData.calibre}
+                    name="prix_vente"
+                    value={formData.prix_vente}
                     onChange={handleChange}
-                    placeholder="Calibre"
+                    placeholder="Prix Vente"
                     className="form-control-sm"
                   />
-                  <Form.Text className="text-danger">
-                    {errors.calibre}
-                  </Form.Text>
                 </Form.Group>
                 <Form.Group className="col-sm-5 m-2" controlId="categorie_id">
                   <FontAwesomeIcon
@@ -764,6 +858,7 @@ const ProduitList = () => {
                       <th style={tableHeaderStyle}>designation</th>
                       <th style={tableHeaderStyle}>Type de Quantité</th>
                       <th style={tableHeaderStyle}>Calibre</th>
+                      <th style={tableHeaderStyle}>Prix vente</th>
                       <th style={tableHeaderStyle}>categorie</th>
                       <th style={tableHeaderStyle}>user</th>
                       <th
@@ -798,7 +893,10 @@ const ProduitList = () => {
                           <td>{produit.Code_produit}</td>
                           <td>{produit.designation}</td>
                           <td>{produit.type_quantite}</td>
-                          <td>{produit.calibre}</td>
+                          <td style={tableCellStyle}>
+                            {produit.calibre.calibre}
+                          </td>
+                          <td style={tableCellStyle}>{produit.prix_vente}</td>
                           <td>
                             {produit.categorie
                               ? produit.categorie.categorie
