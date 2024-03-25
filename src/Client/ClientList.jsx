@@ -782,559 +782,540 @@ const ClientList = () => {
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
 
-          <div className="container">
-            <h3>Liste des Clients</h3>
-            <div
-              className="search-container d-flex flex-row-reverse "
-              role="search"
-            >
-              <Search onSearch={handleSearch} type="search" />
-            </div>
-            <Button
-              variant="primary"
-              className="col-2 btn btn-sm m-2"
-              id="showFormButton"
-              onClick={handleShowFormButtonClick}
-            >
-              {showForm ? "Modifier le formulaire" : "Ajouter un Client"}
-            </Button>
-            <Button
-              variant="primary"
-              className="col-2 btn btn-sm m-2"
-              id="showFormButton"
-              onClick={() => {
-                if (selectedItems.length === 1) {
-                  handleShowFormButtonClickSC();
-                } else if (selectedItems.length > 1) {
-                  console.error(
-                    "Vous ne pouvez ajouter qu'un seul site client à la fois."
-                  );
-                } else {
-                  console.error(
-                    "Aucun client sélectionné pour ajouter un site client."
-                  );
-                }
-              }}
-              disabled={selectedItems.length === 0 || selectedItems.length > 1} // Désactiver le bouton si aucun client n'est sélectionné ou si plus d'un client est sélectionné
-            >
-              {showForm ? "Modifier Site Client" : "Ajouter Site Client"}
-            </Button>
-            <div id="formContainer" className="" style={formContainerStyle}>
-              <Form className="col row" onSubmit={handleSubmit}>
-                <Form.Label className="text-center m-2">
-                  <h4>{editingClient ? "Modifier" : "Ajouter"} un Client</h4>
-                </Form.Label>
-                <Form.Group
-                  className="col-sm-5 m-2 "
-                  controlId="raison_sociale"
-                >
-                  <Form.Label>Raison Sociale</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="raison_sociale"
-                    value={formData.raison_sociale}
-                    onChange={handleChange}
-                    placeholder="Raison Sociale"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2 " controlId="abreviation">
-                  <Form.Label>abreviation</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="abreviation"
-                    value={formData.abreviation}
-                    onChange={handleChange}
-                    placeholder="abreviation"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-10 m-2" controlId="adresse">
-                  <Form.Label>Adresse</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="adresse"
-                    value={formData.adresse}
-                    onChange={handleChange}
-                    placeholder="Adresse"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="tele">
-                  <Form.Label>Téléphone</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    name="tele"
-                    value={formData.tele}
-                    onChange={handleChange}
-                    placeholder="06XXXXXXXX"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="ville">
-                  <Form.Label>Ville</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ville"
-                    value={formData.ville}
-                    onChange={handleChange}
-                    placeholder="Ville"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" id="zone_id">
-                  <FontAwesomeIcon
-                    icon={faPlus}
-                    className="ml-2 text-primary"
-                    style={{ cursor: "pointer" }}
-                    onClick={handleAddZone}
-                    onChange={handleChange}
-                  />
-                  <Form.Label>Zone</Form.Label>
-                  <Form.Control
-                    as="select"
-                    name="zone_id"
-                    value={formData.zone_id}
-                    onChange={handleChange}
-                  >
-                    <option value="">Sélectionner Zone</option>
-                    {zones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.zone}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
-                  <Form.Label>Code Postal</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="code_postal"
-                    value={formData.code_postal}
-                    onChange={handleChange}
-                    placeholder="code_postal"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="zone_id">
-                  <Form.Label>ICE</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ice"
-                    value={formData.ice}
-                    onChange={handleChange}
-                    placeholder="ice"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="user_id">
-                  <Form.Label>Utilisateur</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="user_id"
-                    value={formData.user_id}
-                    onChange={handleChange}
-                    placeholder="user_id"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-7 m-3">
-                  <Button className="col-6" variant="primary" type="submit">
-                    {editingClient ? "Modifier" : "Ajouter"}
-                  </Button>
-                  <Button
-                    className="btn btn-secondary col-5 offset-1"
-                    onClick={closeForm}
-                  >
-                    Annuler
-                  </Button>
-                </Form.Group>
-              </Form>
-            </div>
-            <div
-              id="formContainer1SC"
-              className=""
-              style={formContainerStyleSC}
-            >
-              <Form className="col row" onSubmit={handleSubmitSC}>
-                <Form.Label className="text-center m-2">
-                  <h4>
-                    {editingSiteClient ? "Modifier" : "Ajouter"} Site Client
-                  </h4>
-                </Form.Label>
-                <Form.Group
-                  className="col-sm-5 m-2 "
-                  controlId="raison_sociale"
-                >
-                  <Form.Label>Raison Sociale</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="raison_sociale"
-                    value={formDataSC.raison_sociale}
-                    onChange={handleChangeSC}
-                    placeholder="Raison Sociale"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2 " controlId="abreviation">
-                  <Form.Label>abreviation</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="abreviation"
-                    value={formDataSC.abreviation}
-                    onChange={handleChangeSC}
-                    placeholder="abreviation"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-10 m-2" controlId="adresse">
-                  <Form.Label>Adresse</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="adresse"
-                    value={formDataSC.adresse}
-                    onChange={handleChangeSC}
-                    placeholder="Adresse"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="tele">
-                  <Form.Label>Téléphone</Form.Label>
-                  <Form.Control
-                    type="tel"
-                    name="tele"
-                    value={formDataSC.tele}
-                    onChange={handleChangeSC}
-                    placeholder="06XXXXXXXX"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="ville">
-                  <Form.Label>Ville</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ville"
-                    value={formDataSC.ville}
-                    onChange={handleChangeSC}
-                    placeholder="Ville"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" id="zone_id">
-                  <FontAwesomeIcon
-                    icon={faPlus}
-                    className="ml-2 text-primary"
-                    style={{ cursor: "pointer" }}
-                    onClick={handleAddZone}
-                    onChange={handleChangeSC}
-                  />
-                  <Form.Label>Zone</Form.Label>
-                  <Form.Control
-                    as="select"
-                    name="zone_id"
-                    value={formDataSC.zone_id}
-                    onChange={handleChangeSC}
-                  >
-                    <option value="">Sélectionner Zone</option>
-                    {zones.map((zone) => (
-                      <option key={zone.id} value={zone.id}>
-                        {zone.zone}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="code_postal">
-                  <Form.Label>Code Postal</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="code_postal"
-                    value={formDataSC.code_postal}
-                    onChange={handleChangeSC}
-                    placeholder="code_postal"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="ice">
-                  <Form.Label>ICE</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="ice"
-                    value={formDataSC.ice}
-                    onChange={handleChangeSC}
-                    placeholder="ice"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="user_id">
-                  <Form.Label>Utilisateur</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="user_id"
-                    value={formDataSC.user_id}
-                    onChange={handleChangeSC}
-                    placeholder="user_id"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group
-                  className="col-sm-4 m-2 hidden"
-                  controlId="client_id"
-                >
-                  <Form.Label>Client</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="client_id"
-                    value={
-                      selectedItems
-                        ? selectedItems.map((client) => client.id).join(", ")
-                        : ""
-                    }
-                    onChange={handleChangeSC}
-                    placeholder="client_id"
-                    className="form-control-sm"
-                  />
-                </Form.Group>
-                <Form.Group className="col-7 m-3">
-                  <Button className="col-6" variant="primary" type="submit">
-                    {editingSiteClient ? "Modifier" : "Ajouter"}
-                  </Button>
-                  <Button
-                    className="btn btn-secondary col-5 offset-1"
-                    onClick={closeFormSC}
-                  >
-                    Annuler
-                  </Button>
-                </Form.Group>
-              </Form>
-            </div>
-            <div className="">
-              <div
-                id="tableContainer"
-                className="table-responsive-sm"
-                style={tableContainerStyle}
-              >
-                {clients && clients.length > 0 ? (
-                  <table className="table table-responsive" id="clientsTable">
-                    <thead className="text-center">
-                      <tr>
-                        <th>{/* vide */}</th>
-                        <th>
-                          <input
-                            type="checkbox"
-                            checked={selectAll}
-                            onChange={handleSelectAllChange}
-                          />
-                        </th>
-                        <th>Raison Sociale</th>
-                        <th>Abreviation</th>
-                        <th>Adresse</th>
-                        <th>Téléphone</th>
-                        <th>Ville</th>
-                        <th>Code Postal</th>
-                        <th>ICE</th>
-                        <th>Zone</th>
-                        <th>User</th>
-                        <th className="text-center">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-center">
-                      {filteredclients
-                        .slice(
-                          page * rowsPerPage,
-                          page * rowsPerPage + rowsPerPage
-                        )
-                        .map((client) => (
-                          <React.Fragment key={client.id}>
-                            <tr>
-                              <td>
-                                <div className="no-print ">
-                                  <button
-                                    className="btn btn-sm btn-light"
-                                    onClick={() => toggleRow(client.id)}
-                                  >
-                                    <FontAwesomeIcon
-                                      icon={
-                                        expandedRows.includes(client.id)
-                                          ? faMinus
-                                          : faPlus
-                                      }
-                                    />
-                                  </button>
-                                </div>
-                              </td>
-                              <td>
-                                <input
-                                  type="checkbox"
-                                  checked={selectedItems.some(
-                                    (item) => item.id === client.id
-                                  )}
-                                  onChange={() => handleSelectItem(client)}
-                                />
-                              </td>
-                              <td>{client.raison_sociale}</td>
-                              <td>{client.abreviation}</td>
-                              <td>{client.adresse}</td>
-                              <td>{client.tele}</td>
-                              <td>{client.ville}</td>
-                              <td>{client.code_postal}</td>
-                              <td>{client.ice}</td>
-                              <td>{client.zone.zone}</td>
-                              <td>{client.user.name}</td>
-                              <td className="d-inline-flex">
-                                <button
-                                  className="btn btn-sm btn-info m-1"
-                                  onClick={() => handleEdit(client)}
-                                >
-                                  <i className="fas fa-edit"></i>
-                                </button>
-                                <button
-                                  className="btn btn-danger btn-sm m-1"
-                                  onClick={() => handleDelete(client.id)}
-                                >
-                                  <i className="fas fa-minus-circle"></i>
-                                </button>
-                              </td>
-                            </tr>
-                            {expandedRows.includes(client.id) &&
-                              client.siteClients && (
-                                <tr>
-                                  <td colSpan="12">
-                                    <div id="client">
-                                      <table
-                                        className="table table-responsive"
-                                        style={{ backgroundColor: "#F1F1F1" }}
-                                      >
-                                        <thead>
-                                          <tr>
-                                            <th>Raison Sociale</th>
-                                            <th>Abreviation</th>
-                                            <th>Adresse</th>
-                                            <th>Téléphone</th>
-                                            <th>Ville</th>
-                                            <th>Code Postal</th>
-                                            <th>ICE</th>
-                                            <th>Zone</th>
-                                            <th className="text-center">
-                                              Action
-                                            </th>
-                                          </tr>
-                                        </thead>
-                                        <tbody>
-                                          {client.siteClients.map(
-                                            (siteClient) => (
-                                              <tr key={siteClient.id}>
-                                                <td>
-                                                  {siteClient.raison_sociale}
-                                                </td>
-                                                <td>
-                                                  {siteClient.abreviation}
-                                                </td>
-                                                <td>{siteClient.adresse}</td>
-                                                <td>{siteClient.tele}</td>
-                                                <td>{siteClient.ville}</td>
-                                                <td>
-                                                  {siteClient.code_postal}
-                                                </td>
-                                                <td>{siteClient.ice}</td>
-                                                <td>{siteClient.zone_id}</td>
-                                                <td className="no-print">
-                                                  <button
-                                                    className="btn btn-sm btn-info m-1"
-                                                    onClick={() => {
-                                                      if (
-                                                        selectedItems.length ===
-                                                        1
-                                                      ) {
-                                                        handleEditSC(
-                                                          siteClient
-                                                        );
-                                                      } else if (
-                                                        selectedItems.length > 1
-                                                      ) {
-                                                        console.error(
-                                                          "Vous ne pouvez modifier qu'un seul site client à la fois."
-                                                        );
-                                                      } else {
-                                                        console.error(
-                                                          "Aucun client sélectionné pour modifier un site client."
-                                                        );
-                                                      }
-                                                    }}
-                                                    disabled={
-                                                      selectedItems.length ===
-                                                        0 ||
-                                                      selectedItems.length > 1
-                                                    }
-                                                  >
-                                                    <i className="fas fa-edit"></i>
-                                                  </button>
-                                                  <button
-                                                    className="btn btn-sm btn-danger m-1"
-                                                    onClick={() =>
-                                                      handleDeleteSiteClient(
-                                                        siteClient.id
-                                                      )
-                                                    }
-                                                  >
-                                                    <FontAwesomeIcon
-                                                      icon={faTrash}
-                                                    />
-                                                  </button>
-                                                </td>
-                                              </tr>
-                                            )
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </td>
-                                </tr>
-                              )}
-                          </React.Fragment>
-                        ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <div className="text-center">
-                    <h5>Aucun client</h5>
-                  </div>
-                )}
-                <div className="d-flex flex-row">
-                  <div className="btn-group col-2">
-                    <Button
-                      className="btn btn-danger btn-sm"
-                      onClick={handleDeleteSelected}
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                    <PrintList
-                      tableId="clientsTable"
-                      title="Liste des clients"
-                      clientList={clients}
-                      filteredclients={filteredclients}
-                    />
-                    <ExportPdfButton
-                      clients={clients}
-                      selectedItems={selectedItems}
-                    />
-                    <Button
-                      className="btn btn-success btn-sm ml-2"
-                      onClick={exportToExcel}
-                    >
-                      <FontAwesomeIcon icon={faFileExcel} />
-                    </Button>
-                  </div>
-                </div>
-                <TablePagination
-                  rowsPerPageOptions={[5, 10, 25]}
-                  component="div"
-                  count={filteredclients.length}
-                  rowsPerPage={rowsPerPage}
-                  page={page}
-                  onPageChange={handleChangePage}
-                  onRowsPerPageChange={handleChangeRowsPerPage}
+          <h3>Liste des Clients</h3>
+          <div
+            className="search-container d-flex flex-row-reverse "
+            role="search"
+          >
+            <Search onSearch={handleSearch} type="search" />
+          </div>
+          <Button
+            variant="primary"
+            className="col-2 btn btn-sm m-2"
+            id="showFormButton"
+            onClick={handleShowFormButtonClick}
+          >
+            {showForm ? "Modifier le formulaire" : "Ajouter un Client"}
+          </Button>
+          <Button
+            variant="primary"
+            className="col-2 btn btn-sm m-2"
+            id="showFormButton"
+            onClick={() => {
+              if (selectedItems.length === 1) {
+                handleShowFormButtonClickSC();
+              } else if (selectedItems.length > 1) {
+                console.error(
+                  "Vous ne pouvez ajouter qu'un seul site client à la fois."
+                );
+              } else {
+                console.error(
+                  "Aucun client sélectionné pour ajouter un site client."
+                );
+              }
+            }}
+            disabled={selectedItems.length === 0 || selectedItems.length > 1} // Désactiver le bouton si aucun client n'est sélectionné ou si plus d'un client est sélectionné
+          >
+            {showForm ? "Modifier Site Client" : "Ajouter Site Client"}
+          </Button>
+          <div id="formContainer" className="" style={formContainerStyle}>
+            <Form className="col row" onSubmit={handleSubmit}>
+              <Form.Label className="text-center m-2">
+                <h4>{editingClient ? "Modifier" : "Ajouter"} un Client</h4>
+              </Form.Label>
+              <Form.Group className="col-sm-5 m-2 " controlId="raison_sociale">
+                <Form.Label>Raison Sociale</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="raison_sociale"
+                  value={formData.raison_sociale}
+                  onChange={handleChange}
+                  placeholder="Raison Sociale"
+                  className="form-control-sm"
                 />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2 " controlId="abreviation">
+                <Form.Label>abreviation</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="abreviation"
+                  value={formData.abreviation}
+                  onChange={handleChange}
+                  placeholder="abreviation"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-10 m-2" controlId="adresse">
+                <Form.Label>Adresse</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="adresse"
+                  value={formData.adresse}
+                  onChange={handleChange}
+                  placeholder="Adresse"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2" controlId="tele">
+                <Form.Label>Téléphone</Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="tele"
+                  value={formData.tele}
+                  onChange={handleChange}
+                  placeholder="06XXXXXXXX"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2" controlId="ville">
+                <Form.Label>Ville</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ville"
+                  value={formData.ville}
+                  onChange={handleChange}
+                  placeholder="Ville"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" id="zone_id">
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  className="ml-2 text-primary"
+                  style={{ cursor: "pointer" }}
+                  onClick={handleAddZone}
+                  onChange={handleChange}
+                />
+                <Form.Label>Zone</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="zone_id"
+                  value={formData.zone_id}
+                  onChange={handleChange}
+                >
+                  <option value="">Sélectionner Zone</option>
+                  {zones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.zone}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                <Form.Label>Code Postal</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="code_postal"
+                  value={formData.code_postal}
+                  onChange={handleChange}
+                  placeholder="code_postal"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="zone_id">
+                <Form.Label>ICE</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ice"
+                  value={formData.ice}
+                  onChange={handleChange}
+                  placeholder="ice"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="user_id">
+                <Form.Label>Utilisateur</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="user_id"
+                  value={formData.user_id}
+                  onChange={handleChange}
+                  placeholder="user_id"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-7 m-3">
+                <Button className="col-6" variant="primary" type="submit">
+                  {editingClient ? "Modifier" : "Ajouter"}
+                </Button>
+                <Button
+                  className="btn btn-secondary col-5 offset-1"
+                  onClick={closeForm}
+                >
+                  Annuler
+                </Button>
+              </Form.Group>
+            </Form>
+          </div>
+          <div id="formContainer1SC" className="" style={formContainerStyleSC}>
+            <Form className="col row" onSubmit={handleSubmitSC}>
+              <Form.Label className="text-center m-2">
+                <h4>
+                  {editingSiteClient ? "Modifier" : "Ajouter"} Site Client
+                </h4>
+              </Form.Label>
+              <Form.Group className="col-sm-5 m-2 " controlId="raison_sociale">
+                <Form.Label>Raison Sociale</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="raison_sociale"
+                  value={formDataSC.raison_sociale}
+                  onChange={handleChangeSC}
+                  placeholder="Raison Sociale"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2 " controlId="abreviation">
+                <Form.Label>abreviation</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="abreviation"
+                  value={formDataSC.abreviation}
+                  onChange={handleChangeSC}
+                  placeholder="abreviation"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-10 m-2" controlId="adresse">
+                <Form.Label>Adresse</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="adresse"
+                  value={formDataSC.adresse}
+                  onChange={handleChangeSC}
+                  placeholder="Adresse"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2" controlId="tele">
+                <Form.Label>Téléphone</Form.Label>
+                <Form.Control
+                  type="tel"
+                  name="tele"
+                  value={formDataSC.tele}
+                  onChange={handleChangeSC}
+                  placeholder="06XXXXXXXX"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-5 m-2" controlId="ville">
+                <Form.Label>Ville</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ville"
+                  value={formDataSC.ville}
+                  onChange={handleChangeSC}
+                  placeholder="Ville"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" id="zone_id">
+                <FontAwesomeIcon
+                  icon={faPlus}
+                  className="ml-2 text-primary"
+                  style={{ cursor: "pointer" }}
+                  onClick={handleAddZone}
+                  onChange={handleChangeSC}
+                />
+                <Form.Label>Zone</Form.Label>
+                <Form.Control
+                  as="select"
+                  name="zone_id"
+                  value={formDataSC.zone_id}
+                  onChange={handleChangeSC}
+                >
+                  <option value="">Sélectionner Zone</option>
+                  {zones.map((zone) => (
+                    <option key={zone.id} value={zone.id}>
+                      {zone.zone}
+                    </option>
+                  ))}
+                </Form.Control>
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="code_postal">
+                <Form.Label>Code Postal</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="code_postal"
+                  value={formDataSC.code_postal}
+                  onChange={handleChangeSC}
+                  placeholder="code_postal"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="ice">
+                <Form.Label>ICE</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="ice"
+                  value={formDataSC.ice}
+                  onChange={handleChangeSC}
+                  placeholder="ice"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2" controlId="user_id">
+                <Form.Label>Utilisateur</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="user_id"
+                  value={formDataSC.user_id}
+                  onChange={handleChangeSC}
+                  placeholder="user_id"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-sm-4 m-2 hidden" controlId="client_id">
+                <Form.Label>Client</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="client_id"
+                  value={
+                    selectedItems
+                      ? selectedItems.map((client) => client.id).join(", ")
+                      : ""
+                  }
+                  onChange={handleChangeSC}
+                  placeholder="client_id"
+                  className="form-control-sm"
+                />
+              </Form.Group>
+              <Form.Group className="col-7 m-3">
+                <Button className="col-6" variant="primary" type="submit">
+                  {editingSiteClient ? "Modifier" : "Ajouter"}
+                </Button>
+                <Button
+                  className="btn btn-secondary col-5 offset-1"
+                  onClick={closeFormSC}
+                >
+                  Annuler
+                </Button>
+              </Form.Group>
+            </Form>
+          </div>
+          <div className="">
+            <div
+              id="tableContainer"
+              className="table-responsive-sm"
+              style={tableContainerStyle}
+            >
+              {clients && clients.length > 0 ? (
+                <table
+                  className="table table-responsive table-bordered"
+                  id="clientsTable"
+                >
+                  <thead className="text-center">
+                    <tr>
+                      <th>{/* vide */}</th>
+                      <th>
+                        <input
+                          type="checkbox"
+                          checked={selectAll}
+                          onChange={handleSelectAllChange}
+                        />
+                      </th>
+                      <th>Raison Sociale</th>
+                      <th>Abreviation</th>
+                      <th>Adresse</th>
+                      <th>Téléphone</th>
+                      <th>Ville</th>
+                      <th>Code Postal</th>
+                      <th>ICE</th>
+                      <th>Zone</th>
+                      <th>User</th>
+                      <th className="text-center">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-center">
+                    {filteredclients
+                      .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                      )
+                      .map((client) => (
+                        <React.Fragment key={client.id}>
+                          <tr>
+                            <td>
+                              <div className="no-print ">
+                                <button
+                                  className="btn btn-sm btn-light"
+                                  onClick={() => toggleRow(client.id)}
+                                >
+                                  <FontAwesomeIcon
+                                    icon={
+                                      expandedRows.includes(client.id)
+                                        ? faMinus
+                                        : faPlus
+                                    }
+                                  />
+                                </button>
+                              </div>
+                            </td>
+                            <td>
+                              <input
+                                type="checkbox"
+                                checked={selectedItems.some(
+                                  (item) => item.id === client.id
+                                )}
+                                onChange={() => handleSelectItem(client)}
+                              />
+                            </td>
+                            <td>{client.raison_sociale}</td>
+                            <td>{client.abreviation}</td>
+                            <td>{client.adresse}</td>
+                            <td>{client.tele}</td>
+                            <td>{client.ville}</td>
+                            <td>{client.code_postal}</td>
+                            <td>{client.ice}</td>
+                            <td>{client.zone.zone}</td>
+                            <td>{client.user.name}</td>
+                            <td className="d-inline-flex">
+                              <button
+                                className="btn btn-sm btn-info m-1"
+                                onClick={() => handleEdit(client)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </button>
+                              <button
+                                className="btn btn-danger btn-sm m-1"
+                                onClick={() => handleDelete(client.id)}
+                              >
+                                <i className="fas fa-minus-circle"></i>
+                              </button>
+                            </td>
+                          </tr>
+                          {expandedRows.includes(client.id) &&
+                            client.siteClients && (
+                              <tr>
+                                <td colSpan="12">
+                                  <div id="client">
+                                    <table
+                                      className="table table-responsive"
+                                      style={{ backgroundColor: "#F1F1F1" }}
+                                    >
+                                      <thead>
+                                        <tr>
+                                          <th>Raison Sociale</th>
+                                          <th>Abreviation</th>
+                                          <th>Adresse</th>
+                                          <th>Téléphone</th>
+                                          <th>Ville</th>
+                                          <th>Code Postal</th>
+                                          <th>ICE</th>
+                                          <th>Zone</th>
+                                          <th className="text-center">
+                                            Action
+                                          </th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {client.siteClients.map(
+                                          (siteClient) => (
+                                            <tr key={siteClient.id}>
+                                              <td>
+                                                {siteClient.raison_sociale}
+                                              </td>
+                                              <td>{siteClient.abreviation}</td>
+                                              <td>{siteClient.adresse}</td>
+                                              <td>{siteClient.tele}</td>
+                                              <td>{siteClient.ville}</td>
+                                              <td>{siteClient.code_postal}</td>
+                                              <td>{siteClient.ice}</td>
+                                              <td>{siteClient.zone_id}</td>
+                                              <td className="no-print">
+                                                <button
+                                                  className="btn btn-sm btn-info m-1"
+                                                  onClick={() => {
+                                                    if (
+                                                      selectedItems.length === 1
+                                                    ) {
+                                                      handleEditSC(siteClient);
+                                                    } else if (
+                                                      selectedItems.length > 1
+                                                    ) {
+                                                      console.error(
+                                                        "Vous ne pouvez modifier qu'un seul site client à la fois."
+                                                      );
+                                                    } else {
+                                                      console.error(
+                                                        "Aucun client sélectionné pour modifier un site client."
+                                                      );
+                                                    }
+                                                  }}
+                                                  disabled={
+                                                    selectedItems.length ===
+                                                      0 ||
+                                                    selectedItems.length > 1
+                                                  }
+                                                >
+                                                  <i className="fas fa-edit"></i>
+                                                </button>
+                                                <button
+                                                  className="btn btn-sm btn-danger m-1"
+                                                  onClick={() =>
+                                                    handleDeleteSiteClient(
+                                                      siteClient.id
+                                                    )
+                                                  }
+                                                >
+                                                  <FontAwesomeIcon
+                                                    icon={faTrash}
+                                                  />
+                                                </button>
+                                              </td>
+                                            </tr>
+                                          )
+                                        )}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                </td>
+                              </tr>
+                            )}
+                        </React.Fragment>
+                      ))}
+                  </tbody>
+                </table>
+              ) : (
+                <div className="text-center">
+                  <h5>Aucun client</h5>
+                </div>
+              )}
+              <div className="d-flex flex-row">
+                <div className="btn-group col-2">
+                  <Button
+                    className="btn btn-danger btn-sm"
+                    onClick={handleDeleteSelected}
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </Button>
+                  <PrintList
+                    tableId="clientsTable"
+                    title="Liste des clients"
+                    clientList={clients}
+                    filteredclients={filteredclients}
+                  />
+                  <ExportPdfButton
+                    clients={clients}
+                    selectedItems={selectedItems}
+                  />
+                  <Button
+                    className="btn btn-success btn-sm ml-2"
+                    onClick={exportToExcel}
+                  >
+                    <FontAwesomeIcon icon={faFileExcel} />
+                  </Button>
+                </div>
               </div>
+              <TablePagination
+                rowsPerPageOptions={[5, 10, 25]}
+                component="div"
+                count={filteredclients.length}
+                rowsPerPage={rowsPerPage}
+                page={page}
+                onPageChange={handleChangePage}
+                onRowsPerPageChange={handleChangeRowsPerPage}
+              />
             </div>
           </div>
         </Box>

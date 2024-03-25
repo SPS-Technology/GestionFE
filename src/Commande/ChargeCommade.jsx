@@ -656,20 +656,12 @@ const ChargeCommande = () => {
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 1 }}>
-          <Toolbar />
+          {/* <h2 className="mt-4">Chargement des Commandes</h2> */}
 
           <div className="search-container d-flex flex-row-reverse mb-3">
             <Search onSearch={handleSearch} />
           </div>
           <div className="add-Ajout-form ">
-            <Button
-              //variant="primary"
-              className=" btn btn-sm"
-              id="showFormButton"
-              onClick={handleShowFormButtonClick}
-            >
-              {showForm ? "Modifier le formulaire" : "Charger une Commande"}
-            </Button>
             <div className="filter-container mt-4">
               <div className="filter-controls">
                 <input
@@ -686,101 +678,157 @@ const ChargeCommande = () => {
                 />
               </div>
             </div>
-            <div id="formContainer" className="mt-2" style={formContainerStyle}>
-              <Form className="col row" onSubmit={handleSubmit}>
-                <Form.Label className="text-center m-2">
-                  <h5>
-                    {editingChargementCommande
-                      ? "Modifier le chargementCommande"
-                      : "Charger une Commande"}
-                  </h5>
-                </Form.Label>
-                <Form.Group className="col-sm-5 m-2" controlId="livreur_id">
-                  <Form.Label>Livreur</Form.Label>
+            <div className="mt-4">
+              {" "}
+              <Button
+                //variant="primary"
+                className=" btn btn-sm"
+                id="showFormButton"
+                onClick={handleShowFormButtonClick}
+              >
+                {showForm ? "Modifier le formulaire" : "Charger une Commande"}
+              </Button>
+            </div>
 
-                  <Form.Select
-                    name="livreur_id"
-                    value={formData.livreur_id}
-                    onChange={handleChange}
-                    className="form-select form-select-sm"
-                    required
-                  >
-                    <option value="">Livreur</option>
-                    {livreurs.map((livreur) => (
-                      <option key={livreur.id} value={livreur.id}>
-                        {livreur.nom}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="veihicule_id">
-                  <Form.Label>Vehicule</Form.Label>
-
-                  <Form.Select
-                    name="veihicule_id"
-                    value={formData.veihicule_id}
-                    onChange={handleChange}
-                    className="form-select form-select-sm"
-                    required
-                  >
-                    <option value="">Vehicule</option>
-                    {vehicules.map((vehicule) => (
-                      <option key={vehicule.id} value={vehicule.id}>
-                        {vehicule.marque}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="commande_id">
-                  <Form.Label>Commande</Form.Label>
-
-                  <Form.Select
-                    name="commande_id"
-                    value={formData.commande_id}
-                    onChange={handleChange}
-                    className="form-select form-select-sm"
-                    required
-                  >
-                    <option value="">Commande</option>
-                    {commandes.map((commande) => (
-                      <option key={commande.id} value={commande.id}>
-                        {commande.reference}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
-                <Form.Group className="col-sm-5 m-2 ">
-                  <Form.Label>Date Livraison Prevue</Form.Label>
-                  <Form.Control
-                    type="date"
-                    placeholder="dateLivraisonPrevue"
-                    name="dateLivraisonPrevue"
-                    value={formData.dateLivraisonPrevue}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-                <Form.Group className="col-sm-10 m-2">
-                  <Form.Label>Date Livraison Reelle</Form.Label>
-                  <Form.Control
-                    type="date"
-                    placeholder="dateLivraisonReelle"
-                    name="dateLivraisonReelle"
-                    value={formData.dateLivraisonReelle}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-
-                <Form.Group className="col m-3 text-center">
-                  <Button type="submit" className="btn btn-success col-6">
-                    {editingChargementCommande ? "Modifier" : "Ajouter"}
-                  </Button>
-                  <Button
-                    className="btn btn-secondary col-5 offset-1"
-                    onClick={closeForm}
-                  >
-                    Annuler
-                  </Button>
-                </Form.Group>
+            <div
+              id="formContainer"
+              style={{ ...formContainerStyle, padding: "50px" }}
+            >
+              <Form className="row" onSubmit={handleSubmit}>
+                <div className="col-md-12">
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label htmlFor="livreur_id" className="col-form-label">
+                        Livreur:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <Form.Select
+                        name="livreur_id"
+                        value={formData.livreur_id}
+                        onChange={handleChange}
+                        className="form-select form-select-sm"
+                        required
+                      >
+                        <option value="">Livreur</option>
+                        {livreurs.map((livreur) => (
+                          <option key={livreur.id} value={livreur.id}>
+                            {livreur.nom}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label htmlFor="veihicule_id" className="col-form-label">
+                        Vehicule:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <Form.Select
+                        name="veihicule_id"
+                        value={formData.veihicule_id}
+                        onChange={handleChange}
+                        className="form-select form-select-sm"
+                        required
+                      >
+                        <option value="">Vehicule</option>
+                        {vehicules.map((vehicule) => (
+                          <option key={vehicule.id} value={vehicule.id}>
+                            {vehicule.marque}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label htmlFor="commande_id" className="col-form-label">
+                        Commande:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <Form.Select
+                        name="commande_id"
+                        value={formData.commande_id}
+                        onChange={handleChange}
+                        className="form-select form-select-sm"
+                        required
+                      >
+                        <option value="">Commande</option>
+                        {commandes.map((commande) => (
+                          <option key={commande.id} value={commande.id}>
+                            {commande.reference}
+                          </option>
+                        ))}
+                      </Form.Select>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label
+                        htmlFor="dateLivraisonPrevue"
+                        className="col-form-label"
+                      >
+                        Date Livraison Prevue:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <Form.Group controlId="dateLivraisonPrevue">
+                        <Form.Control
+                          type="date"
+                          name="dateLivraisonPrevue"
+                          value={formData.dateLivraisonPrevue}
+                          onChange={handleChange}
+                          className="form-control-sm"
+                        />
+                      </Form.Group>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <div className="row mb-4">
+                    <div className="col-sm-6">
+                      <label
+                        htmlFor="dateLivraisonReelle"
+                        className="col-form-label"
+                      >
+                        Date Livraison Reelle:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
+                      <Form.Group controlId="dateLivraisonReelle">
+                        <Form.Control
+                          type="date"
+                          name="dateLivraisonReelle"
+                          value={formData.dateLivraisonReelle}
+                          onChange={handleChange}
+                          className="form-control-sm"
+                        />
+                      </Form.Group>
+                    </div>
+                  </div>
+                </div>
+                <div className="col-md-12">
+                  <Form.Group className="text-center">
+                    <Button type="submit" className=" btn-sm col-4">
+                      {editingChargementCommande ? "Modifier" : "Valider"}
+                    </Button>
+                    <Button
+                      className=" btn-sm btn-secondary col-4 offset-1 "
+                      onClick={closeForm}
+                    >
+                      Annuler
+                    </Button>
+                  </Form.Group>
+                </div>
               </Form>
             </div>
           </div>
@@ -789,8 +837,11 @@ const ChargeCommande = () => {
             className="table-responsive-sm"
             style={tableContainerStyle}
           >
-            <table className="table" id="stockTable">
-              <thead>
+            <table className="table table-bordered" id="stockTable">
+              <thead
+                className="text-center "
+                style={{ backgroundColor: "#ddd" }}
+              >
                 <tr></tr>
                 <tr>
                   <th scope="col">

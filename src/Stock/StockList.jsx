@@ -598,192 +598,184 @@ const StockList = () => {
           {notifications.map((notification) => (
             <div key={notification.id}></div>
           ))}
-          <div className="container">
-            {/* <h3>Produits Stockes</h3> */}
-            <div className="search-container d-flex flex-row-reverse mb-3">
-              <Search onSearch={handleSearch} />
-            </div>
-            <div className="add-Ajout-form">
-              <Button
-                variant="primary"
-                className="col-3 btn btn-sm"
-                id="showFormButton"
-                onClick={handleShowFormButtonClick}
-              >
-                {showForm ? "Modifier le formulaire" : "Ajouter au stock"}
-              </Button>
-              <div
-                id="formContainer"
-                className="mt-2"
-                style={formContainerStyle}
-              >
-                <Form className="col row" onSubmit={handleSubmit}>
-                  <Form.Label className="text-center m-2">
-                    <h5>
-                      {editingStock ? "Modifier le Stock" : "Ajouter au Stock"}
-                    </h5>
-                  </Form.Label>
-                  <Form.Group className="col-sm-5 m-2" controlId="produit_id">
-                    <Form.Label>Produit</Form.Label>
 
-                    <Form.Select
-                      name="produit_id"
-                      value={formData.produit_id}
-                      onChange={handleChange}
-                      className="form-select form-select-sm"
-                      required
-                    >
-                      <option value="">Sélectionner un Produit</option>
-                      {produits.map((produit) => (
-                        <option key={produit.id} value={produit.id}>
-                          {produit.designation}
-                        </option>
-                      ))}
-                    </Form.Select>
-                  </Form.Group>
-                  <Form.Group className="col-sm-5 m-2 ">
-                    <Form.Label>Quantite</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Quantite"
-                      name="quantite"
-                      value={formData.quantite}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                  <Form.Group className="col-sm-10 m-2">
-                    <Form.Label>Seuil Minimal</Form.Label>
-                    <Form.Control
-                      type="text"
-                      placeholder="Seuil Minimal"
-                      name="seuil_minimal"
-                      value={formData.seuil_minimal}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-
-                  <Form.Group className="col m-3 text-center">
-                    <Button type="submit" className="btn btn-success col-6">
-                      {editingStock ? "Modifier" : "Ajouter"}
-                    </Button>
-                    <Button
-                      className="btn btn-secondary col-5 offset-1"
-                      onClick={closeForm}
-                    >
-                      Annuler
-                    </Button>
-                  </Form.Group>
-                </Form>
-              </div>
-            </div>
-            <div
-              id="tableContainer"
-              className="table-responsive-sm"
-              style={tableContainerStyle}
+          {/* <h3>Produits Stockes</h3> */}
+          <div className="search-container d-flex flex-row-reverse mb-3">
+            <Search onSearch={handleSearch} />
+          </div>
+          <div className="add-Ajout-form">
+            <Button
+              variant="primary"
+              className=" btn btn-sm"
+              id="showFormButton"
+              onClick={handleShowFormButtonClick}
             >
-              <table className="table" id="stockTable">
-                <thead>
-                  <tr>
-                    <th style={tableHeaderStyleStock} scope="col">
-                      <input type="checkbox" onChange={handleSelectAllChange} />
-                    </th>
-                    <th style={tableHeaderStyleStock} scope="col">
-                      Produit
-                    </th>
-                    <th style={tableHeaderStyleStock} scope="col">
-                      Quantite
-                    </th>
-                    <th style={tableHeaderStyleStock} scope="col">
-                      Seuil Minimal
-                    </th>
+              {showForm ? "Modifier le formulaire" : "Ajouter au stock"}
+            </Button>
+            <div id="formContainer" className="mt-2" style={formContainerStyle}>
+              <Form className="col row" onSubmit={handleSubmit}>
+                <Form.Label className="text-center m-2">
+                  <h5>
+                    {editingStock ? "Modifier le Stock" : "Ajouter au Stock"}
+                  </h5>
+                </Form.Label>
+                <Form.Group className="col-sm-5 m-2" controlId="produit_id">
+                  <Form.Label>Produit</Form.Label>
 
-                    <th style={tableHeaderStyleStock} scope="col">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredStocks &&
-                    filteredStocks
-                      .slice(
-                        page * rowsPerPage,
-                        page * rowsPerPage + rowsPerPage
-                      )
-                      .map((stocks) => (
-                        <tr key={stocks.id}>
-                          <td style={tableCellStyleStock}>
-                            <input
-                              type="checkbox"
-                              onChange={() => handleCheckboxChange(stocks.id)}
-                              checked={selectedItems.includes(stocks.id)}
-                            />
-                          </td>
-                          <td style={tableCellStyleStock}>
-                            {getProduitDesignation(stocks.produit_id)}
-                          </td>
-                          <td style={tableCellStyleStock}>{stocks.quantite}</td>
-                          <td style={tableCellStyleStock}>
-                            {stocks.seuil_minimal}
-                          </td>
+                  <Form.Select
+                    name="produit_id"
+                    value={formData.produit_id}
+                    onChange={handleChange}
+                    className="form-select form-select-sm"
+                    required
+                  >
+                    <option value="">Sélectionner un Produit</option>
+                    {produits.map((produit) => (
+                      <option key={produit.id} value={produit.id}>
+                        {produit.designation}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+                <Form.Group className="col-sm-5 m-2 ">
+                  <Form.Label>Quantite</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Quantite"
+                    name="quantite"
+                    value={formData.quantite}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+                <Form.Group className="col-sm-10 m-2">
+                  <Form.Label>Seuil Minimal</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Seuil Minimal"
+                    name="seuil_minimal"
+                    value={formData.seuil_minimal}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
 
-                          <td style={tableCellStyleStock}>
-                            <Button
-                              className="btn btn-sm btn-info m-1"
-                              onClick={() => handleEdit(stocks)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                            <Button
-                              className="btn btn-danger btn-sm m-1"
-                              onClick={() => handleDelete(stocks.id)}
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                </tbody>
-              </table>
-              <div className="d-flex flex-row">
-                <div className="btn-group col-2">
-                  <Button
-                    className="btn btn-danger btn-sm"
-                    onClick={handleDeleteSelected}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
+                <Form.Group className="col m-3 text-center">
+                  <Button type="submit" className="btn btn-success col-6">
+                    {editingStock ? "Modifier" : "Ajouter"}
                   </Button>
                   <Button
-                    className="btn btn-secondary btn-sm"
-                    onClick={() =>
-                      printList("stockTable", "Liste des Stocks", stocks)
-                    }
+                    className="btn btn-secondary col-5 offset-1"
+                    onClick={closeForm}
                   >
-                    <FontAwesomeIcon icon={faPrint} />
+                    Annuler
                   </Button>
-                  <Button
-                    className="btn btn-danger btn-sm ml-2"
-                    onClick={exportToPdf}
-                  >
-                    <FontAwesomeIcon icon={faFilePdf} />
-                  </Button>
-                  <Button
-                    className="btn btn-success btn-sm ml-2"
-                    onClick={exportToExcel}
-                  >
-                    <FontAwesomeIcon icon={faFileExcel} />
-                  </Button>
-                </div>
-              </div>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={filteredStocks.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
+                </Form.Group>
+              </Form>
             </div>
+          </div>
+          <div
+            id="tableContainer"
+            className="table-responsive-sm"
+            style={tableContainerStyle}
+          >
+            <table className="table" id="stockTable">
+              <thead>
+                <tr>
+                  <th style={tableHeaderStyleStock} scope="col">
+                    <input type="checkbox" onChange={handleSelectAllChange} />
+                  </th>
+                  <th style={tableHeaderStyleStock} scope="col">
+                    Produit
+                  </th>
+                  <th style={tableHeaderStyleStock} scope="col">
+                    Quantite
+                  </th>
+                  <th style={tableHeaderStyleStock} scope="col">
+                    Seuil Minimal
+                  </th>
+
+                  <th style={tableHeaderStyleStock} scope="col">
+                    Action
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredStocks &&
+                  filteredStocks
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((stocks) => (
+                      <tr key={stocks.id}>
+                        <td style={tableCellStyleStock}>
+                          <input
+                            type="checkbox"
+                            onChange={() => handleCheckboxChange(stocks.id)}
+                            checked={selectedItems.includes(stocks.id)}
+                          />
+                        </td>
+                        <td style={tableCellStyleStock}>
+                          {getProduitDesignation(stocks.produit_id)}
+                        </td>
+                        <td style={tableCellStyleStock}>{stocks.quantite}</td>
+                        <td style={tableCellStyleStock}>
+                          {stocks.seuil_minimal}
+                        </td>
+
+                        <td style={tableCellStyleStock}>
+                          <Button
+                            className="btn btn-sm btn-info m-1"
+                            onClick={() => handleEdit(stocks)}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </Button>
+                          <Button
+                            className="btn btn-danger btn-sm m-1"
+                            onClick={() => handleDelete(stocks.id)}
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+              </tbody>
+            </table>
+            <div className="d-flex flex-row">
+              <div className="btn-group col-2">
+                <Button
+                  className="btn btn-danger btn-sm"
+                  onClick={handleDeleteSelected}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </Button>
+                <Button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    printList("stockTable", "Liste des Stocks", stocks)
+                  }
+                >
+                  <FontAwesomeIcon icon={faPrint} />
+                </Button>
+                <Button
+                  className="btn btn-danger btn-sm ml-2"
+                  onClick={exportToPdf}
+                >
+                  <FontAwesomeIcon icon={faFilePdf} />
+                </Button>
+                <Button
+                  className="btn btn-success btn-sm ml-2"
+                  onClick={exportToExcel}
+                >
+                  <FontAwesomeIcon icon={faFileExcel} />
+                </Button>
+              </div>
+            </div>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredStocks.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
           </div>
         </Box>
       </Box>

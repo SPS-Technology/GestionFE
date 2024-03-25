@@ -219,10 +219,10 @@ const CommandeList = () => {
 
     return correspondingLigneCommande ? correspondingLigneCommande.quantite : 0;
   };
-  const populateProductInputs = (productId, inputType) => {
-    console.log("productId", productId);
+  const populateProductInputs = (ligneCommandId, inputType) => {
+    console.log("ligneCommandId", ligneCommandId);
     const existingLigneCommande = existingLigneCommandes.find(
-      (ligneCommande) => ligneCommande.produit_id === productId
+      (ligneCommande) => ligneCommande.id === ligneCommandId
     );
     console.log("existing LigneCommande", existingLigneCommandes);
 
@@ -288,28 +288,34 @@ const CommandeList = () => {
         const existingLigneCommandesResponse = await axios.get(
           `http://localhost:8000/api/ligneCommandes/${editingCommandes.id}`
         );
+
         const existingLigneCommandes =
           existingLigneCommandesResponse.data.ligneCommandes;
-        const selectedPrdsData = selectedProductsData.map((selectedProduct) => {
-          const existingLigneCommande = existingLigneCommandes.find(
-            (ligneCommande) => ligneCommande.produit_id === selectedProduct.id
-          );
+        const selectedPrdsData = selectedProductsData.map(
+          (selectedProduct, index) => {
+            const existingLigneCommande = existingLigneCommandes.find(
+              (ligneCommande) =>
+                ligneCommande.produit_id === selectedProduct.produit_id
+            );
 
-          return {
-            id: existingLigneCommande ? existingLigneCommande.id : undefined,
-            commande_id: editingCommandes.id,
-            produit_id: selectedProduct.id,
-            quantite: getElementValueById(`quantite_${selectedProduct.id}`),
-            prix_unitaire: getElementValueById(
-              `prix_unitaire_${selectedProduct.id}`
-            ),
-            // Update other properties as needed
-          };
-        });
+            return {
+              id: existingLigneCommande ? existingLigneCommande.id : undefined,
+              commande_id: editingCommandes.id,
+              produit_id: selectedProduct.produit_id,
+              quantite: getElementValueById(
+                `quantite_${index}_${selectedProduct.id}`
+              ),
+              prix_unitaire: getElementValueById(
+                `prix_unitaire_${index}_${selectedProduct.id}`
+              ),
+              // Update other properties as needed
+            };
+          }
+        );
         for (const ligneCommandeData of selectedPrdsData) {
           // Check if ligneCommande already exists for this produit_id and update accordingly
 
-          console.log("existing LigneCommande:", ligneCommandeData);
+          console.log("existing LigneCommande:", selectedPrdsData);
 
           if (ligneCommandeData.id) {
             // If exists, update the existing ligneCommande
@@ -337,6 +343,7 @@ const CommandeList = () => {
             );
           }
         }
+
         const existingStatusesResponse = await axios.get(
           "http://localhost:8000/api/statusCommande"
         );
@@ -368,16 +375,20 @@ const CommandeList = () => {
           "http://localhost:8000/api/commandes",
           CommandesData
         );
-        const selectedPrdsData = selectedProductsData.map((selectProduct) => {
-          return {
-            commande_id: response.data.commande.id,
-            produit_id: selectProduct.id,
-            quantite: getElementValueById(`quantite_${selectProduct.id}`),
-            prix_unitaire: getElementValueById(
-              `prix_unitaire_${selectProduct.id}`
-            ),
-          };
-        });
+        const selectedPrdsData = selectedProductsData.map(
+          (selectProduct, index) => {
+            return {
+              commande_id: response.data.commande.id,
+              produit_id: selectProduct.produit_id,
+              quantite: getElementValueById(
+                `quantite_${index}_${selectProduct.id}`
+              ),
+              prix_unitaire: getElementValueById(
+                `prix_unitaire_${index}_${selectProduct.id}`
+              ),
+            };
+          }
+        );
         console.log("selectedPrdsData", selectedPrdsData);
         for (const ligneCommandesData of selectedPrdsData) {
           // Sinon, il s'agit d'une nouvelle ligne de Commandes
@@ -401,25 +412,8 @@ const CommandeList = () => {
           }
         );
       }
-      console.log("response of postCommande: ", response);
+      console.log("response of postCommande: ", response.data);
 
-      //   // Envoyer une requête PUT pour mettre à jour le Commandes
-      //   const updatedCommandesResponse = await axios.put(
-      //     `http://localhost:8000/api/commandes/${response.data.Commandes.id}`,
-      //     updatedCommandesData
-      //   );
-
-      //   console.log("Commandes mis à jour:", updatedCommandesResponse.data);
-      // }
-
-      // Préparer les données des lignes de Commandes
-
-      // console.log("selectedProductsData11", selectedProductsData);
-
-      // Récupérer les données mises à jour
-      fetchData();
-
-      // Réinitialiser les données du formulaire
       setFormData({
         reference: "",
         dateCommande: "",
@@ -432,8 +426,18 @@ const CommandeList = () => {
         quantite: "",
       });
 
-      // Fermer le formulaire si nécessaire
+      fetchData();
+
       setShowForm(false);
+
+      setSelectedClientId(null);
+      setSelectedProductsData([]);
+      fetchExistingLigneCommandes();
+
+      // Delete all selections in the table
+      // selectedProductsData.forEach((product, index) => {
+      //   handleDeleteProduct(index, product.id);
+      // });
 
       // Afficher un message de succès à l'utilisateur
       Swal.fire({
@@ -465,7 +469,21 @@ const CommandeList = () => {
     // If the product is not found, return an empty string or any default value
     return "";
   };
+  const getClientValue = (clientId, field) => {
+    // Find the product in the produits array based on produitId
+    const client = clients.find((p) => p.id === clientId);
+
+    // If the product is found, return the value of the specified field
+    if (client) {
+      return client[field];
+    }
+
+    // If the product is not found, return an empty string or any default value
+    return "";
+  };
   const handleEdit = (commande) => {
+    setModifiedQuantiteValues({});
+    setModifiedPrixValues({});
     setEditingCommandesId(commande.id);
     setEditingCommandes(commande);
     console.log(commande);
@@ -484,7 +502,7 @@ const CommandeList = () => {
         (produit) => produit.id === ligneCommande.produit_id
       );
       return {
-        id: product.id,
+        id: ligneCommande.id,
         Code_produit: product.Code_produit,
         calibre_id: product.calibre_id,
         designation: product.designation,
@@ -504,21 +522,30 @@ const CommandeList = () => {
   };
   const handleInputChange = (index, inputType, event) => {
     const newValue = event.target.value;
-    console.log(selectedProductsData[0]);
-    const productId = selectedProductsData[index].id;
+    console.log("selectedProductsData", selectedProductsData);
+    console.log("index", index);
+    if (selectedProductsData[index]) {
+      const productId = selectedProductsData[index].id;
 
-    if (inputType === "prix_unitaire") {
-      setModifiedPrixValues((prev) => {
-        const updatedValues = { ...prev, [`${productId}_${index}`]: newValue };
-        console.log("Modified prix values:", updatedValues);
-        return updatedValues;
-      });
-    } else if (inputType === "quantite") {
-      setModifiedQuantiteValues((prev) => {
-        const updatedValues = { ...prev, [`${productId}_${index}`]: newValue };
-        console.log("Modified quantite values:", updatedValues);
-        return updatedValues;
-      });
+      if (inputType === "prix_unitaire") {
+        setModifiedPrixValues((prev) => {
+          const updatedValues = {
+            ...prev,
+            [`${index}_${productId}`]: newValue,
+          };
+          console.log("Modified prix values:", updatedValues);
+          return updatedValues;
+        });
+      } else if (inputType === "quantite") {
+        setModifiedQuantiteValues((prev) => {
+          const updatedValues = {
+            ...prev,
+            [`${index}_${productId}`]: newValue,
+          };
+          console.log("Modified quantite values:", updatedValues);
+          return updatedValues;
+        });
+      }
     }
   };
 
@@ -587,9 +614,12 @@ const CommandeList = () => {
   };
 
   const closeForm = () => {
+    handleDeleteAllSelection();
+
     setFormContainerStyle({ right: "-100%" });
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
+    setSelectedClientId(null);
     setFormData({
       // Clear form data
       reference: "",
@@ -607,9 +637,24 @@ const CommandeList = () => {
   //---------------------------Produit--------------------------
 
   const handleClientSelection = (selected) => {
-    console.log("selectedClientId", selected[0].value);
-    setSelectedClientId(selected[0].value);
+    if (selected && selected.length > 0) {
+      console.log("selectedClient", selected);
+      setSelectedClientId(selected[0].value);
+    }
   };
+  // const handleClientSelection = (selectedOption) => {
+  //   console.log("Selected option:", selectedOption);
+  //   if (selectedOption && selectedOption.length > 0) {
+  //     // Handle the selected client
+  //     console.log("Selected client:", selectedOption[0].value);
+  //     setFormData((prevFormData) => ({
+  //       ...prevFormData,
+  //       client_id: selectedOption.value,
+  //     }));
+  //   } else {
+  //     console.log("No client selected");
+  //   }
+  // };
 
   const handleProductSelection = (selectedProduct, index) => {
     console.log("selectedProduct", selectedProduct);
@@ -769,10 +814,21 @@ const CommandeList = () => {
     // Enregistrer le fichier PDF avec le nom 'Commandes.pdf'
     doc.save("Commandes.pdf");
   };
-  const handleDeleteProduct = (index) => {
+  const handleDeleteProduct = (index, id) => {
     const updatedSelectedProductsData = [...selectedProductsData];
     updatedSelectedProductsData.splice(index, 1);
     setSelectedProductsData(updatedSelectedProductsData);
+    if (id) {
+      axios
+        .delete(`http://localhost:8000/api/ligneCommandes/${id}`)
+        .then(() => {
+          fetchData();
+        });
+    }
+  };
+  const handleDeleteAllSelection = () => {
+    // Clear the selected products data
+    setSelectedProductsData([]);
   };
   const handleProductCheckboxChange = (selectedOptions) => {
     const selectedProductIds = selectedOptions.map((option) => option.value);
@@ -818,38 +874,61 @@ const CommandeList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <h2 className="mt-4">Liste des Commandes</h2>
-          <div className="container">
-            <Button
-              variant="primary"
-              className="col-2 btn btn-sm m-2"
-              id="showFormButton"
-              onClick={handleShowFormButtonClick}
-            >
-              {showForm ? "Modifier le formulaire" : "Passer une Commande"}
-            </Button>
-            <div
-              id="formContainer"
-              className="col"
-              style={{ ...formContainerStyle }}
-            >
-              <Form className="row" onSubmit={handleSubmit}>
-                <div className="col-md-4">
-                  <Form.Group controlId="client_id">
-                    <Form.Label>Client:</Form.Label>
+
+          <Button
+            variant="primary"
+            className="btn btn-sm m-2"
+            id="showFormButton"
+            onClick={handleShowFormButtonClick}
+          >
+            {showForm ? "Modifier le formulaire" : "Passer une Commande"}
+          </Button>
+          <div
+            id="formContainerCommande"
+            style={{ ...formContainerStyle, padding: "50px" }}
+          >
+            <Form className="row" onSubmit={handleSubmit}>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="client_id" className="col-form-label">
+                      Client:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
                     <Select
                       options={clients.map((client) => ({
                         value: client.id,
                         label: client.raison_sociale,
                       }))}
                       onChange={handleClientSelection}
-                      value={formData.client_id}
+                      values={
+                        formData.client_id
+                          ? [
+                              {
+                                value: formData.client_id,
+                                label: getClientValue(
+                                  formData.client_id,
+                                  "raison_sociale"
+                                ),
+                              },
+                            ]
+                          : []
+                      }
+                      placeholder="Select client ..."
                     />
-                  </Form.Group>
+                  </div>
                 </div>
+              </div>
 
-                <div className="col-md-4">
-                  <Form.Group controlId="mode_payement">
-                    <Form.Label>Mode Paiement:</Form.Label>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="mode_payement" className="col-form-label">
+                      Mode Paiement:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
                     <Form.Select
                       name="mode_payement"
                       value={formData.mode_payement}
@@ -863,321 +942,382 @@ const CommandeList = () => {
                       <option value="Cheque">Cheque</option>
                       {/* Add more payment types as needed */}
                     </Form.Select>
-                  </Form.Group>
+                  </div>
                 </div>
+              </div>
 
-                <div className="col-md-4">
-                  {editingCommandes && (
-                    <Form.Group controlId="status">
-                      <Form.Label>Status:</Form.Label>
+              <div className="col-md-12">
+                {editingCommandes && (
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label htmlFor="status" className="col-form-label">
+                        Status:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
                       <Form.Select
+                        id="status"
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
                       >
-                        <option disabled selected>
-                          Status
-                        </option>
                         <option value="En cours">En cours</option>
                         <option value="Valide">Valide</option>
                         <option value="Non Valide">Non Valide</option>
-                        {/* Add more payment types as needed */}
+                        {/* Add more statuses as needed */}
                       </Form.Select>
-                    </Form.Group>
-                  )}
-                </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
-                <div className="col-md-4">
-                  <Form.Group controlId="dateCommande">
-                    <Form.Label>Date Commande:</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="dateCommande"
-                      value={formData.dateCommande}
-                      onChange={handleChange}
-                      className="form-control-sm"
-                    />
-                  </Form.Group>
-                </div>
-                <div className="mt-4">
-                  <Button variant="primary" onClick={handleAddEmptyRow}>
-                    <FontAwesomeIcon icon={faPlus} />
-                    Produit
-                  </Button>
-                </div>
-                <div className="col-md-12">
-                  {console.log("selectedProductsData:", selectedProductsData)}
-                  <Form.Group controlId="selectedProduitTable">
-                    <table className="table-bordered table-responsive-sm">
-                      <thead>
-                        <tr>
-                          <th>Code Produit</th>
-                          <th>Designation</th>
-                          <th>Calibre</th>
-                          <th>Quantité</th>
-                          <th>Prix vente</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProductsData.map((productData, index) => (
-                          <tr key={index}>
-                            <td>
-                              <Select
-                                options={produits.map((produit) => ({
-                                  value: produit.id,
-                                  label: produit.Code_produit,
-                                }))}
-                                onChange={(selected) => {
-                                  const produit = produits.find(
-                                    (prod) => prod.id === selected[0].value
-                                  );
-                                  handleProductSelection(
-                                    {
-                                      id: selected[0].value,
-                                      Code_produit: produit.Code_produit,
-                                      designation: produit.designation,
-                                      calibre: produit.calibre,
-                                    },
-                                    index
-                                  );
-                                }}
-                                value={selectedProductId}
-                              />
-                            </td>
-                            <td>{productData.designation}</td>
-                            <td>
-                              {productData.calibre
-                                ? productData.calibre.calibre
-                                : ""}
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                id={`quantite_${productData.id}`}
-                                className="quantiteInput"
-                                placeholder="Quantite"
-                                value={
-                                  modifiedQuantiteValues[productData.id] ||
-                                  populateProductInputs(
-                                    productData.id,
-                                    "quantite"
-                                  )
-                                }
-                                onChange={(event) =>
-                                  handleInputChange(index, "quantite", event)
-                                }
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                id={`prix_unitaire_${productData.id}`}
-                                className="prixInput"
-                                placeholder="Prix"
-                                value={
-                                  modifiedPrixValues[productData.id] ||
-                                  populateProductInputs(
-                                    productData.id,
-                                    "prix_unitaire"
-                                  )
-                                }
-                                onChange={(event) =>
-                                  handleInputChange(
-                                    productData.id,
-                                    "prix_unitaire",
-                                    event
-                                  )
-                                }
-                              />
-                            </td>
-                            <td>
-                              <Button
-                                className=" btn btn-danger btn-sm m-1"
-                                onClick={() => handleDeleteProduct(index)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-12 mt-3">
-                  <Button
-                    className="btn btn-sm"
-                    variant="primary"
-                    type="submit"
-                  >
-                    Submit
-                  </Button>
-                </div>
-              </Form>
-            </div>
-            <div
-              id="tableContainer"
-              className="table-responsive-sm"
-              style={tableContainerStyle}
-            >
-              <table className="table table-bordered">
-                <thead
-                  className="text-center "
-                  style={{ backgroundColor: "#ddd" }}
-                >
-                  <tr>
-                    <th>
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAllChange}
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="dateCommande" className="col-form-label">
+                      Date Commande:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Group controlId="dateCommande">
+                      <Form.Control
+                        controlId="dateCommande"
+                        type="date"
+                        name="dateCommande"
+                        value={formData.dateCommande}
+                        onChange={handleChange}
+                        className="form-control-sm"
                       />
-                    </th>
-                    <th colSpan="2">reference</th>
-                    <th>Client</th>
-                    <th>Date Commande</th>
+                    </Form.Group>
+                  </div>
+                </div>
+              </div>
 
-                    <th>Mode de Paiement</th>
+              {console.log("selectedProductsData:", selectedProductsData)}
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-12">
+                    <Form.Group controlId="selectedProduitTable">
+                      <div className="table-responsive">
+                        <table className="table-bordered ">
+                          <thead>
+                            <tr>
+                              <th>
+                                {" "}
+                                <Button
+                                  className="btn btn-sm "
+                                  variant="primary"
+                                  onClick={handleAddEmptyRow}
+                                >
+                                  <FontAwesomeIcon icon={faPlus} />
+                                </Button>
+                              </th>
+                              <th>Code Produit</th>
+                              <th>Designation</th>
+                              <th>Calibre</th>
+                              <th>Quantité</th>
+                              <th>Prix vente</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedProductsData.map((productData, index) => (
+                              <tr key={index}>
+                                <td colSpan="2">
+                                  <Select
+                                    options={produits.map((produit) => ({
+                                      value: produit.id,
+                                      label: produit.Code_produit,
+                                    }))}
+                                    onChange={(selected) => {
+                                      const produit = produits.find(
+                                        (prod) => prod.id === selected[0].value
+                                      );
+                                      handleProductSelection(
+                                        {
+                                          produit_id: selected[0].value,
+                                          Code_produit: produit.Code_produit,
+                                          designation: produit.designation,
+                                          calibre_id: produit.calibre_id,
+                                        },
+                                        index
+                                      );
+                                    }}
+                                    values={
+                                      productData.produit_id
+                                        ? [
+                                            {
+                                              value: productData.produit_id,
+                                              label: productData.Code_produit,
+                                            },
+                                          ]
+                                        : []
+                                    }
+                                    placeholder="Code ..."
+                                  />
+                                </td>
+                                <td>{productData.designation}</td>
+                                <td>{productData.calibre_id}</td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    id={`quantite_${index}_${productData.id}`}
+                                    className="quantiteInput"
+                                    placeholder="Quantite"
+                                    value={
+                                      modifiedQuantiteValues[
+                                        `${index}_${productData.id}`
+                                      ] ||
+                                      populateProductInputs(
+                                        productData.id,
+                                        "quantite"
+                                      )
+                                    }
+                                    onChange={(event) =>
+                                      handleInputChange(
+                                        index,
+                                        "quantite",
+                                        event
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    id={`prix_unitaire_${index}_${productData.id}`}
+                                    className="prixInput"
+                                    placeholder="Prix"
+                                    value={
+                                      modifiedPrixValues[
+                                        `${index}_${productData.id}`
+                                      ] ||
+                                      populateProductInputs(
+                                        productData.id,
+                                        "prix_unitaire"
+                                      )
+                                    }
+                                    onChange={(event) =>
+                                      handleInputChange(
+                                        index,
+                                        "prix_unitaire",
+                                        event
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <Button
+                                    className=" btn btn-danger btn-sm m-1"
+                                    onClick={() =>
+                                      handleDeleteProduct(index, productData.id)
+                                    }
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Form.Group>
+                  </div>
+                </div>
+              </div>
 
-                    <th colSpan="2">Status</th>
-                    <th colSpan="2">Total</th>
+              <div className="col-md-12">
+                <div className="text-center">
+                  <Button type="submit" className=" btn-sm col-4">
+                    {editingCommandes ? "Modifier" : "Valider"}
+                  </Button>
+                  <Button
+                    className=" btn-sm btn-secondary col-4 offset-1 "
+                    onClick={closeForm}
+                  >
+                    Annuler
+                  </Button>
+                </div>
+              </div>
+            </Form>
+          </div>
+          <div
+            id="tableContainer"
+            className="table-responsive-sm"
+            style={tableContainerStyle}
+          >
+            <table className="table table-responsive table-bordered">
+              <thead
+                className="text-center "
+                style={{ backgroundColor: "#ddd" }}
+              >
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAllChange}
+                    />
+                  </th>
+                  <th colSpan="2">reference</th>
+                  <th>Client</th>
+                  <th>Date Commande</th>
 
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-center">
-                  {commandes &&
-                    commandes.map((commande) => (
-                      <React.Fragment key={commande.id}>
-                        <tr>
-                          <td>
-                            {/* <input
+                  <th>Mode de Paiement</th>
+
+                  <th colSpan="2">Status</th>
+                  <th colSpan="2">Total</th>
+
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {commandes &&
+                  commandes.map((commande) => (
+                    <React.Fragment key={commande.id}>
+                      <tr>
+                        <td>
+                          {/* <input
                               type="checkbox"
                               checked={selectedItems.some(
                                 (item) => item.id === Commandes.id
                               )}
                               onChange={() => handleSelectItem(Commandes)}
                             /> */}
-                            <input
-                              type="checkbox"
-                              onChange={() => handleCheckboxChange(commande.id)}
-                              checked={selectedItems.includes(commande.id)}
-                            />
-                          </td>
-                          <td>
-                            <div className="no-print ">
-                              <Button
-                                className="btn btn-sm btn-light"
-                                onClick={() =>
-                                  handleShowLigneCommandes(commande.id)
+                          <input
+                            type="checkbox"
+                            onChange={() => handleCheckboxChange(commande.id)}
+                            checked={selectedItems.includes(commande.id)}
+                          />
+                        </td>
+                        <td>
+                          <div className="no-print ">
+                            <Button
+                              className="btn btn-sm btn-light"
+                              onClick={() =>
+                                handleShowLigneCommandes(commande.id)
+                              }
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  expandedRows.includes(commande.id)
+                                    ? faMinus
+                                    : faPlus
                                 }
-                              >
-                                <FontAwesomeIcon
-                                  icon={
-                                    expandedRows.includes(commande.id)
-                                      ? faMinus
-                                      : faPlus
-                                  }
-                                />
-                              </Button>
-                            </div>
-                          </td>
-                          <td>{commande.reference}</td>
-                          <td>{commande.client_id}</td>
-                          <td>{commande.dateCommande}</td>
+                              />
+                            </Button>
+                          </div>
+                        </td>
+                        <td>{commande.reference}</td>
+                        <td>{commande.client_id}</td>
+                        <td>{commande.dateCommande}</td>
 
-                          <td>{commande.mode_payement}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-light"
-                              onClick={() =>
-                                handleShowStatusCommandes(commande.id)
+                        <td>{commande.mode_payement}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-light"
+                            onClick={() =>
+                              handleShowStatusCommandes(commande.id)
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expand_status.includes(commande.id)
+                                  ? faMinus
+                                  : faPlus
                               }
-                            >
-                              <FontAwesomeIcon
-                                icon={
-                                  expand_status.includes(commande.id)
-                                    ? faMinus
-                                    : faPlus
-                                }
-                              />
-                            </button>
-                          </td>
-                          <td>{commande.status}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-light"
-                              onClick={() =>
-                                handleShowTotalDetails(commande.id)
+                            />
+                          </button>
+                        </td>
+                        <td>{commande.status}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-light"
+                            onClick={() => handleShowTotalDetails(commande.id)}
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expand_total.includes(commande.id)
+                                  ? faMinus
+                                  : faPlus
                               }
+                            />
+                          </button>
+                        </td>
+                        <td>
+                          {calculateTotalQuantity(commande.ligne_commandes)}
+                        </td>
+                        <td>
+                          <div className="d-inline-flex text-center">
+                            <Button
+                              className=" btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(commande)}
                             >
-                              <FontAwesomeIcon
-                                icon={
-                                  expand_total.includes(commande.id)
-                                    ? faMinus
-                                    : faPlus
-                                }
-                              />
-                            </button>
-                          </td>
-                          <td>
-                            {calculateTotalQuantity(commande.ligne_commandes)}
-                          </td>
-                          <td>
-                            <div className="d-inline-flex text-center">
-                              <Button
-                                className=" btn btn-sm btn-info m-1"
-                                onClick={() => handleEdit(commande)}
-                              >
-                                <i className="fas fa-edit"></i>
-                              </Button>
-                              <Button
-                                className=" btn btn-danger btn-sm m-1"
-                                onClick={() => handleDelete(commande.id)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedRows.includes(commande.id) &&
-                          commande.ligne_commandes && (
-                            <tr>
-                              <td
-                                colSpan="11"
-                                style={{
-                                  padding: "0",
-                                }}
-                              >
-                                <div id="lignesCommandes">
-                                  <table
-                                    className=" table-bordered"
-                                    style={{
-                                      borderCollapse: "collapse",
-                                      backgroundColor: "#f2f2f2",
-                                      width: "100%",
-                                    }}
-                                  >
-                                    <thead>
-                                      <tr>
-                                        <th>Produit</th>
-                                        <th>Quantite</th>
-                                        <th>Prix Vente</th>
-                                        {/* <th className="text-center">Action</th> */}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {commande.ligne_commandes.map(
-                                        (ligneCommande) => (
-                                          <tr key={ligneCommande.id}>
-                                            <td>{ligneCommande.produit_id}</td>
-                                            <td>{ligneCommande.quantite}</td>
-                                            <td>
-                                              {ligneCommande.prix_unitaire} DH
-                                            </td>
-                                            {/* <td className="no-print">
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className=" btn btn-danger btn-sm m-1"
+                              onClick={() => handleDelete(commande.id)}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedRows.includes(commande.id) &&
+                        commande.ligne_commandes && (
+                          <tr>
+                            <td
+                              colSpan="11"
+                              style={{
+                                padding: "0",
+                              }}
+                            >
+                              <div id="lignesCommandes">
+                                <table
+                                  className=" table-bordered"
+                                  style={{
+                                    borderCollapse: "collapse",
+                                    // backgroundColor: "#f2f2f2",
+                                    width: "100%",
+                                  }}
+                                >
+                                  <thead>
+                                    <tr>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Produit
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Quantite
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Prix Vente
+                                      </th>
+                                      {/* <th className="text-center">Action</th> */}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {commande.ligne_commandes.map(
+                                      (ligneCommande) => (
+                                        <tr key={ligneCommande.id}>
+                                          <td>{ligneCommande.produit_id}</td>
+                                          <td>{ligneCommande.quantite}</td>
+                                          <td>
+                                            {ligneCommande.prix_unitaire} DH
+                                          </td>
+                                          {/* <td className="no-print">
                                               <button
                                                 className="btn btn-sm btn-info m-1"
                                                 onClick={() => {
@@ -1190,131 +1330,155 @@ const CommandeList = () => {
                                                 <FontAwesomeIcon icon={faTrash} />
                                               </button>
                                             </td> */}
-                                          </tr>
-                                        )
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        {expand_total.includes(commande.id) && (
-                          <tr>
-                            <td
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      {expand_total.includes(commande.id) && (
+                        <tr>
+                          <td
+                            style={{
+                              padding: "0",
+                            }}
+                            colSpan="11"
+                          >
+                            {/* Increased colspan to accommodate the new Total column */}
+                            <table
+                              className="table-bordered"
                               style={{
-                                padding: "0",
+                                borderCollapse: "collapse",
+                                // backgroundColor: "#f2f2f2",
+                                width: "100%",
                               }}
-                              colSpan="11"
                             >
-                              {/* Increased colspan to accommodate the new Total column */}
-                              <table
-                                className="table-bordered"
-                                style={{
-                                  borderCollapse: "collapse",
-                                  backgroundColor: "#f2f2f2",
-                                  width: "100%",
-                                }}
-                              >
-                                <thead>
-                                  <tr>
-                                    <th></th>
+                              <thead>
+                                <tr>
+                                  <th></th>
+                                  {commande.ligne_commandes.map((ligne) => {
+                                    const produit = produits.find(
+                                      (prod) => prod.id === ligne.produit_id
+                                    );
+                                    return (
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                        key={produit.designation}
+                                      >
+                                        {produit.designation}
+                                      </th>
+                                    );
+                                  })}
+                                  <th
+                                    style={{
+                                      backgroundColor: "#ddd",
+                                    }}
+                                  >
+                                    Total (Unité) / Calibre
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {uniqueCalibres.map((calibre) => (
+                                  <tr key={calibre}>
+                                    <td
+                                      style={{
+                                        backgroundColor: "#ddd",
+                                      }}
+                                    >
+                                      <strong>calibre : [{calibre}]</strong>
+                                    </td>
                                     {commande.ligne_commandes.map((ligne) => {
                                       const produit = produits.find(
                                         (prod) => prod.id === ligne.produit_id
                                       );
                                       return (
-                                        <th key={produit.designation}>
-                                          {produit.designation}
-                                        </th>
-                                      );
-                                    })}
-                                    <th>Total (Unité) / Calibre</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {uniqueCalibres.map((calibre) => (
-                                    <tr key={calibre}>
-                                      <td>
-                                        <strong>calibre : [{calibre}]</strong>
-                                      </td>
-                                      {commande.ligne_commandes.map((ligne) => {
-                                        const produit = produits.find(
-                                          (prod) => prod.id === ligne.produit_id
-                                        );
-                                        return (
-                                          <td key={produit.designation}>
-                                            {getQuantity(
-                                              commande.ligne_commandes,
-                                              calibre,
-                                              produit.designation
-                                            )}
-                                          </td>
-                                        );
-                                      })}
-
-                                      <td>
-                                        <strong>
-                                          {getTotalForCalibre(
+                                        <td key={produit.designation}>
+                                          {getQuantity(
                                             commande.ligne_commandes,
                                             calibre,
-                                            produits
+                                            produit.designation
                                           )}
-                                        </strong>
-                                      </td>
+                                        </td>
+                                      );
+                                    })}
+
+                                    <td>
+                                      <strong>
+                                        {getTotalForCalibre(
+                                          commande.ligne_commandes,
+                                          calibre,
+                                          produits
+                                        )}
+                                      </strong>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      )}
+                      {expand_status.includes(commande.id) &&
+                        commande.status_commandes && (
+                          <tr>
+                            <td
+                              colSpan="11"
+                              style={{
+                                padding: "0",
+                              }}
+                            >
+                              <div id="statusCommandes">
+                                <table
+                                  className="table-bordered"
+                                  style={{
+                                    borderCollapse: "collapse",
+                                    // backgroundColor: "#f2f2f2",
+                                    width: "100%",
+                                  }}
+                                >
+                                  <thead>
+                                    <tr>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Status
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Date Status
+                                      </th>
                                     </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                  </thead>
+                                  <tbody>
+                                    {commande.status_commandes.map(
+                                      (statusCommande) => (
+                                        <tr key={statusCommande.id}>
+                                          <td>{statusCommande.status}</td>
+                                          <td>{statusCommande.date_status}</td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
                             </td>
                           </tr>
                         )}
-                        {expand_status.includes(commande.id) &&
-                          commande.status_commandes && (
-                            <tr>
-                              <td
-                                colSpan="11"
-                                style={{
-                                  padding: "0",
-                                }}
-                              >
-                                <div id="statusCommandes">
-                                  <table
-                                    className="table-bordered"
-                                    style={{
-                                      borderCollapse: "collapse",
-                                      backgroundColor: "#f2f2f2",
-                                      width: "100%",
-                                    }}
-                                  >
-                                    <thead>
-                                      <tr>
-                                        <th>Status</th>
-                                        <th>Date Status</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {commande.status_commandes.map(
-                                        (statusCommande) => (
-                                          <tr key={statusCommande.id}>
-                                            <td>{statusCommande.status}</td>
-                                            <td>
-                                              {statusCommande.date_status}
-                                            </td>
-                                          </tr>
-                                        )
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                      </React.Fragment>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+                    </React.Fragment>
+                  ))}
+              </tbody>
+            </table>
           </div>
         </Box>
       </Box>
