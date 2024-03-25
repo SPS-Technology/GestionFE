@@ -44,6 +44,8 @@ const BanqueList = () => {
     const [searchTerm, setSearchTerm] = useState("");
 
 const [clientId,setClientId] = useState(null);
+    const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
+
 
 
 
@@ -72,7 +74,7 @@ const [clientId,setClientId] = useState(null);
         numero_cheque: "",
         mode_de_paiement: "",
         datee: "",
-        Montant:"",
+        avance:{},
         Status:"",
         remarque: "",
         reference: {},
@@ -95,52 +97,56 @@ const [clientId,setClientId] = useState(null);
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
-    const toggleRow = async (Clients) => {
-        if (expandedRows.includes(Clients)) {
-            setExpandedRows(expandedRows.filter((id) => id !== Clients));
+    const toggleRow = async (banque) => {
+        if (expandedRows.includes(banque.id)) {
+            setExpandedRows(expandedRows.filter((id) => id !== banque.id));
         } else {
             try {
-                // Récupérer les lignes de Commandes associées à ce Commandes
-                const facture = await fetchBanques(Clients);
+                // Charger les lignes de factures pour la banque sélectionnée
+                const lignes = ligneEntrerComptes; // Vous devez implémenter cette fonction
 
-                // Mettre à jour l'état pour inclure les lignes de Commandes récupérées
-                setClients((prevClients) =>
-                    prevClients.map((Clients) =>
-                        Clients.id === Clients
-                            ? { ...Clients, factures }
-                            : Clients
-                    )
-                );
-
-                // Ajouter l'ID du Commandes aux lignes étendues
-                setExpandedRows([...expandedRows, Clients]);
+                // Ajouter les lignes de factures spécifiques à la banque sélectionnée
+                setExpandedRows([...expandedRows, ...lignes]);
             } catch (error) {
-                console.error(
-                    "Erreur lors de la récupération des lignes de Commandes :",
-                    error
-                );
+                console.error("Erreur lors de la récupération des lignes de Commandes :", error);
             }
         }
     };
+    const handleShowLigneEntreeCompte = async (banque) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(banque)
+                ? prevRows.filter((row) => row !== banque)
+                : [...prevRows, banque]
+        );
+    };
     const fetchBanques = async () => {
         try {
-            const response = await axios.get(
-                "http://localhost:8000/api/banques");
+            const response = await axios.get("http://localhost:8000/api/banques");
             setBanques(response.data.banques);
-            console.log("response",response);
-            const clientResponse = await axios.get(
-                "http://localhost:8000/api/clients"
-            );
-            console.log("API Response for Clients:", clientResponse.data.client);
-            setClients(clientResponse.data.client);
+            console.log("API Response for Banques:", response.data.banques);
 
-            const factureResponse = await axios.get(
-                "http://localhost:8000/api/factures"
-            );
-            console.log("API Response for Factures:", factureResponse.data.facture);
+            const clientResponse = await axios.get("http://localhost:8000/api/clients");
+            setClients(clientResponse.data.client);
+            console.log("API Response for Clients:", clientResponse.data.client);
+
+            const factureResponse = await axios.get("http://localhost:8000/api/factures");
             setFactures(factureResponse.data.facture);
+            console.log("API Response for Factures:", factureResponse.data.facture);
+
+            // Récupération des données depuis le nouvel endpoint
+            const ligneEntrerCompteResponse = await axios.get("http://localhost:8000/api/ligneentrercompte");
+            setLigneEntrerComptes(ligneEntrerCompteResponse.data.ligneentrercomptes);
+            console.log("API Response for LigneEntrerCompte:", ligneEntrerCompteResponse.data.ligneentrercomptes);
+
         } catch (error) {
             console.error("Error fetching data:", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: 'error',
+                title: 'Erreur!',
+                text: 'Échec de la récupération des données.',
+            });
         }
     };
 
@@ -168,7 +174,7 @@ const [clientId,setClientId] = useState(null);
         setFormData({ ...formData, [target.name]: clientId });
     console.log("formData",formData);
         // Filtrer les factures en fonction de l'ID du client sélectionné
-        const facturesForClient = factures.filter(facture => facture.client_id === parseInt(clientId));
+        const facturesForClient = factures.filter(facture => facture.client_id === parseInt(clientId) && facture.status != "reglee"  );
         setFilteredFactures(facturesForClient);
         console.log("filtered Factures",filteredFactures);
     };
@@ -312,6 +318,11 @@ const [clientId,setClientId] = useState(null);
         console.log("handleChange called");
         // Extraction des données du champ de formulaire modifié
         const { name, value } = event.target;
+
+        setFormData(prevFormData => ({
+            ...prevFormData,
+            [name]: value
+        }));
 
         // Mise à jour de l'état du formulaire avec la nouvelle valeur sélectionnée
         setFormData({ ...formData, [name]: value });
@@ -618,9 +629,9 @@ const [clientId,setClientId] = useState(null);
             numero_cheque: banques.numero_cheque,
             mode_de_paiement: banques.mode_de_paiement,
             datee: banques.datee,
-            Montant:banques.Montant,
             Status:banques.Status,
             remarque: banques.remarque,
+            avance:banques.avance,
 
         });
         if (formContainerStyle.right === '-500px') {
@@ -645,68 +656,138 @@ const [clientId,setClientId] = useState(null);
         fetchBanques();
     }, []);
 
-    const handleSubmit = (e) => {
+    // const handleSubmit = (e) => {
+    //     e.preventDefault();
+    //     const url = editingBanque ? `http://localhost:8000/api/banques/${editingBanque.id}` : 'http://localhost:8000/api/banques';
+    //     const method = editingBanque ? 'put' : 'post';
+    //
+    //     axios({
+    //         method: method,
+    //         url: url,
+    //         data: formData,
+    //     }).then(() => {
+    //         fetchBanques();
+    //
+    //         // Mise à jour de filteredBanques pour inclure la nouvelle entrée ou la mise à jour
+    //         if (editingBanque) {
+    //             // Si c'est une mise à jour, trouvez l'index de l'élément modifié dans filteredBanques et mettez à jour cet élément
+    //             const index = filteredBanques.findIndex(banque => banque.id === editingBanque.id);
+    //             if (index !== -1) {
+    //                 const updatedBanques = [...filteredBanques];
+    //                 updatedBanques[index] = formData;
+    //                 setFilteredBanques(updatedBanques);
+    //             }
+    //         } else {
+    //             // Si c'est un ajout, ajoutez simplement la nouvelle entrée à filteredBanques
+    //             setFilteredBanques(prevBanques => [...prevBanques, formData]);
+    //         }
+    //
+    //         Swal.fire({
+    //             icon: 'success',
+    //             title: 'Succès!',
+    //             text: `banque ${editingBanque ? 'modifié' : 'ajouté'} avec succès.`,
+    //         });
+    //
+    //         setFormData({
+    //             client_id: "",
+    //             numero_cheque: "",
+    //             mode_de_paiement: "",
+    //             datee: "",
+    //
+    //             Status:"",
+    //             remarque: "",
+    //
+    //         });
+    //         setEditingBanque(null); // Clear editing banque
+    //
+    //         if (formContainerStyle.right === "-500px") {
+    //             setFormContainerStyle({ right: "0" });
+    //             setTableContainerStyle({ marginRight: "500px" });
+    //         } else {
+    //             closeForm();
+    //         }
+    //     }).catch((error) => {
+    //         console.error(`Erreur lors de ${editingBanque ? 'la modification' : "l'ajout"} du banque:`, error);
+    //         Swal.fire({
+    //             icon: 'error',
+    //             title: 'Erreur!',
+    //             text: `Échec de ${editingBanque ? 'la modification' : "l'ajout"} du banque.`,
+    //         });
+    //     });
+    // };
+    const getElementValueById = (id) => {
+        return document.getElementById(id)?.value || "";
+    };
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        const url = editingBanque ? `http://localhost:8000/api/banques/${editingBanque.id}` : 'http://localhost:8000/api/banques';
-        const method = editingBanque ? 'put' : 'post';
+try {
 
-        axios({
-            method: method,
-            url: url,
-            data: formData,
-        }).then(() => {
-            fetchBanques();
 
-            // Mise à jour de filteredBanques pour inclure la nouvelle entrée ou la mise à jour
-            if (editingBanque) {
-                // Si c'est une mise à jour, trouvez l'index de l'élément modifié dans filteredBanques et mettez à jour cet élément
-                const index = filteredBanques.findIndex(banque => banque.id === editingBanque.id);
-                if (index !== -1) {
-                    const updatedBanques = [...filteredBanques];
-                    updatedBanques[index] = formData;
-                    setFilteredBanques(updatedBanques);
-                }
-            } else {
-                // Si c'est un ajout, ajoutez simplement la nouvelle entrée à filteredBanques
-                setFilteredBanques(prevBanques => [...prevBanques, formData]);
-            }
+        const banquesData = {
+            numero_cheque: formData.numero_cheque,
+            mode_de_paiement: formData.mode_de_paiement,
+            datee: formData.datee,
+            Status: formData.Status,
+            remarque: formData.remarque,
+            client_id: formData.client_id,
+        };
+        const banqueResponse = await axios.post(
+            "http://localhost:8000/api/banques",
+            banquesData,
 
+        );
+        console.log(banqueResponse)
+
+        const ligneEntrerCompteData = {
+            banques_id: banqueResponse.data.banque.id,
+            id_facture: formData.id_facture,
+            avance: formData.avance,
+        };
+        const selectedFacturesData = filteredFactures.map((selectedFacture) => {
+            return {
+                banques_id: banqueResponse.data.banque.id,
+                id_facture: selectedFacture.id,
+                avance: getElementValueById(`avance_${selectedFacture.id}`),
+
+            };
+        });
+        console.log("selectedFacturesData", selectedFacturesData);
+        for (const ligneEntreBanques of selectedFacturesData) {
+            await axios.post(
+                "http://localhost:8000/api/ligneentrercompte",
+                ligneEntreBanques,
+
+            );
+        }
+        // try {
+        //     const banquesResponse = await axios.post('http://localhost:8000/api/banques', banquesData);
+        //     console.log('Response from /api/banques:', banquesResponse.data);
+        //
+        //     const ligneEntrerComptesResponse = await axios.post('http://localhost:8000/api/ligneentrercompte', ligneEntrerCompteData);
+        //     console.log('Response from /api/ligneentrercompte:', ligneEntrerComptesResponse.data);
+        //
+        //     setFormData(formData);
+
+            // Afficher une alerte de succès
             Swal.fire({
                 icon: 'success',
                 title: 'Succès!',
-                text: `banque ${editingBanque ? 'modifié' : 'ajouté'} avec succès.`,
+                text: 'Données ajoutées avec succès.',
             });
 
-            setFormData({
-                client_id: "",
-                numero_cheque: "",
-                mode_de_paiement: "",
-                datee: "",
-                Montant:"",
-                Status:"",
-                remarque: "",
-                facture:{},
-                reference: {},
-                total_ttc:{},
-                date:{},
-            });
-            setEditingBanque(null); // Clear editing banque
+            fetchBanques();
+        } catch (error) {
+            console.error('Error:', error);
 
-            if (formContainerStyle.right === "-500px") {
-                setFormContainerStyle({ right: "0" });
-                setTableContainerStyle({ marginRight: "500px" });
-            } else {
-                closeForm();
-            }
-        }).catch((error) => {
-            console.error(`Erreur lors de ${editingBanque ? 'la modification' : "l'ajout"} du banque:`, error);
+            // Afficher une alerte d'erreur
             Swal.fire({
                 icon: 'error',
                 title: 'Erreur!',
-                text: `Échec de ${editingBanque ? 'la modification' : "l'ajout"} du banque.`,
+                text: 'Échec de l\'ajout des données.',
             });
-        });
+        }
     };
+
 
     //------------------------- banque FORM---------------------//
 
@@ -783,38 +864,12 @@ const [clientId,setClientId] = useState(null);
                                     </Form.Select>
                                 </Form.Group>
 
-                                {/*<Form.Group className="col-sm-5 m-2" controlId="client_id">*/}
-
-                                {/*    <Form.Label>Numero de Facture</Form.Label>*/}
-
-                                {/*    <Form.Select*/}
-                                {/*        name="id_facture"*/}
-                                {/*        value={formData.reference}*/}
-                                {/*        onChange={handleChange}*/}
-                                {/*        className="form-select form-select-sm"*/}
-                                {/*    >*/}
-                                {/*        <option value="">Sélectionner une Facture </option>*/}
-                                {/*        {factures.map((facture) => (*/}
-                                {/*            <option key={facture.id} value={facture.id}>*/}
-                                {/*                {facture.reference}*/}
-                                {/*            </option>*/}
-                                {/*        ))}*/}
-                                {/*    </Form.Select>*/}
-                                {/*</Form.Group>*/}
 
                                 <Form.Group className="col-sm-10 m-2">
                                     <Form.Label>N° de Chéque</Form.Label>
                                     <Form.Control type="text" placeholder="Numéro de Facture" name="numero_cheque" value={formData.numero_cheque} onChange={handleChange} />
                                 </Form.Group>
-                                {/*<Form.Group className="col-sm-4 m-2">*/}
-                                {/*    <Form.Label>Mode de Paiement</Form.Label>*/}
-                                {/*    <Form.Control as="select" name="mode_de_paiement" value={formData.mode_de_paiement} onChange={handleChange}>*/}
-                                {/*        <option value="">Sélectionner un mode de paiement</option>*/}
-                                {/*        <option value="espece">Espèce</option>*/}
-                                {/*        <option value="cheque">Chèque</option>*/}
-                                {/*        <option value="carte_bancaire">Carte Bancaire</option>*/}
-                                {/*    </Form.Control>*/}
-                                {/*</Form.Group>*/}
+
                                 <Form.Group className="col-sm-4 m-2">
                                     <Form.Label>Mode de Paiement</Form.Label>
                                     <Form.Control as="select" name="mode_de_paiement" value={formData.mode_de_paiement} onChange={handleChange}>
@@ -830,10 +885,7 @@ const [clientId,setClientId] = useState(null);
                                     <Form.Label>date </Form.Label>
                                     <Form.Control type="date" placeholder="datee" name="datee" value={formData.datee} onChange={handleChange} />
                                 </Form.Group>
-                                {/*<Form.Group className="col-sm-4 m-2">*/}
-                                {/*    <Form.Label>Montant </Form.Label>*/}
-                                {/*    <Form.Control type="text" placeholder="Montant" name="Montant" value={formData.Montant} onChange={handleChange} />*/}
-                                {/*</Form.Group>*/}
+
                                 <Form.Group className="col-sm-5 m-2">
                                     <Form.Label>Status </Form.Label>
                                     <Form.Control as="select" name="Status" value={formData. Status} onChange={handleChange}>
@@ -865,7 +917,7 @@ const [clientId,setClientId] = useState(null);
                                                 <th>Numéro de Facture</th>
                                                 <th>Total TTC</th>
                                                 <th>Date de Facture</th>
-                                                <th>Montant à payer</th>
+                                                <th>Avance</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -875,7 +927,16 @@ const [clientId,setClientId] = useState(null);
                                                     <td>{facture.total_ttc}</td>
                                                     <td>{facture.date}</td>
                                                     <td>
-                                                        <Form.Control type="text" placeholder="Montant" name="Montant" value={formData.Montant} onChange={handleChange} />
+                                                        <td>
+                                                            <Form.Control
+                                                                type="text"
+                                                                placeholder="Montant"
+                                                                id={`avance_${facture.id}`}
+                                                                name={`avance_${facture.id}`}
+                                                                value={formData[`avance_${facture.id}`] || ''}
+                                                                onChange={handleChange}
+                                                            />
+                                                        </td>
                                                     </td>
                                                 </tr>
                                             ))}
@@ -907,7 +968,7 @@ const [clientId,setClientId] = useState(null);
                                     <th style={tableHeaderStyle}>N° de Chéque</th>
                                     <th style={tableHeaderStyle}>Mode de Paiement</th>
                                     <th style={tableHeaderStyle}>date</th>
-                                    <th style={tableHeaderStyle}>Montant</th>
+                                    <th style={tableHeaderStyle}>Avance</th>
                                     <th style={tableHeaderStyle}>Status</th>
                                     <th style={tableHeaderStyle}>Remarque</th>
                                     <th style={tableHeaderStyle}>Action</th>
@@ -930,7 +991,7 @@ const [clientId,setClientId] = useState(null);
                                            {getReferenceByIdClient(banques.client_id).length > 1
                                                ?  <button
                                                    className="btn btn-sm btn-light"
-                                                   onClick={() => toggleRow(banques.id)}
+                                                   onClick={() => handleShowLigneEntreeCompte(banques.id)}
                                                >
                                                    <FontAwesomeIcon
                                                        icon={
@@ -948,7 +1009,7 @@ const [clientId,setClientId] = useState(null);
                                            <td>{banques.numero_cheque}</td>
                                            <td>{banques.mode_de_paiement}</td>
                                            <td>{banques.datee}</td>
-                                           <td>{banques.Montant}</td>
+                                           <td>{banques.avance}</td>
                                            <td>{banques.Status}</td>
                                            <td>{banques.remarque}</td>
                                            <td className="d-inline-flex">
@@ -968,22 +1029,28 @@ const [clientId,setClientId] = useState(null);
                                                        <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
                                                            <thead>
                                                            <tr>
-                                                               <th>N° Facture</th>
-                                                               <th>Total TTC</th>
-                                                               <th>Date</th>
-                                                               <th>Avance</th>
+                                                               <th style={tableHeaderStyle}>N° Facture</th>
+                                                               <th style={tableHeaderStyle}>Total TTC</th>
+                                                               <th style={tableHeaderStyle}>Date</th>
+                                                               <th style={tableHeaderStyle}>Avance</th>
 
                                                            </tr>
                                                            </thead>
                                                            <tbody>
-                                                           {getReferenceByIdClient(banques.client_id).map((facture, index) => (
-                                                               <tr key={index}>
-                                                                   <td>{facture}</td>
-                                                                   <td>{gettotalttcByIdClient(banques.client_id)[index]}</td>
-                                                                   <td>{getDateFactureByIdClient(banques.client_id)[index]}</td>
-                                                                   <td>{gettotalttcByIdClient(banques.client_id)[index]}</td>
+
+                                                           {ligneEntrerComptes.map((ligneEntreCompte) => (
+                                                               <tr key={ligneEntreCompte.id}>
+
+                                                                   <td>{ligneEntreCompte.id_facture}</td>
+                                                                   <td>{gettotalttcByIdClient(ligneEntreCompte.id)}</td>
+                                                                   <td>{getDateFactureByIdClient(ligneEntreCompte.id)}</td>
+                                                                   <td>{ligneEntreCompte.avance}</td>
+
                                                                </tr>
                                                            ))}
+
+
+
                                                            </tbody>
                                                        </table>
                                                    </div>
