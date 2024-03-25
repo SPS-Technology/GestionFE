@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { Toolbar } from "@mui/material";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
@@ -10,7 +10,8 @@ import CardMedia from "@mui/material/CardMedia";
 import Typography from "@mui/material/Typography";
 import Navigation from "../Acceuil/Navigation";
 import Swal from "sweetalert2";
-
+import PeopleIcon from "@mui/icons-material/People";
+import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 const SiteClientsPage = () => {
   const [siteClients, setSiteClients] = useState([]);
   const { clientId } = useParams();
@@ -33,7 +34,6 @@ const SiteClientsPage = () => {
           });
           navigate("/clients_logo");
         }
-       
       } catch (error) {
         console.error("Erreur lors du chargement des site clients:", error);
       }
@@ -47,8 +47,22 @@ const SiteClientsPage = () => {
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-        <Toolbar />
-          <Typography variant="h5" gutterBottom component="div">
+          <Toolbar />
+          {/* <Typography variant="h5" gutterBottom component="div">
+            
+          </Typography> */}
+          <Typography
+            variant="h5"
+            gutterBottom
+            component="div"
+            sx={{
+              color: "#A31818",
+              display: "flex",
+              alignItems: "center",
+              marginBottom: "50px",
+            }}
+          >
+            <PeopleIcon sx={{ fontSize: "24px", marginRight: "8px" }} />
             Liste des site clients du client sélectionné
           </Typography>
           <Box
@@ -58,14 +72,14 @@ const SiteClientsPage = () => {
               justifyContent: "center",
             }}
           >
-            <div className="site-clients">
+            <div className="d-flex flex-row justify-content-start flex-wrap">
               {siteClients.map((siteClient) => (
                 <Card
                   key={siteClient.id}
                   sx={{
                     maxWidth: 300,
-                    margin: "0 auto",
                     marginBottom: "20px",
+                    marginRight: "20px",
                     boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.1)",
                   }}
                 >
@@ -74,26 +88,42 @@ const SiteClientsPage = () => {
                     height="140"
                     image={siteClient.logoSC}
                     alt={siteClient.raison_sociale}
-                    sx={{ objectFit: "cover", height: "140px" }}
+                    sx={{ objectFit: "cover", height: "250px" }}
                   />
                   <CardContent>
-                    <Typography gutterBottom variant="h6" component="div">
-                      {siteClient.raison_sociale}
+                    <Typography
+                      gutterBottom
+                      variant="h6"
+                      component="div"
+                      style={{ textAlign: "center", fontSize: "24px" }}
+                    >
+                      <span style={{ fontWeight: "bold" }}>
+                        {siteClient.raison_sociale}
+                      </span>
+                    </Typography>
+
+                    <Typography variant="body1">
+                      <span style={{ fontWeight: "bold" }}>Adresse :</span>{" "}
+                      {siteClient.adresse}
                     </Typography>
                     <Typography variant="body1">
-                      Adresse : {siteClient.adresse}
+                      <span style={{ fontWeight: "bold" }}>Téléphone :</span>{" "}
+                      {siteClient.tele}
                     </Typography>
                     <Typography variant="body1">
-                      Téléphone : {siteClient.tele}
-                    </Typography>
-                    <Typography variant="body1">
-                      Ville : {siteClient.ville}
+                      <span style={{ fontWeight: "bold" }}>Ville :</span>{" "}
+                      {siteClient.ville}
                     </Typography>
                   </CardContent>
                 </Card>
               ))}
             </div>
           </Box>
+
+          <Link to="/clients_logo">
+            <KeyboardReturnIcon />
+            return aux clients
+          </Link>
         </Box>
       </Box>
     </ThemeProvider>
