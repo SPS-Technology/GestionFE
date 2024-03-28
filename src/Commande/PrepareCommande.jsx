@@ -2085,7 +2085,7 @@ const CommandeList = () => {
                         </td>
                       </tr>
                       {expandedRows.includes(commande.id) &&
-                        commande.ligne_commandes && (
+                        commande.ligne_preparation_commandes && (
                           <tr>
                             <td
                               colSpan="12"
@@ -2103,6 +2103,11 @@ const CommandeList = () => {
                                   }}
                                 >
                                   <thead>
+                                    <tr>
+                                      <center>
+                                        Lignes de Preparation Commandes
+                                      </center>
+                                    </tr>
                                     <tr>
                                       <th
                                         style={{
@@ -2125,17 +2130,36 @@ const CommandeList = () => {
                                       >
                                         Prix Vente
                                       </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Lot
+                                      </th>
                                       {/* <th className="text-center">Action</th> */}
                                     </tr>
                                   </thead>
                                   <tbody>
-                                    {commande.ligne_commandes.map(
-                                      (ligneCommande) => (
-                                        <tr key={ligneCommande.id}>
-                                          <td>{ligneCommande.produit_id}</td>
-                                          <td>{ligneCommande.quantite}</td>
+                                    {commande.ligne_preparation_commandes.map(
+                                      (lignePreparationCommande) => (
+                                        <tr key={lignePreparationCommande.id}>
                                           <td>
-                                            {ligneCommande.prix_unitaire} DH
+                                            {
+                                              lignePreparationCommande.produit_id
+                                            }
+                                          </td>
+                                          <td>
+                                            {lignePreparationCommande.quantite}
+                                          </td>
+                                          <td>
+                                            {
+                                              lignePreparationCommande.prix_unitaire
+                                            }{" "}
+                                            DH
+                                          </td>
+                                          <td>
+                                            {lignePreparationCommande.lot}
                                           </td>
                                           {/* <td className="no-print">
                                               <button
