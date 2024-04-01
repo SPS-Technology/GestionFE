@@ -656,7 +656,8 @@ const ChargeCommande = () => {
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 1 }}>
-          {/* <h2 className="mt-4">Chargement des Commandes</h2> */}
+          <Toolbar />
+          <h3>Chargement des Commandes</h3>
 
           <div className="search-container d-flex flex-row-reverse mb-3">
             <Search onSearch={handleSearch} />

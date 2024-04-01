@@ -4,14 +4,26 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Navigation from "../Acceuil/Navigation";
 import { Form, Button } from "react-bootstrap";
+import { Toolbar } from "@mui/material";
+import PrintList from "./PrintList";
+import ExportPdfButton from "./exportToPdf";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faPlus,
+  faMinus,
+  faFileExcel,
+} from "@fortawesome/free-solid-svg-icons";
+import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import Select from "react-dropdown-select";
 import "jspdf-autotable";
 import Swal from "sweetalert2";
-
+import Search from "../Acceuil/Search";
+import TablePagination from "@mui/material/TablePagination";
 const CommandeList = () => {
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0);
   const [commandes, setCommandes] = useState([]);
   const [selectedClient, setSelectedClient] = useState([]);
   const [clients, setClients] = useState([]);
@@ -30,6 +42,7 @@ const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
   const [selectedClientId, setSelectedClientId] = useState(null);
+  const [authId, setAuthId] = useState([]);
   const [selectedSiteClient, setSelectedSiteClient] = useState(null);
   useState(null);
   const [formData, setFormData] = useState({
@@ -39,7 +52,7 @@ const CommandeList = () => {
     site_id: "",
     mode_payement: "",
     status: "",
-    user_id: "",
+    user_id: authId,
     produit_id: "",
     prix_unitaire: "",
     quantite: "",
@@ -77,7 +90,14 @@ const CommandeList = () => {
   //     console.error("Error fetching data:", error);
   //   }
   // };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 5));
+    setPage(0);
+  };
   useEffect(() => {
     if (editingCommandesId) {
       fetchExistingLigneCommandes(editingCommandesId);
@@ -141,65 +161,31 @@ const CommandeList = () => {
         : [...prevRows, commande]
     );
   };
-  // const fetchLigneCommandes = async (CommandesId) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8000/api/ligneCommandes/${CommandesId}`
-  //     );
-  //     return response.data.ligneCommandes;
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de la récupération des lignes de Commandes :",
-  //       error
-  //     );
-  //     return [];
-  //   }
-  // };
-  // const fetchStatusCommandes = async (CommandesId) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8000/api/statusCommandes/${CommandesId}`
-  //     );
-  //     return response.data.statusCommandes;
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de la récupération des lignes de Commandes :",
-  //       error
-  //     );
-  //     return [];
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   // Préchargement des lingeCommandes pour chaque Commandes
-  //   commandes.forEach(async (Commandes) => {
-  //     if (!Commandes.ligne_commandes) {
-  //       const ligneCommandes = await fetchLigneCommandes(Commandes.id);
-  //       setClients((prevCommandes) => {
-  //         return prevCommandes.map((prevCommandes) => {
-  //           if (prevCommandes.id === Commandes.id) {
-  //             return { ...prevCommandes, ligneCommandes };
-  //           }
-  //           return prevCommandes;
-  //         });
-  //       });
-  //     }
-  //   });
-  // }, [commandes]);
-
+  const exportToExcel = () => {
+    const selectedClients = clients.filter((client) =>
+      selectedItems.includes(client.id)
+    );
+    const ws = XLSX.utils.json_to_sheet(selectedClients);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Clients");
+    XLSX.writeFile(wb, "clients.xlsx");
+  };
   const fetchData = async () => {
     try {
       const [
+        userResponse,
         commandesResponse,
         clientsResponse,
         siteClientResponse,
         produitsResponse,
       ] = await Promise.all([
+        axios.get("http://localhost:8000/api/user"),
         axios.get("http://localhost:8000/api/commandes"),
         axios.get("http://localhost:8000/api/clients"),
         axios.get("http://localhost:8000/api/siteclients"),
         axios.get("http://localhost:8000/api/produits"),
       ]);
+      setAuthId(userResponse.data.id);
       setCommandes(commandesResponse.data.commandes);
       setClients(clientsResponse.data.client);
       setSiteClients(siteClientResponse.data.siteclient);
@@ -236,7 +222,7 @@ const CommandeList = () => {
   };
 
   const getQuantity = (ligneCommandes, calibre, designation) => {
-    const correspondingProduct = selectedProductsData.find(
+    const correspondingProduct = produits.find(
       (product) =>
         product.calibre.calibre === calibre &&
         product.designation === designation
@@ -247,16 +233,13 @@ const CommandeList = () => {
     }
 
     const correspondingLigneCommande = ligneCommandes.find(
-      (ligne) =>
-        ligne.produit_id === correspondingProduct.id &&
-        ligne.id === correspondingProduct.id
+      (ligne) => ligne.produit_id === correspondingProduct.id
     );
-
     return correspondingLigneCommande ? correspondingLigneCommande.quantite : 0;
   };
   const populateProductInputs = (ligneCommandId, inputType) => {
     console.log("ligneCommandId", ligneCommandId);
-    const existingLigneCommande = existingLigneCommandes.find(
+    const existingLigneCommande = selectedProductsData.find(
       (ligneCommande) => ligneCommande.id === ligneCommandId
     );
     console.log("existing LigneCommande", existingLigneCommandes);
@@ -287,15 +270,15 @@ const CommandeList = () => {
     e.preventDefault();
 
     try {
-      const userResponse = await axios.get("http://localhost:8000/api/users", {
-        withCredentials: true,
-        headers: {
-          "X-CSRF-TOKEN": csrfToken,
-        },
-      });
+      // const userResponse = await axios.get("http://localhost:8000/api/users", {
+      //   withCredentials: true,
+      //   headers: {
+      //     "X-CSRF-TOKEN": csrfToken,
+      //   },
+      // });
 
-      const authenticatedUserId = userResponse.data[0].id;
-      console.log("auth user", authenticatedUserId);
+      // const authenticatedUserId = userResponse.data[0].id;
+      // console.log("auth user", authenticatedUserId);
       // Préparer les données du Commandes
       const CommandesData = {
         dateCommande: formData.dateCommande,
@@ -303,7 +286,7 @@ const CommandeList = () => {
         mode_payement: formData.mode_payement,
         site_id: selectedSiteClient ? selectedSiteClient.id : null,
         client_id: selectedClient.id,
-        user_id: authenticatedUserId,
+        user_id: authId,
       };
 
       let response;
@@ -317,7 +300,7 @@ const CommandeList = () => {
             mode_payement: formData.mode_payement,
             site_id: selectedSiteClient ? selectedSiteClient.id : null,
             client_id: selectedClient.id,
-            user_id: authenticatedUserId,
+            user_id: authId,
           }
         );
         const existingLigneCommandesResponse = await axios.get(
@@ -449,38 +432,19 @@ const CommandeList = () => {
       }
       console.log("response of postCommande: ", response.data);
 
-      setFormData({
-        reference: "",
-        dateCommande: "",
-        site_id: "",
-        client_id: "",
-        mode_payement: "",
-        status: "",
-        user_id: "",
-        produit_id: "",
-        prix_unitaire: "",
-        quantite: "",
-      });
-
       fetchData();
-
-      setShowForm(false);
 
       setSelectedClient([]);
       setSelectedSiteClient([]);
       setSelectedProductsData([]);
       fetchExistingLigneCommandes();
-
-      // Delete all selections in the table
-      // selectedProductsData.forEach((product, index) => {
-      //   handleDeleteProduct(index, product.id);
-      // });
+      closeForm();
 
       // Afficher un message de succès à l'utilisateur
       Swal.fire({
         icon: "success",
-        title: "Succès !",
-        text: "Succès.",
+        title: "Commande ajoutée avec succès",
+        text: "La commande a été ajoutée avec succès.",
       });
     } catch (error) {
       console.error("Erreur lors de la soumission des données :", error);
@@ -565,7 +529,7 @@ const CommandeList = () => {
 
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -654,7 +618,7 @@ const CommandeList = () => {
   const handleShowFormButtonClick = () => {
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "-0%" });
-      setTableContainerStyle({ marginRight: "600px" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -677,7 +641,7 @@ const CommandeList = () => {
       site_id: "",
       mode_payement: "",
       status: "",
-      user_id: "",
+      user_id: authId,
       produit_id: "",
       prix_unitaire: "",
       quantite: "",
@@ -989,11 +953,40 @@ const CommandeList = () => {
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-          <h2 className="mt-4">Liste de Commandes</h2>
+          <Toolbar />
+          <div className="d-flex justify-content-center align-items-center">
+            <div className="col-md-auto" style={{ width: "700px" }}>
+              <Search onSearch={handleSearch} type="search" />
+            </div>
+          </div>
 
+          <div className="d-flex justify-content-end align-items-center">
+            <div className="btn-group col-1">
+              <PrintList
+                tableId="produitsTable"
+                title="Liste des produits"
+                produitList={produits}
+                filteredProduits={filteredCommandes}
+              />
+              <ExportPdfButton
+                produits={produits}
+                selectedItems={selectedItems}
+                disabled={selectedItems.length === 0}
+              />
+              <Button
+                className="btn btn-success btn-sm ml-2"
+                onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
+              >
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
+            </div>
+          </div>
+
+          <h3>Liste des Commandes</h3>
           <Button
             variant="primary"
-            className="btn btn-sm m-2"
+            className=" btn btn-sm m-4"
             id="showFormButton"
             onClick={handleShowFormButtonClick}
           >
@@ -1163,7 +1156,7 @@ const CommandeList = () => {
               </div>
 
               <div className="col-md-12">
-                <div className="row mb-3">
+                <div className="row mb-4">
                   <div className="col-sm-6">
                     <label htmlFor="dateCommande" className="col-form-label">
                       Date Commande:
@@ -1193,13 +1186,13 @@ const CommandeList = () => {
                 </Button>
                 <strong>Ajouter Produit</strong>
               </div>
-              {console.log("selectedProductsData:", selectedProductsData)}
+
               <div className="col-md-12">
                 <div className="row mb-3">
                   <div className="col-sm-12">
                     <Form.Group controlId="selectedProduitTable">
                       <div className="table-responsive">
-                        <table className="table-bordered ">
+                        <table className="table table-bordered ">
                           <thead>
                             <tr>
                               <th>Code Produit</th>
@@ -1229,6 +1222,7 @@ const CommandeList = () => {
                                           Code_produit: produit.Code_produit,
                                           designation: produit.designation,
                                           calibre_id: produit.calibre_id,
+                                          calibre: produit.calibre,
                                         },
                                         index
                                       );
@@ -1334,6 +1328,7 @@ const CommandeList = () => {
               </div>
             </Form>
           </div>
+
           <div
             id="tableContainer"
             className="table-responsive-sm"
@@ -1366,9 +1361,13 @@ const CommandeList = () => {
                 </tr>
               </thead>
               <tbody className="text-center">
-                {commandes &&
-                  commandes.map((commande) => (
+                {filteredCommandes &&
+                  filteredCommandes.map((commande) => (
                     <React.Fragment key={commande.id}>
+                      {console.log(
+                        "Ligne_Commandes:",
+                        commande.ligne_commandes
+                      )}
                       <tr>
                         <td>
                           {/* <input
@@ -1581,7 +1580,7 @@ const CommandeList = () => {
                               <thead>
                                 <tr>
                                   <th></th>
-                                  {/* {commande.ligne_commandes.map((ligne) => {
+                                  {commande.ligne_commandes.map((ligne) => {
                                     const produit = produits.find(
                                       (prod) => prod.id === ligne.produit_id
                                     );
@@ -1595,19 +1594,19 @@ const CommandeList = () => {
                                         {produit.designation}
                                       </th>
                                     );
-                                  })} */}
-                                  {selectedProductsData.map((ligne) => {
+                                  })}
+                                  {/* {selectedProductsData.map((ligne, index) => {
                                     return (
                                       <th
                                         style={{
                                           backgroundColor: "#ddd",
                                         }}
-                                        key={ligne.id}
+                                        key={index}
                                       >
                                         {ligne.designation}
                                       </th>
                                     );
-                                  })}
+                                  })} */}
                                   <th
                                     style={{
                                       backgroundColor: "#ddd",
@@ -1627,7 +1626,7 @@ const CommandeList = () => {
                                     >
                                       <strong>calibre : [{calibre}]</strong>
                                     </td>
-                                    {/* {commande.ligne_commandes.map((ligne) => {
+                                    {commande.ligne_commandes.map((ligne) => {
                                       const produit = produits.find(
                                         (prod) => prod.id === ligne.produit_id
                                       );
@@ -1640,18 +1639,20 @@ const CommandeList = () => {
                                           )}
                                         </td>
                                       );
-                                    })} */}
-                                    {selectedProductsData.map((ligne) => {
-                                      return (
-                                        <td key={ligne.id}>
-                                          {getQuantity(
-                                            commande.ligne_commandes,
-                                            calibre,
-                                            ligne.designation
-                                          )}
-                                        </td>
-                                      );
                                     })}
+                                    {/* {selectedProductsData.map(
+                                      (ligne, index) => {
+                                        return (
+                                          <td key={index}>
+                                            {getQuantity(
+                                              commande.ligne_commandes,
+                                              calibre,
+                                              ligne.designation
+                                            )}
+                                          </td>
+                                        );
+                                      }
+                                    )} */}
 
                                     <td>
                                       <strong>
@@ -1724,6 +1725,15 @@ const CommandeList = () => {
                   ))}
               </tbody>
             </table>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredCommandes.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
             <Button
               className="btn btn-danger btn-sm"
               onClick={handleDeleteSelected}

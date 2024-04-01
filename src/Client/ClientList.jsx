@@ -14,8 +14,6 @@ import {
   faFileExcel,
   faPlus,
   faMinus,
-  faCircleInfo,
-  faSquarePlus,
 } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import "../style.css";
@@ -26,7 +24,7 @@ import { Toolbar } from "@mui/material";
 //------------------------- CLIENT LIST---------------------//
 const ClientList = () => {
   const [clients, setClients] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [authId, setAuthId] = useState([]);
   const [zones, setZones] = useState([]);
   const [siteClients, setSiteClients] = useState([]);
 
@@ -39,7 +37,7 @@ const ClientList = () => {
     tele: "",
     ville: "",
     zone_id: "",
-    user_id: "",
+    user_id: authId,
     ice: "",
     code_postal: "",
   });
@@ -75,7 +73,7 @@ const ClientList = () => {
     tele: "",
     ville: "",
     zone_id: "",
-    user_id: "",
+    user_id: authId,
     ice: "",
     code_postal: "",
     client_id: "",
@@ -93,8 +91,9 @@ const ClientList = () => {
       setClients(response.data.client);
 
       const userResponse = await axios.get("http://localhost:8000/api/user");
-      setUsers(userResponse.data.users);
-
+      const authenticatedUserId = userResponse.data.id;
+      setAuthId(authenticatedUserId);
+      console.log("authenticatedUserId", authenticatedUserId);
       const zoneResponse = await axios.get("http://localhost:8000/api/zones");
       setZones(zoneResponse.data.zone);
 
@@ -109,33 +108,11 @@ const ClientList = () => {
   };
 
   const toggleRow = async (clientId) => {
-    if (expandedRows.includes(clientId)) {
-      setExpandedRows(expandedRows.filter((id) => id !== clientId));
-    } else {
-      try {
-        // Fetch site clients associés au client
-        const siteClients = await fetchSiteClients(clientId);
-        // console.log('Site clients:', siteClients);
-
-        // Mettre à jour l'état des clients avec les site clients associés au client
-        setClients((prevClients) => {
-          return prevClients.map((client) => {
-            if (client.id === clientId) {
-              return { ...client, siteClients };
-            }
-            return client;
-          });
-        });
-
-        // Ajouter le client ID aux lignes étendues
-        setExpandedRows([...expandedRows, clientId]);
-      } catch (error) {
-        console.error(
-          "Erreur lors de la récupération des site clients:",
-          error
-        );
-      }
-    }
+    setExpandedRows((prevRows) =>
+      prevRows.includes(clientId)
+        ? prevRows.filter((row) => row !== clientId)
+        : [...prevRows, clientId]
+    );
   };
 
   const fetchSiteClients = async (clientId) => {
@@ -203,13 +180,13 @@ const ClientList = () => {
       tele: client.tele,
       ville: client.ville,
       zone_id: client.zone_id,
-      user_id: client.user_id,
+      user_id: authId,
       ice: client.ice,
       code_postal: client.code_postal,
     });
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -217,7 +194,7 @@ const ClientList = () => {
   useEffect(() => {
     if (editingClientId !== null) {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     }
   }, [editingClientId]);
 
@@ -248,7 +225,7 @@ const ClientList = () => {
           tele: "",
           ville: "",
           zone_id: "",
-          user_id: "",
+          user_id: authId,
           ice: "",
           code_postal: "",
         });
@@ -276,7 +253,7 @@ const ClientList = () => {
   const handleShowFormButtonClick = () => {
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -294,7 +271,7 @@ const ClientList = () => {
       tele: "",
       ville: "",
       zone_id: "",
-      user_id: "",
+      user_id: authId,
       ice: "",
       code_postal: "",
     });
@@ -363,7 +340,7 @@ const ClientList = () => {
           tele: "",
           ville: "",
           zone_id: "",
-          user_id: "",
+          user_id: authId,
           ice: "",
           code_postal: "",
           client_id: "", // Mettez l'ID du client sélectionn
@@ -398,7 +375,7 @@ const ClientList = () => {
       tele: siteClient.tele,
       ville: siteClient.ville,
       zone_id: siteClient.zone_id,
-      user_id: siteClient.user_id,
+      user_id: authId,
       ice: siteClient.ice,
       code_postal: siteClient.code_postal,
       client_id: siteClient.selectedClientIds
@@ -481,7 +458,7 @@ const ClientList = () => {
       tele: "",
       ville: "",
       zone_id: "",
-      user_id: "",
+      user_id: authId,
       ice: "",
       code_postal: "",
       client_id: "",
@@ -923,17 +900,7 @@ const ClientList = () => {
                   className="form-control-sm"
                 />
               </Form.Group>
-              <Form.Group className="col-sm-4 m-2" controlId="user_id">
-                <Form.Label>Utilisateur</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="user_id"
-                  value={formData.user_id}
-                  onChange={handleChange}
-                  placeholder="user_id"
-                  className="form-control-sm"
-                />
-              </Form.Group>
+
               <Form.Group className="col-7 m-3">
                 <Button className="col-6" variant="primary" type="submit">
                   {editingClient ? "Modifier" : "Ajouter"}
@@ -1054,17 +1021,7 @@ const ClientList = () => {
                   className="form-control-sm"
                 />
               </Form.Group>
-              <Form.Group className="col-sm-4 m-2" controlId="user_id">
-                <Form.Label>Utilisateur</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="user_id"
-                  value={formDataSC.user_id}
-                  onChange={handleChangeSC}
-                  placeholder="user_id"
-                  className="form-control-sm"
-                />
-              </Form.Group>
+
               <Form.Group className="col-sm-4 m-2 hidden" controlId="client_id">
                 <Form.Label>Client</Form.Label>
                 <Form.Control
@@ -1093,229 +1050,222 @@ const ClientList = () => {
               </Form.Group>
             </Form>
           </div>
-          <div className="">
-            <div
-              id="tableContainer"
-              className="table-responsive-sm"
-              style={tableContainerStyle}
-            >
-              {clients && clients.length > 0 ? (
-                <table
-                  className="table table-responsive table-bordered"
-                  id="clientsTable"
-                >
-                  <thead className="text-center">
-                    <tr>
-                      <th>{/* vide */}</th>
-                      <th>
-                        <input
-                          type="checkbox"
-                          checked={selectAll}
-                          onChange={handleSelectAllChange}
-                        />
-                      </th>
-                      <th>Raison Sociale</th>
-                      <th>Abreviation</th>
-                      <th>Adresse</th>
-                      <th>Téléphone</th>
-                      <th>Ville</th>
-                      <th>Code Postal</th>
-                      <th>ICE</th>
-                      <th>Zone</th>
-                      <th>User</th>
-                      <th className="text-center">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-center">
-                    {filteredclients
-                      .slice(
-                        page * rowsPerPage,
-                        page * rowsPerPage + rowsPerPage
-                      )
-                      .map((client) => (
-                        <React.Fragment key={client.id}>
+
+          <div
+            id="tableContainer"
+            className="table-responsive-sm"
+            style={tableContainerStyle}
+          >
+            <table className="table table-responsive table-bordered">
+              <thead
+                className="text-center "
+                style={{ backgroundColor: "#ddd" }}
+              >
+                <tr>
+                  <th>{/* vide */}</th>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAllChange}
+                    />
+                  </th>
+                  <th>Raison Sociale</th>
+                  <th>Abreviation</th>
+                  <th>Adresse</th>
+                  <th>Téléphone</th>
+                  <th>Ville</th>
+                  <th>Code Postal</th>
+                  <th>ICE</th>
+                  <th>Zone</th>
+
+                  <th className="text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {filteredclients
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((client) => (
+                    <React.Fragment key={client.id}>
+                      <tr>
+                        <td>
+                          <div className="no-print ">
+                            <button
+                              className="btn btn-sm btn-light"
+                              onClick={() => toggleRow(client.id)}
+                            >
+                              <FontAwesomeIcon
+                                icon={
+                                  expandedRows.includes(client.id)
+                                    ? faMinus
+                                    : faPlus
+                                }
+                              />
+                            </button>
+                          </div>
+                        </td>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selectedItems.some(
+                              (item) => item.id === client.id
+                            )}
+                            onChange={() => handleSelectItem(client)}
+                          />
+                        </td>
+                        <td>{client.raison_sociale}</td>
+                        <td>{client.abreviation}</td>
+                        <td>{client.adresse}</td>
+                        <td>{client.tele}</td>
+                        <td>{client.ville}</td>
+                        <td>{client.code_postal}</td>
+                        <td>{client.ice}</td>
+                        <td>{client.zone.zone}</td>
+
+                        <td>
+                          <div className="d-inline-flex text-center">
+                            <Button
+                              className=" btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(client)}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className=" btn btn-danger btn-sm m-1"
+                              onClick={() => handleDelete(client.id)}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedRows.includes(client.id) &&
+                        client.siteClients && (
                           <tr>
-                            <td>
-                              <div className="no-print ">
-                                <button
-                                  className="btn btn-sm btn-light"
-                                  onClick={() => toggleRow(client.id)}
+                            <td
+                              colSpan="12"
+                              style={{
+                                padding: "0",
+                              }}
+                            >
+                              <div id="client">
+                                <table
+                                  className=" table-bordered"
+                                  style={{
+                                    borderCollapse: "collapse",
+                                    // backgroundColor: "#f2f2f2",
+                                    width: "100%",
+                                  }}
                                 >
-                                  <FontAwesomeIcon
-                                    icon={
-                                      expandedRows.includes(client.id)
-                                        ? faMinus
-                                        : faPlus
-                                    }
-                                  />
-                                </button>
+                                  <thead
+                                    className="text-center "
+                                    style={{ backgroundColor: "#ddd" }}
+                                  >
+                                    <tr>
+                                      <th>Raison Sociale</th>
+                                      <th>Abreviation</th>
+                                      <th>Adresse</th>
+                                      <th>Téléphone</th>
+                                      <th>Ville</th>
+                                      <th>Code Postal</th>
+                                      <th>ICE</th>
+                                      <th>Zone</th>
+                                      <th className="text-center">Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {client.siteClients.map((siteClient) => (
+                                      <tr key={siteClient.id}>
+                                        <td>{siteClient.raison_sociale}</td>
+                                        <td>{siteClient.abreviation}</td>
+                                        <td>{siteClient.adresse}</td>
+                                        <td>{siteClient.tele}</td>
+                                        <td>{siteClient.ville}</td>
+                                        <td>{siteClient.code_postal}</td>
+                                        <td>{siteClient.ice}</td>
+                                        <td>{siteClient.zone_id}</td>
+                                        <td className="no-print">
+                                          <button
+                                            className="btn btn-sm btn-info m-1"
+                                            onClick={() => {
+                                              if (selectedItems.length === 1) {
+                                                handleEditSC(siteClient);
+                                              } else if (
+                                                selectedItems.length > 1
+                                              ) {
+                                                console.error(
+                                                  "Vous ne pouvez modifier qu'un seul site client à la fois."
+                                                );
+                                              } else {
+                                                console.error(
+                                                  "Aucun client sélectionné pour modifier un site client."
+                                                );
+                                              }
+                                            }}
+                                            disabled={
+                                              selectedItems.length === 0 ||
+                                              selectedItems.length > 1
+                                            }
+                                          >
+                                            <i className="fas fa-edit"></i>
+                                          </button>
+                                          <button
+                                            className="btn btn-sm btn-danger m-1"
+                                            onClick={() =>
+                                              handleDeleteSiteClient(
+                                                siteClient.id
+                                              )
+                                            }
+                                          >
+                                            <FontAwesomeIcon icon={faTrash} />
+                                          </button>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
                               </div>
                             </td>
-                            <td>
-                              <input
-                                type="checkbox"
-                                checked={selectedItems.some(
-                                  (item) => item.id === client.id
-                                )}
-                                onChange={() => handleSelectItem(client)}
-                              />
-                            </td>
-                            <td>{client.raison_sociale}</td>
-                            <td>{client.abreviation}</td>
-                            <td>{client.adresse}</td>
-                            <td>{client.tele}</td>
-                            <td>{client.ville}</td>
-                            <td>{client.code_postal}</td>
-                            <td>{client.ice}</td>
-                            <td>{client.zone.zone}</td>
-                            <td>{client.user.name}</td>
-                            <td className="d-inline-flex">
-                              <button
-                                className="btn btn-sm btn-info m-1"
-                                onClick={() => handleEdit(client)}
-                              >
-                                <i className="fas fa-edit"></i>
-                              </button>
-                              <button
-                                className="btn btn-danger btn-sm m-1"
-                                onClick={() => handleDelete(client.id)}
-                              >
-                                <i className="fas fa-minus-circle"></i>
-                              </button>
-                            </td>
                           </tr>
-                          {expandedRows.includes(client.id) &&
-                            client.siteClients && (
-                              <tr>
-                                <td colSpan="12">
-                                  <div id="client">
-                                    <table
-                                      className="table table-responsive"
-                                      style={{ backgroundColor: "#F1F1F1" }}
-                                    >
-                                      <thead>
-                                        <tr>
-                                          <th>Raison Sociale</th>
-                                          <th>Abreviation</th>
-                                          <th>Adresse</th>
-                                          <th>Téléphone</th>
-                                          <th>Ville</th>
-                                          <th>Code Postal</th>
-                                          <th>ICE</th>
-                                          <th>Zone</th>
-                                          <th className="text-center">
-                                            Action
-                                          </th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {client.siteClients.map(
-                                          (siteClient) => (
-                                            <tr key={siteClient.id}>
-                                              <td>
-                                                {siteClient.raison_sociale}
-                                              </td>
-                                              <td>{siteClient.abreviation}</td>
-                                              <td>{siteClient.adresse}</td>
-                                              <td>{siteClient.tele}</td>
-                                              <td>{siteClient.ville}</td>
-                                              <td>{siteClient.code_postal}</td>
-                                              <td>{siteClient.ice}</td>
-                                              <td>{siteClient.zone_id}</td>
-                                              <td className="no-print">
-                                                <button
-                                                  className="btn btn-sm btn-info m-1"
-                                                  onClick={() => {
-                                                    if (
-                                                      selectedItems.length === 1
-                                                    ) {
-                                                      handleEditSC(siteClient);
-                                                    } else if (
-                                                      selectedItems.length > 1
-                                                    ) {
-                                                      console.error(
-                                                        "Vous ne pouvez modifier qu'un seul site client à la fois."
-                                                      );
-                                                    } else {
-                                                      console.error(
-                                                        "Aucun client sélectionné pour modifier un site client."
-                                                      );
-                                                    }
-                                                  }}
-                                                  disabled={
-                                                    selectedItems.length ===
-                                                      0 ||
-                                                    selectedItems.length > 1
-                                                  }
-                                                >
-                                                  <i className="fas fa-edit"></i>
-                                                </button>
-                                                <button
-                                                  className="btn btn-sm btn-danger m-1"
-                                                  onClick={() =>
-                                                    handleDeleteSiteClient(
-                                                      siteClient.id
-                                                    )
-                                                  }
-                                                >
-                                                  <FontAwesomeIcon
-                                                    icon={faTrash}
-                                                  />
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          )
-                                        )}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </td>
-                              </tr>
-                            )}
-                        </React.Fragment>
-                      ))}
-                  </tbody>
-                </table>
-              ) : (
-                <div className="text-center">
-                  <h5>Aucun client</h5>
-                </div>
-              )}
-              <div className="d-flex flex-row">
-                <div className="btn-group col-2">
-                  <Button
-                    className="btn btn-danger btn-sm"
-                    onClick={handleDeleteSelected}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </Button>
-                  <PrintList
-                    tableId="clientsTable"
-                    title="Liste des clients"
-                    clientList={clients}
-                    filteredclients={filteredclients}
-                  />
-                  <ExportPdfButton
-                    clients={clients}
-                    selectedItems={selectedItems}
-                  />
-                  <Button
-                    className="btn btn-success btn-sm ml-2"
-                    onClick={exportToExcel}
-                  >
-                    <FontAwesomeIcon icon={faFileExcel} />
-                  </Button>
-                </div>
+                        )}
+                    </React.Fragment>
+                  ))}
+              </tbody>
+            </table>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredclients.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+            <div className="d-flex flex-row">
+              <div className="btn-group col-2">
+                <Button
+                  className="btn btn-danger btn-sm"
+                  onClick={handleDeleteSelected}
+                >
+                  <FontAwesomeIcon icon={faTrash} />
+                </Button>
+                <PrintList
+                  tableId="clientsTable"
+                  title="Liste des clients"
+                  clientList={clients}
+                  filteredclients={filteredclients}
+                />
+                <ExportPdfButton
+                  clients={clients}
+                  selectedItems={selectedItems}
+                />
+                <Button
+                  className="btn btn-success btn-sm ml-2"
+                  onClick={exportToExcel}
+                >
+                  <FontAwesomeIcon icon={faFileExcel} />
+                </Button>
               </div>
-              <TablePagination
-                rowsPerPageOptions={[5, 10, 25]}
-                component="div"
-                count={filteredclients.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
-              />
             </div>
           </div>
         </Box>

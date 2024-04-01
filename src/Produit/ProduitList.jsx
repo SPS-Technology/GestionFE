@@ -26,7 +26,7 @@ import { Toolbar } from "@mui/material";
 
 const ProduitList = () => {
   const [produits, setProduits] = useState([]);
-  const [users, setUsers] = useState([]);
+  const [authId, setAuthId] = useState([]);
   const [categories, setCategories] = useState([]);
   const [calibres, setCalibres] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,7 +42,7 @@ const ProduitList = () => {
   const [editingProduitId, setEditingProduitId] = useState(null);
 
   const [formContainerStyle, setFormContainerStyle] = useState({
-    right: "-500px",
+    right: "-100%",
   });
   const [tableContainerStyle, setTableContainerStyle] = useState({
     marginRight: "0px",
@@ -54,7 +54,7 @@ const ProduitList = () => {
     designation: "",
     type_quantite: "",
     calibre_id: "",
-    user_id: "",
+    user_id: authId,
     categorie_id: "",
   });
 
@@ -71,11 +71,13 @@ const ProduitList = () => {
 
   const fetchProduits = async () => {
     try {
+      const userResponse = await axios.get("http://localhost:8000/api/user");
+      const authenticatedUserId = userResponse.data.id;
+      setAuthId(authenticatedUserId);
+      console.log("authenticatedUserId", authenticatedUserId);
       const response = await axios.get("http://localhost:8000/api/produits");
       setProduits(response.data.produit);
       console.log("response", response);
-      const usersResponse = await axios.get("http://localhost:8000/api/users");
-      setUsers(usersResponse.data);
 
       // // const responseCategories = await axios.get(
       // //   "http://localhost:8000/api/categories"
@@ -235,7 +237,7 @@ const ProduitList = () => {
   const handleShowFormButtonClick = () => {
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -253,7 +255,7 @@ const ProduitList = () => {
       prix_vente: "",
       categorie_id: "",
       calibre_id: "",
-      user_id: "",
+      user_id: authId,
     });
     setEditingProduit(null); // Clear editing client
   };
@@ -268,11 +270,11 @@ const ProduitList = () => {
       prix_vente: produit.prix_vente,
       categorie_id: produit.categorie_id,
       calibre_id: produit.calibre_id,
-      user_id: produit.user_id,
+      user_id: authId,
     });
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -280,7 +282,7 @@ const ProduitList = () => {
   useEffect(() => {
     if (editingProduitId !== null) {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     }
   }, [editingProduitId]);
 
@@ -290,6 +292,13 @@ const ProduitList = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // if (user) {
+    //   console.log("User ID before setting in formData:", user);
+    // }
+    // const updatedFormData = { ...formData, user_id: user };
+    // setFormData(updatedFormData);
+
+    // console.log("User ID after setting in formData:", user);
     const url = editingProduit
       ? `http://localhost:8000/api/produits/${editingProduit.id}`
       : "http://localhost:8000/api/produits";
@@ -344,7 +353,7 @@ const ProduitList = () => {
 
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "100%" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
@@ -454,14 +463,36 @@ const ProduitList = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
-
-          <h3>Liste des Produits</h3>
-          <div
-            className="search-container d-flex flex-row-reverse "
-            role="search"
-          >
-            <Search onSearch={handleSearch} type="search" />
+          <div className="d-flex justify-content-center align-items-center">
+            <div className="col-md-auto" style={{ width: "700px" }}>
+              <Search onSearch={handleSearch} type="search" />
+            </div>
           </div>
+
+          <div className="d-flex justify-content-end align-items-center">
+            <div className="btn-group col-1">
+              <PrintList
+                tableId="produitsTable"
+                title="Liste des produits"
+                produitList={produits}
+                filteredProduits={filteredProduits}
+              />
+              <ExportToPdfButton
+                produits={produits}
+                selectedItems={selectedItems}
+                disabled={selectedItems.length === 0}
+              />
+              <Button
+                className="btn btn-success btn-sm ml-2"
+                onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
+              >
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
+            </div>
+          </div>
+          <h3>Liste des Produits</h3>
+
           <Button
             variant="primary"
             className="btn btn-sm m-2"
@@ -591,7 +622,7 @@ const ProduitList = () => {
                 </Form.Select>
               </Form.Group>
 
-              <Form.Group className="col-sm-5 m-2 " controlId="user_id">
+              {/* <Form.Group className="col-sm-5 m-2 " controlId="user_id">
                 <Form.Label>User</Form.Label>
                 <Form.Control
                   type="text"
@@ -602,7 +633,7 @@ const ProduitList = () => {
                   className="form-control-sm"
                   required
                 />
-              </Form.Group>
+              </Form.Group> */}
 
               <Form.Group className="col-7 m-3">
                 <Button className="col-6" variant="primary" type="submit">
@@ -619,35 +650,27 @@ const ProduitList = () => {
               style={tableContainerStyle}
             >
               {produits && produits.length > 0 && (
-                <table className="table table-bordered" id="produitsTable">
-                  <thead className="text-center">
+                <table className="table table-responsive table-bordered">
+                  <thead
+                    className="text-center "
+                    style={{ backgroundColor: "#ddd" }}
+                  >
                     <tr>
-                      <th
-                        style={Object.assign({}, tableHeaderStyle, {
-                          textAlign: "left",
-                        })}
-                      >
+                      <th>
                         <input
                           type="checkbox"
                           checked={selectAll}
                           onChange={handleSelectAllChange}
                         />
                       </th>
-                      <th style={tableHeaderStyle}>Code_produit</th>
-                      <th style={tableHeaderStyle}>designation</th>
-                      <th style={tableHeaderStyle}>Type de Quantité</th>
-                      <th style={tableHeaderStyle}>Calibre</th>
-                      <th style={tableHeaderStyle}>Prix Vente</th>
-                      <th style={tableHeaderStyle}>categorie</th>
-                      <th style={tableHeaderStyle}>description</th>
-                      <th
-                        className="text-center"
-                        style={Object.assign({}, tableHeaderStyle, {
-                          textAlign: "left",
-                        })}
-                      >
-                        Action
-                      </th>
+                      <th>Code_produit</th>
+                      <th>designation</th>
+                      <th>Type de Quantité</th>
+                      <th>Calibre</th>
+                      <th>Prix Vente</th>
+                      <th>categorie</th>
+                      <th>description</th>
+                      <th className="text-center">Action</th>
                     </tr>
                   </thead>
                   <tbody className="text-center">
@@ -658,50 +681,35 @@ const ProduitList = () => {
                       )
                       .map((produit) => (
                         <tr key={produit.id}>
-                          <td
-                            style={Object.assign({}, tableCellStyle, {
-                              textAlign: "left",
-                            })}
-                          >
+                          <td>
                             <input
                               type="checkbox"
                               checked={selectedItems.includes(produit.id)}
                               onChange={() => handleCheckboxChange(produit.id)}
                             />
                           </td>
-                          <td style={tableCellStyle}>{produit.Code_produit}</td>
-                          <td style={tableCellStyle}>{produit.designation}</td>
-                          <td style={tableCellStyle}>
-                            {produit.type_quantite}
-                          </td>
-                          <td style={tableCellStyle}>
-                            {produit.calibre.calibre}
-                          </td>
-                          <td style={tableCellStyle}>{produit.prix_vente}</td>
-                          <td style={tableCellStyle}>
-                            {produit.categorie.categorie}
-                          </td>
-                          <td style={tableCellStyle}>
-                            {produit.categorie.description}
-                          </td>
-                          <td
-                            className="d-inline-flex"
-                            style={Object.assign({}, tableCellStyle, {
-                              textAlign: "left",
-                            })}
-                          >
-                            <button
-                              className="btn btn-sm btn-warning m-1"
-                              onClick={() => handleEdit(produit)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </button>
-                            <button
-                              className="btn btn-danger btn-sm m-1"
-                              onClick={() => handleDelete(produit.id)}
-                            >
-                              <i className="fas fa-minus-circle"></i>
-                            </button>
+                          <td>{produit.Code_produit}</td>
+                          <td>{produit.designation}</td>
+                          <td>{produit.type_quantite}</td>
+                          <td>{produit.calibre.calibre}</td>
+                          <td>{produit.prix_vente}</td>
+                          <td>{produit.categorie.categorie}</td>
+                          <td>{produit.categorie.description}</td>
+                          <td>
+                            <div className="d-inline-flex text-center">
+                              <Button
+                                className=" btn btn-sm btn-info m-1"
+                                onClick={() => handleEdit(produit)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </Button>
+                              <Button
+                                className=" btn btn-danger btn-sm m-1"
+                                onClick={() => handleDelete(produit.id)}
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -717,50 +725,18 @@ const ProduitList = () => {
                 onPageChange={handleChangePage}
                 onRowsPerPageChange={handleChangeRowsPerPage}
               />
-              <div className="d-flex flex-row">
-                <div className="btn-group col-2">
-                  <Button
-                    className="btn btn-danger btn-sm"
-                    onClick={handleDeleteSelected}
-                  >
-                    <FontAwesomeIcon icon={faTrash} />
-                  </Button>
-                  <PrintList
-                    tableId="produitsTable"
-                    title="Liste des produits"
-                    produitList={produits}
-                    filteredProduits={filteredProduits}
-                  />
-                  <ExportToPdfButton
-                    produits={produits}
-                    selectedItems={selectedItems}
-                  />
-                  <Button
-                    className="btn btn-success btn-sm ml-2"
-                    onClick={exportToExcel}
-                  >
-                    <FontAwesomeIcon icon={faFileExcel} />
-                  </Button>
-                </div>
-              </div>
+              <Button
+                className="btn btn-danger btn-sm"
+                onClick={handleDeleteSelected}
+              >
+                <FontAwesomeIcon icon={faTrash} />
+              </Button>
             </div>
           </div>
         </Box>
       </Box>
     </ThemeProvider>
   );
-};
-
-const tableHeaderStyle = {
-  background: "#f2f2f2",
-  padding: "10px",
-  textAlign: "left",
-  borderBottom: "1px solid #ddd",
-};
-
-const tableCellStyle = {
-  padding: "10px",
-  borderBottom: "1px solid #ddd",
 };
 
 export default ProduitList;
