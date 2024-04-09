@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
-import { Form, Button } from "react-bootstrap";
+import {Form, Button, Table} from "react-bootstrap";
 import "../style.css";
 import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
@@ -15,57 +15,43 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import { Toolbar } from "@mui/material";
 import {IoIosPersonAdd} from "react-icons/io";
-import ExportPdfButton from "./ExportPdfButton";
-import PrintList from "./PrintList";
-const ReclamationList = () => {
-    const [montantHt, setMontantHt] = useState('');
-    const [avance, setAvance] = useState('');
-    const [montantTtc, setMontantTtc] = useState(null);
-    const [payments, setPayments] = useState([]);
-    const [totalAvance, setTotalAvance] = useState(0);
-    const [totalReste, setTotalReste] = useState(0);
-    const [totalTtc, setTotalTtc] = useState(0);
+// import ExportPdfButton from "./ExportPdfButton";
+// import PrintList from "./PrintList";
+const EncaissementList = () => {
 
+    const [comptes, setComptes] = useState([]);
 
-    const handleCalculateTotalAvance = () => {
-        alert(`Total des avances: ${totalAvance}`);
+    const [encaissements, setEncaissements] = useState([]);
+    const [ligneEncaissements,setLigneEncaissements]=useState([]);
+
+    const [banques, setBanques] = useState([]);
+
+    const getCompteById = (compteId) => {
+        console.log("comptes", comptes);
+        const compte = comptes.find((c) => c.id === compteId);
+        return compte ? compte.designations : "";
     };
 
-    const handleCalculateTotalReste = () => {
-        alert(`Total du reste: ${totalReste}`);
-    };
-
-    // const [existingFournisseur, setExistingFournisseur] = useState([]);
-    const getClientNameById = (clientId) => {
-        console.log("clients", clients);
-        const client = clients.find((c) => c.id === clientId);
-        return client ? client.raison_sociale : "";
-    };
-    const [clients, setClients] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
-    const [filteredReclamations, setFilteredReclamations] = useState([]);
+    const [filtredEncaissements, setFiltredEncaissements] = useState([]);
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
-    const [reclamations, setReclamations] = useState([]);
     const [user, setUser] = useState({});
     // const [users, setUsers] = useState([]);
     const [selectedItems, setSelectedItems] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
     //-------------------edit-----------------------//
-    const [editingReclamation, setEditingReclamation] = useState(null); // State to hold the reclamation being edited
-    const [editingReclamationId, setEditingReclamationId] = useState(null);
+    const [editingEncaissement, setEditingEncaissement] = useState(null); // State to hold the encaissement being edited
+    const [editingEncaissementId, setEditingEncaissementId] = useState(null);
 
     //---------------form-------------------//
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
-        numero: "",
-        client: "",
-        numero_facture: "",
-        montant_ht: "",
-        avance: "",
-        mode_paiement: "",
-        date_echeance: "",
-        remarque: "",
+        referencee: "",
+        date_encaissement: "",
+        montant_total: "",
+        comptes_id: "",
+        type_encaissement: "",
     });
     const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
     const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px", });
@@ -77,34 +63,50 @@ const ReclamationList = () => {
     };
 
 
-    const fetchReclamations = async () => {
+    const fetchEncaissements = async () => {
         try {
             const response = await axios.get(
-                "http://localhost:8000/api/reclamations");
-            setReclamations(response.data.reclamations);
+                "http://localhost:8000/api/encaissements");
+            setEncaissements(response.data.encaissements);
             console.log("response",response);
-            const clientResponse = await axios.get(
-                "http://localhost:8000/api/clients"
+
+            const responsebanques = await axios.get("http://localhost:8000/api/banques");
+            setBanques(responsebanques.data.banques);
+            console.log("API Response for Banques:", responsebanques.data.banques);
+
+            const ligneEncaissementResponse = await axios.get("http://localhost:8000/api/ligneencaissement");
+            setLigneEncaissements(ligneEncaissementResponse.data.ligneencaissements );
+            console.log("API Response for ligneencaissement:", ligneEncaissementResponse.data.ligneencaissements);
+
+
+            const compteResponse = await axios.get(
+                "http://localhost:8000/api/comptes"
             );
-            console.log("API Response for Clients:", clientResponse.data.client);
-            setClients(clientResponse.data.client);
+            console.log("API Response for Comptes:", compteResponse.data.comptes);
+            setComptes(compteResponse.data.comptes);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
     };
 
     useEffect(() => {
-        fetchReclamations();
+        fetchEncaissements();
     }, []);
 
     useEffect(() => {
-        const filtered =  reclamations&&reclamations.filter((reclamation) =>
-            reclamation.sujet
+        const filtered =  encaissements&&encaissements.filter((encaissement) =>
+            encaissement.referencee
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
         );
-        setFilteredReclamations(filtered);
-    }, [reclamations, searchTerm]);
+        setFiltredEncaissements(filtered);
+    }, [encaissements, searchTerm]);
+
+    const handleBanqueSelection = (target) => {
+        const banqueId = target.value;
+        setFormData({ ...formData, [target.name]: banqueId });
+        console.log("formData",formData);
+    };
 
     const handleSearch = (term) => {
         setSearchTerm(term);
@@ -126,7 +128,7 @@ const ReclamationList = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
-    //------------------------- reclamation Delete Selected ---------------------//
+    //------------------------- encaissement Delete Selected ---------------------//
 
     const handleDeleteSelected = () => {
         Swal.fire({
@@ -145,22 +147,22 @@ const ReclamationList = () => {
             if (result.isConfirmed) {
                 selectedItems.forEach((id) => {
                     axios
-                        .delete(`http://localhost:8000/api/reclamations/${id}`)
+                        .delete(`http://localhost:8000/api/encaissements/${id}`)
                         .then((response) => {
-                            fetchReclamations();
+                            fetchEncaissements();
                             Swal.fire({
                                 icon: "success",
                                 title: "Succès!",
-                                text: 'reclamation supprimé avec succès.',
+                                text: 'encaissement supprimé avec succès.',
                             });
                         })
                         .catch((error) => {
                             console.error(
-                                "Erreur lors de la suppression du reclamation:", error);
+                                "Erreur lors de la suppression du encaissement:", error);
                             Swal.fire({
                                 icon: "error",
                                 title: "Erreur!",
-                                text: 'Échec de la suppression du reclamation.',
+                                text: 'Échec de la suppression du encaissement.',
                             });
                         });
                 });
@@ -179,12 +181,12 @@ const ReclamationList = () => {
         if (selectAll) {
             setSelectedItems([]);
         } else {
-            setSelectedItems(reclamations.map((reclamation) => reclamation.id));
+            setSelectedItems(encaissements.map((encaissement) => encaissement.id));
         }
     };
     //------------------------- fournisseur print ---------------------//
 
-    const printList = (tableId, title, reclamationList) => {
+    const printList = (tableId, title, encaissementList) => {
         const printWindow = window.open(" ", "_blank", " ");
 
         if (printWindow) {
@@ -275,8 +277,8 @@ const ReclamationList = () => {
             <body>
               <div class="page-header print-no-date">${title}</div>
               <ul>
-                ${Array.isArray(reclamationList)
-                    ? reclamationList.map((item) => `<li>${item}</li>`).join("")
+                ${Array.isArray(encaissementList)
+                    ? encaissementList.map((item) => `<li>${item}</li>`).join("")
                     : ""
                 }
               </ul>
@@ -317,16 +319,16 @@ const ReclamationList = () => {
             "Traitement de Réclamation",
             "Date de Traitement",
         ];
-        const selectedRecouvrements = reclamations.filter((reclamation) =>
-            selectedItems.includes(reclamation.numero)
+        const selectedRecouvrements = encaissements.filter((encaissement) =>
+            selectedItems.includes(encaissement.numero)
         );
-        const rows = selectedRecouvrements.map((reclamation) => [
-            reclamation.client_id,
-            reclamation.sujet,
-            reclamation.date_reclamation,
-            reclamation.status_reclamation,
-            reclamation.traitement_reclamation,
-            reclamation.date_traitement,
+        const rows = selectedRecouvrements.map((encaissement) => [
+            encaissement.referencee,
+            encaissement.date_encaissement,
+            encaissement.montant_total,
+            encaissement.comptes_id,
+            encaissement.type_encaissement,
+
         ]);
 
         // Set the margin and padding
@@ -390,13 +392,13 @@ const ReclamationList = () => {
         });
 
         // Save the PDF
-        pdf.save("reclamations.pdf");
+        pdf.save("encaissements.pdf");
     };
     //------------------------- fournisseur export to excel ---------------------//
 
     const exportToExcel = () => {
-        const selectedRecouvrements = reclamations.filter((reclamation) =>
-            selectedItems.includes(reclamation.id)
+        const selectedRecouvrements = encaissements.filter((encaissement) =>
+            selectedItems.includes(encaissement.id)
         );
         const ws = XLSX.utils.json_to_sheet(selectedRecouvrements);
         const wb = XLSX.utils.book_new();
@@ -404,10 +406,10 @@ const ReclamationList = () => {
         XLSX.writeFile(wb, "recouvrements.xlsx");
     };
 
-    //------------------------- reclamation Delete---------------------//
+    //------------------------- encaissement Delete---------------------//
     const handleDelete = (id) => {
         Swal.fire({
-            title: 'Êtes-vous sûr de vouloir supprimer ce reclamation ?',
+            title: 'Êtes-vous sûr de vouloir supprimer ce encaissement ?',
             showDenyButton: true,
             showCancelButton: false,
             confirmButtonText: 'Oui',
@@ -421,15 +423,15 @@ const ReclamationList = () => {
         }).then((result) => {
             if (result.isConfirmed) {
                 axios
-                    .delete(`http://localhost:8000/api/reclamations/${id}`)
+                    .delete(`http://localhost:8000/api/encaissements/${id}`)
                     .then((response) => {
                         if (response.data) {
                             // Successful deletion
-                            fetchReclamations();
+                            fetchEncaissements();
                             Swal.fire({
                                 icon: 'success',
                                 title: 'Succès!',
-                                text: "reclamation supprimé avec succès",
+                                text: "encaissement supprimé avec succès",
                             });
                         } else if (response.data.error) {
                             // Error occurred
@@ -438,18 +440,18 @@ const ReclamationList = () => {
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Erreur!',
-                                    text: "Impossible de supprimer le reclamation car il a des produits associés.",
+                                    text: "Impossible de supprimer le encaissement car il a des produits associés.",
                                 });
                             }
                         }
                     })
                     .catch((error) => {
                         // Request error
-                        console.error("Erreur lors de la suppression du reclamation:", error);
+                        console.error("Erreur lors de la suppression du encaissement:", error);
                         Swal.fire({
                             icon: 'error',
                             title: 'Erreur!',
-                            text: `Échec de la suppression du reclamation. Veuillez consulter la console pour plus d'informations.`,
+                            text: `Échec de la suppression du encaissement. Veuillez consulter la console pour plus d'informations.`,
                         });
                     });
             } else {
@@ -457,21 +459,20 @@ const ReclamationList = () => {
             }
         });
     }
-    //------------------------- reclamation EDIT---------------------//
+    //------------------------- encaissement EDIT---------------------//
 
-    const handleEdit = (reclamations) => {
-        setEditingReclamation(reclamations); // Set the recouvrements to be edited
+    const handleEdit = (encaissements) => {
+        setEditingEncaissement(encaissements); // Set the recouvrements to be edited
         // Populate form data with recouvrements details
         setFormData({
-            client_id: reclamations.client_id,
-            sujet: reclamations.sujet,
-            date_reclamation: reclamations.date_reclamation,
-            status_reclamation: reclamations.status_reclamation,
-            traitement_reclamation: reclamations.traitement_reclamation,
-            date_traitement: reclamations.date_traitement,
-            remarque:reclamations.remarque,
+            referencee: encaissements.referencee,
+            date_encaissement: encaissements.date_encaissement,
+            montant_total: encaissements.montant_total,
+            comptes_id: encaissements.comptes_id,
+            type_encaissement: encaissements.type_encaissement,
+
         });
-        if (formContainerStyle.right === '-500px') {
+                if (formContainerStyle.right === '-500px') {
             setFormContainerStyle({ right: '0' });
             setTableContainerStyle({ marginRight: '500px' });
         } else {
@@ -481,52 +482,51 @@ const ReclamationList = () => {
         // setShowForm(true);
     };
     useEffect(() => {
-        if (editingReclamationId !== null) {
+        if (editingEncaissementId !== null) {
             setFormContainerStyle({ right: '0' });
             setTableContainerStyle({ marginRight: '500px' });
         }
-    }, [editingReclamationId]);
+    }, [editingEncaissementId]);
 
-    //------------------------- reclamation SUBMIT---------------------//
+    //------------------------- encaissement SUBMIT---------------------//
 
     useEffect(() => {
-        fetchReclamations();
+        fetchEncaissements();
     }, []);
 
     const handleSubmit =  (e) => {
         e.preventDefault();
 
-        const url = editingReclamation ? `http://localhost:8000/api/reclamations/${editingReclamation.id}` : 'http://localhost:8000/api/reclamations';
-        const method = editingReclamation ? 'put' : 'post';
+        const url = editingEncaissement ? `http://localhost:8000/api/encaissements/${editingEncaissement.id}` : 'http://localhost:8000/api/encaissements';
+        const method = editingEncaissement ? 'put' : 'post';
         axios({
             method: method,
             url: url,
             data: formData,
         }).then(() => {
-            fetchReclamations();
+            fetchEncaissements();
             Swal.fire({
                 icon: 'success',
                 title: 'Succès!',
-                text: `reclamation ${editingReclamation ? 'modifié' : 'ajouté'} avec succès.`,
+                text: `encaissement ${editingEncaissement ? 'modifié' : 'ajouté'} avec succès.`,
             });
             setFormData({
-                client_id: '',
-                sujet: '',
-                date_reclamation: '',
-                status_reclamation: '',
-                traitement_reclamation: '',
-                date_traitement: '',
-                remarque:'',
+                referencee: '',
+                date_encaissement: '',
+                montant_total: '',
+                comptes_id: '',
+                type_encaissement: '',
+
             });
-            setEditingReclamation(null); // Clear editing reclamation
+            setEditingEncaissement(null); // Clear editing encaissement
             // closeForm();
         })
             .catch((error) => {
-                console.error(`Erreur lors de ${editingReclamation ? 'la modification' : "l'ajout"} du reclamation:`, error);
+                console.error(`Erreur lors de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement:`, error);
                 Swal.fire({
                     icon: 'error',
                     title: 'Erreur!',
-                    text: `Échec de ${editingReclamation ? 'la modification' : "l'ajout"} du reclamation.`,
+                    text: `Échec de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement.`,
                 });
             });
         if (formContainerStyle.right === "-500px") {
@@ -537,7 +537,7 @@ const ReclamationList = () => {
         }
     };
 
-    //------------------------- reclamation FORM---------------------//
+    //------------------------- encaissement FORM---------------------//
 
     const handleShowFormButtonClick = () => {
         if (formContainerStyle.right === '-500px') {
@@ -553,15 +553,13 @@ const ReclamationList = () => {
         setTableContainerStyle({ marginRight: '0' });
         setShowForm(false); // Hide the form
         setFormData({ // Clear form data
-            client_id: '',
-            sujet: '',
-            date_reclamation: '',
-            status_reclamation: '',
-            traitement_reclamation: '',
-            date_traitement: '',
-            remarque: '',
+            referencee: '',
+            date_encaissement: '',
+            montant_total: '',
+            comptes_id: '',
+            type_encaissement: '',
         });
-        setEditingReclamation(null); // Clear editing reclamation
+        setEditingEncaissement(null); // Clear editing encaissement
     };
 
     return (
@@ -572,7 +570,7 @@ const ReclamationList = () => {
                     <Toolbar />
 
                     <div>
-                        <h3>Liste des Réclamations</h3>
+                        <h3>Liste des Encaissements</h3>
                         <div className="search-container d-flex flex-row-reverse mb-3">
                             <Search onSearch={handleSearch} />
                         </div>
@@ -584,79 +582,126 @@ const ReclamationList = () => {
                             <IoIosPersonAdd  style={{ fontSize: '24px' }} />
                             {/*{showForm ? "Modifier le formulaire" : <IoIosPersonAdd />}*/}
                         </Button>
-                        <div className="d-flex flex-row justify-content-end">
-                            <div className="btn-group col-2">
-                                <PrintList
-                                    tableId="reclamationTable"
-                                    title="Liste des reclatioms"
-                                    ReclamationList={reclamations}
-                                    filtredreclamations={filteredReclamations}
-                                />
+                        {/*<div className="d-flex flex-row justify-content-end">*/}
+                        {/*    <div className="btn-group col-2">*/}
+                        {/*        <PrintList*/}
+                        {/*            tableId="encaissementTable"*/}
+                        {/*            title="Liste des Encaissement"*/}
+                        {/*            encaissementList={encaissements}*/}
+                        {/*            filtredencaissements={filtredEncaissements}*/}
+                        {/*        />*/}
 
-                                <ExportPdfButton
-                                    reclamations={reclamations}
-                                    selectedItems={selectedItems}
-                                />
-                                <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>
-                                    <FontAwesomeIcon icon={faFileExcel} />
-                                </Button>
-                            </div>
-                        </div>
+                        {/*        <ExportPdfButton*/}
+                        {/*            encaissements={encaissements}*/}
+                        {/*            selectedItems={selectedItems}*/}
+                        {/*        />*/}
+                        {/*        <Button className="btn btn-success btn-sm ml-2" onClick={exportToExcel}>*/}
+                        {/*            <FontAwesomeIcon icon={faFileExcel} />*/}
+                        {/*        </Button>*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
                         <div id="formContainer" className="mt-2" style={formContainerStyle}>
                             <Form className="col row" onSubmit={handleSubmit}>
-                                <Form.Label className="text-center m-2"><h5>{editingReclamation ? 'Modifier reclamation' : 'Ajouter un reclamation'}</h5></Form.Label>
+                                <Form.Label className="text-center m-2"><h5>{editingEncaissement ? 'Modifier encaissement' : 'Ajouter un encaissement'}</h5></Form.Label>
                                 <Form.Group className="col-sm-5 m-2" controlId="client_id">
 
-                                    <Form.Label>Client</Form.Label>
+                                    <Form.Label>Compte</Form.Label>
 
                                     <Form.Select
-                                        name="client_id"
-                                        value={formData.client_id}
+                                        name="comptes_id"
+                                        value={formData.comptes_id}
                                         onChange={handleChange}
                                         className="form-select form-select-sm"
                                     >
-                                        <option value="">Sélectionner un client</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>
-                                                {client.raison_sociale}
+                                        <option value="">Sélectionner un compte</option>
+                                        {comptes.map((compte) => (
+                                            <option key={compte.id} value={compte.id}>
+                                                {compte.designations}
                                             </option>
                                         ))}
                                     </Form.Select>
                                 </Form.Group>
 
                                 <Form.Group className="col-sm-10 m-2">
-                                    <Form.Label>Sujet</Form.Label>
-                                    <Form.Control type="text" placeholder="Sujet" name="sujet" value={formData.sujet} onChange={handleChange} />
+                                    <Form.Label>Reference</Form.Label>
+                                    <Form.Control type="text" placeholder="Reference" name="referencee" value={formData.referencee} onChange={handleChange} />
                                 </Form.Group>
                                 <Form.Group className="col-sm-5 m-2">
-                                    <Form.Label>Date de Réclamation</Form.Label>
-                                    <Form.Control type="date" placeholder="Date de Réclamation" name="date_reclamation" value={formData.date_reclamation} onChange={handleChange} />
+                                    <Form.Label>Date d'encaissement</Form.Label>
+                                    <Form.Control type="date" placeholder="Date d'encaissement'" name="date_encaissement" value={formData.date_encaissement} onChange={handleChange} />
                                 </Form.Group>
-                                <Form.Group className="col-sm-5 m-2">
-                                    <Form.Label>Statut de Réclamation</Form.Label>
-                                    <Form.Control as="select" name="status_reclamation" value={formData.status_reclamation} onChange={handleChange}>
-                                        <option value="">Sélectionner le statut</option>
-                                        <option value="En attente">En attente</option>
-                                        <option value="En cours de traitement">En cours de traitement</option>
-                                        <option value="Résolue">Résolue</option>
-                                        <option value="Fermée">Fermée</option>
-                                    </Form.Control>
+                                {/*<Form.Group className="col-sm-5 m-2">*/}
+                                {/*    <Form.Label>Type d'encaissement</Form.Label>*/}
+                                {/*    <Form.Control as="select" name="type_encaissement" value={formData.type_encaissement} onChange={handleChange}>*/}
+                                {/*        <option value="">Sélectionner un type</option>*/}
+                                {/*        <option value="Effet">Effet</option>*/}
+                                {/*        <option value="Chéque">Chéque</option>*/}
+                                {/*        <option value="Espèce">Espèce</option>*/}
+                                {/*    </Form.Control>*/}
+                                {/*</Form.Group>*/}
+                                <Form.Group className="col-sm-5 m-2" controlId="banque_id">
+
+                                    <Form.Label>Type d'encaissement</Form.Label>
+                                    <Form.Select
+                                        name="banque_id"
+                                        value={formData.banque_id}
+                                        onChange={(e) => handleBanqueSelection(e.target)}
+                                        className="form-select form-select-sm"
+                                    >
+                                        <option value="">Sélectionner un encaissement</option>
+                                        {banques.map((banque) => (
+                                            <option key={banque.id} value={banque.id}>
+                                                {banque.mode_de_paiement}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
                                 </Form.Group>
                                 <Form.Group className="col-sm-4 m-2">
-                                    <Form.Label>Traitement de Réclamation</Form.Label>
-                                    <Form.Control type="text" placeholder="Traitement de Réclamation" name="traitement_reclamation" value={formData.traitement_reclamation} onChange={handleChange} />
+                                    <Form.Label>Montant Total</Form.Label>
+                                    <Form.Control type="text" placeholder="Montant Total" name="montant_total" value={formData.montant_total} onChange={handleChange} />
                                 </Form.Group>
-                                <Form.Group className="col-sm-4 m-2">
-                                    <Form.Label>Date de Traitement</Form.Label>
-                                    <Form.Control type="date" placeholder="Date de Traitement" name="date_traitement" value={formData.date_traitement} onChange={handleChange} />
-                                </Form.Group>
-                                <Form.Group className="col-sm-10 m-2">
-                                    <Form.Label>Remarque</Form.Label>
-                                    <Form.Control type="text" placeholder="Remarque" name="remarque" value={formData.remarque} onChange={handleChange} />
-                                </Form.Group>
+                                <div className="col-md-12">
+                                    <Form.Group controlId="selectedFactureTable">
+                                        <Form.Label> </Form.Label>
+                                        <Table striped bordered hover responsive>
+                                            <thead>
+                                            <tr>
+                                                <th>Client</th>
+                                                <th>N° de Facture</th>
+                                                <th>Total TTC</th>
+                                                <th>Date de Facture</th>
+                                                <th>N° de Chéque</th>
+                                                <th>Mode de Paiement</th>
+                                                <th>date</th>
+                                                <th>Avance</th>
+                                                <th>Status</th>
+                                                <th>Remarque</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            {/*{filteredFactures.map((facture, index) => (*/}
+                                                <tr>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+                                                    <td>{}</td>
+
+
+                                                </tr>
+                                            {/*))}*/}
+                                            </tbody>
+                                        </Table>
+                                    </Form.Group>
+                                </div>
                                 <Form.Group className="col m-3 text-center">
                                     <Button type="submit" className="btn btn-success col-6">
-                                        {editingReclamation ? 'Modifier' : 'Ajouter'}
+                                        {editingEncaissement ? 'Modifier' : 'Ajouter'}
                                     </Button>
                                     <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>Annuler</Button>
                                 </Form.Group>
@@ -664,46 +709,42 @@ const ReclamationList = () => {
                         </div>
 
                         <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
-                            <table className="table table-responsive table-bordered " id="reclamationTable">
+                            <table className="table table-responsive table-bordered " id="encaissementTable">
                                 <thead >
                                 <tr>
                                     <th style={tableHeaderStyle}>
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
-                                    <th style={tableHeaderStyle}>Client</th>
-                                    <th style={tableHeaderStyle}>Sujet</th>
-                                    <th style={tableHeaderStyle}>date de Réclamation</th>
-                                    <th style={tableHeaderStyle}>Status de Réclamation</th>
-                                    <th style={tableHeaderStyle}>Traitrement de Réclamation</th>
-                                    <th style={tableHeaderStyle}>Date De Traitement</th>
-                                    <th style={tableHeaderStyle}>Remarque</th>
+                                    <th style={tableHeaderStyle}>Compte</th>
+                                    <th style={tableHeaderStyle}>Reference</th>
+                                    <th style={tableHeaderStyle}>Date d'encaissement</th>
+                                    <th style={tableHeaderStyle}>Type d'encaissement</th>
+                                    <th style={tableHeaderStyle}>Montant Total</th>
                                     <th style={tableHeaderStyle}>Action</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {filteredReclamations && filteredReclamations.slice (page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((reclamations) => (
+                                {filtredEncaissements && filtredEncaissements.slice (page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((encaissements) => (
 
-                                    <tr key={reclamations.id}>
+                                    <tr key={encaissements.id}>
                                         <td>
-                                            <input type="checkbox" onChange={() => handleCheckboxChange(reclamations.id)} checked={selectedItems.includes(reclamations.id)} />
+                                            <input type="checkbox" onChange={() => handleCheckboxChange(encaissements.id)} checked={selectedItems.includes(encaissements.id)} />
                                         </td>
 
                                         <td>
-                                            {getClientNameById(
-                                                reclamations.client_id
+                                            {getCompteById(
+                                                encaissements.comptes_id
                                             )}
                                         </td>
-                                        <td>{reclamations.sujet}</td>
-                                        <td>{reclamations.date_reclamation}</td>
-                                        <td>{reclamations.status_reclamation}</td>
-                                        <td>{reclamations.traitement_reclamation}</td>
-                                        <td>{reclamations.date_traitement}</td>
-                                        <td>{reclamations.remarque}</td>
+                                        <td>{encaissements.referencee}</td>
+                                        <td>{encaissements.date_encaissement}</td>
+                                        <td>{encaissements.type_encaissement}</td>
+                                        <td>{encaissements.montant_total}</td>
                                         <td className="d-inline-flex">
-                                            <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(reclamations)}>
+                                            <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(encaissements)}>
                                                 <i className="fas fa-edit"></i>
                                             </Button>
-                                            <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(reclamations.id)}>
+                                            <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(encaissements.id)}>
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </Button>
                                         </td>
@@ -721,7 +762,7 @@ const ReclamationList = () => {
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"
-                                count={filteredReclamations.length}
+                                count={filtredEncaissements.length}
                                 rowsPerPage={rowsPerPage}
                                 page={page}
                                 onPageChange={handleChangePage}
@@ -736,4 +777,4 @@ const ReclamationList = () => {
     );
 };
 
-export default ReclamationList;
+export default EncaissementList;

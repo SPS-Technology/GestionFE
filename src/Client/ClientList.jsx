@@ -182,6 +182,7 @@ const ClientList = () => {
             abreviation: client.abreviation,
             adresse: client.adresse,
             tele: client.tele,
+            CodeClient:client.CodeClient,
             ville: client.ville,
             zone_id: client.zone_id,
             user_id: client.user_id,
@@ -233,6 +234,7 @@ const ClientList = () => {
                 raison_sociale: '',
                 abreviation: '',
                 adresse: '',
+                CodeClient:'',
                 tele: '',
                 ville: '',
                 zone_id: '',
@@ -790,6 +792,18 @@ const ClientList = () => {
                                         value={formData.raison_sociale}
                                         onChange={handleChange}
                                         placeholder="Raison Sociale"
+                                        className="form-control-sm"
+                                    />
+                                </Form.Group>
+
+                                <Form.Group className="col-sm-5 m-2 " controlId="CodeClient">
+                                    <Form.Label>Code Client</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        name="CodeClient"
+                                        value={formData.CodeClient}
+                                        onChange={handleChange}
+                                        placeholder="Code Client"
                                         className="form-control-sm"
                                     />
                                 </Form.Group>

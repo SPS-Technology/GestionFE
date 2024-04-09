@@ -169,124 +169,138 @@ const ChiffreAffaireList = () => {
 
     //------------------------- fournisseur print ---------------------//
 
-    const printList = (tableId, title, chiffreaffaireList) => {
-        const printWindow = window.open(" ", "_blank", " ");
+    const PrintList = ({ tableId, title, recouvrementList , filtredrecouvrements  }) => {
+        const handlePrint = () => {
+            const printWindow = window.open("", "_blank", "");
 
-        if (printWindow) {
-            const tableToPrint = document.getElementById(tableId);
+            if (printWindow) {
+                const tableToPrint = document.getElementById(tableId);
 
-            if (tableToPrint) {
-                const newWindowDocument = printWindow.document;
-                newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <h1 class="h1"> Gestion Commandes </h1>
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-              <style>
-  
-                body {
-                  font-family: 'Arial', sans-serif;
-                  margin-bottom: 60px;
-                }
-  
-                .page-header {
-                  text-align: center;
-                  font-size: 24px;
-                  margin-bottom: 20px;
-                }
-  
-                .h1 {
-                  text-align: center;
-                }
-  
-                .list-title {
-                  font-size: 18px;
-                  margin-bottom: 10px;
-                }
-  
-                .header {
-                  font-size: 16px;
-                  margin-bottom: 10px;
-                }
-  
-                table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-bottom: 20px;
-                }
-  
-                th, td {
-                  border: 1px solid #ddd;
-                  padding: 8px;
-                  text-align: left;
-                }
-  
+                if (tableToPrint) {
+                    const newWindowDocument = printWindow.document;
+                    newWindowDocument.write(`
+          <!DOCTYPE html>
+          <html lang="fr">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+            <style>
+              body {
+                font-family: 'Arial', sans-serif;
+                margin-bottom: 60px;
+              }
+              .page-header {
+                text-align: center;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              .h1 {
+                text-align: center;
+              }
+              .list-title {
+                font-size: 18px;
+                margin-bottom: 10px;
+              }
+              .header {
+                font-size: 16px;
+                margin-bottom: 10px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+              }
+              .footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 14px;
+                margin-top: 30px;
+                background-color: #fff;
+              }
+              @media print {
                 .footer {
                   position: fixed;
                   bottom: 0;
-                  width: 100%;
-                  text-align: center;
-                  font-size: 14px;
-                  margin-top: 30px;
-                  background-color: #fff;
                 }
-  
-                @media print {
-                  .footer {
-                    position: fixed;
-                    bottom: 0;
-                  }
-  
-                  body {
-                    margin-bottom: 0;
-                  }
-                  .no-print {
-                    display: none;
-                  }
+                body {
+                  margin-bottom: 0;
                 }
-  
-                .content-wrapper {
-                  margin-bottom: 100px;
+                .no-print {
+                  display: none;
                 }
-  
-                .extra-space {
-                  margin-bottom: 30px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${Array.isArray(chiffreaffaireList)
-                    ? chiffreaffaireList.map((item) => `<li>${item}</li>`).join("")
-                    : ""
-                }
-              </ul>
+              }
+              .content-wrapper {
+                margin-bottom: 100px;
+              }
+              .extra-space {
+                margin-bottom: 30px;
+              }
+            </style>
+          </head>
+          <body>
+      <div class="container">
+              <div class="page-header print-no-date m-2">${title}</div>
               <div class="content-wrapper">
-                ${tableToPrint.outerHTML}
-              </div>
-              <script>
-                setTimeout(() => {
-                  window.print();
-                  window.onafterprint = function () {
-                    window.close();
-                  };
-                }, 1000);
-              </script>
-            </body>
-            </html>
-          `);
+                <table>
+                  <thead>
+                    <tr class="table-header">
+                   
+                      <th>Client</th>
+                      <th>Numéro de Facture</th>
+                      <th>Date De Facture</th>
+                      <th>Montant de Facture</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${factures.map((facture) => `
+                      <tr key=${facture.id}>
+                        <td>${getClientNameById(
+                            facture.client_id)}</td>
+                        <td>${facture.reference}</td>
+                        <td>${facture.date}</td>
+                        <td>${facture.total_ttc}</td>
 
-                newWindowDocument.close();
+                      </tr>
+                    `).join("")}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+    <script>
+      setTimeout(() => {
+        window.print();
+        window.onafterprint = function () {
+          window.close();
+        };
+      }, 1000);
+    </script>
+  </body>
+          </html>
+        `);
+
+                    newWindowDocument.close();
+                } else {
+                    console.error(`Table with ID '${tableId}' not found.`);
+                }
             } else {
-                console.error(`Table with ID '${tableId}' not found.`);
+                console.error("Error opening print window.");
             }
-        } else {
-            console.error("Error opening print window.");
-        }
+        };
+
+        return (
+            <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
+                <FontAwesomeIcon icon={faPrint} className="me-2" />
+            </button>
+        );
     };
     //------------------------- fournisseur export to pdf ---------------------//
 
@@ -546,14 +560,6 @@ const ChiffreAffaireList = () => {
                                             <td>{facture.total_ttc}</td>
                                             <td>{facture.date}</td>
 
-                                            {/*<td className="d-inline-flex">*/}
-                                            {/*    <Button className="btn btn-sm btn-info m-1" onClick={() => handleEdit(facture)}>*/}
-                                            {/*        <i className="fas fa-edit"></i>*/}
-                                            {/*    </Button>*/}
-                                            {/*    <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(facture.id)}>*/}
-                                            {/*        <FontAwesomeIcon icon={faTrash} />*/}
-                                            {/*    </Button>*/}
-                                            {/*</td>*/}
                                         </tr>
 
 

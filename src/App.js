@@ -15,6 +15,8 @@ import RecouverementList from "./etat de recouvrement/RecouverementList";
 import ChiffreAffaireList from "./Chiffre D'Affaire/ChiffreAffaireList";
 import ReclamationList from "./Reclamations/ReclamationList";
 import BanqueList from "./Banques/BanqueList";
+import CompteList from "./Compte/CompteList";
+import EncaissementList from "./Encaissements/EncaissementList";
 
 
 const App = () => {
@@ -36,6 +38,8 @@ const App = () => {
         <Route path="/chiffreaffaires" element={<ChiffreAffaireList/>}/>
         <Route path="/reclamations" element={<ReclamationList/>}/>
         <Route path="/banques" element={<BanqueList/>}/>
+        <Route path="/comptes" element={<CompteList/>}/>
+        <Route path="/encaissements" element={<EncaissementList/>}/>
       </Routes>
       </AuthProvider>
     </div>

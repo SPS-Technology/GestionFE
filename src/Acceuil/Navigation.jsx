@@ -272,6 +272,28 @@ const Navigation = () => {
             <ListItem
                 button
                 component={Link}
+                to="/comptes"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <ReportTwoToneIcon   />
+              </ListItemIcon>
+              <ListItemText primary="Compte" />
+            </ListItem>
+            <ListItem
+                button
+                component={Link}
+                to="/encaissements"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <ReportTwoToneIcon   />
+              </ListItemIcon>
+              <ListItemText primary="Encaissement" />
+            </ListItem>
+            <ListItem
+                button
+                component={Link}
                 to="/banques"
                 style={{ color: "grey" }}
             >

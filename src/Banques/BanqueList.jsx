@@ -38,35 +38,14 @@ const BanqueList = () => {
     const [filteredFactures, setFilteredFactures] = useState([]);
     const [expandedRows, setExpandedRows] = useState([]);
     const [selectedClientId, setSelectedClientId] = useState(null);
-
-
+    const [existingLignEntrees, setExistingLigneEntrees] = useState([]);
+    const [modifiedAvanceValues, setModifiedAvanceValues] = useState({});
 
     const [searchTerm, setSearchTerm] = useState("");
 
 const [clientId,setClientId] = useState(null);
     const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
 
-
-
-
-
-
-
-
-
-
-
-
-    //---------------form-------------------//
-    const [showFormSC, setShowFormSC] = useState(false);
-
-    const [formDataSC, setFormDataSC] = useState({  client_id: '',
-        numero_cheque: '',
-        mode_de_paiement: '',
-        datee: '',
-        remarque: '', });
-
-    const [formContainerStyleSC, setFormContainerStyleSC] = useState({ right: '-500px' });
 
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
@@ -81,8 +60,8 @@ const [clientId,setClientId] = useState(null);
         total_ttc:{},
         date:{},
     });
-    const [formContainerStyle, setFormContainerStyle] = useState({ right: "-500px", });
-    const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0px", });
+    const [formContainerStyle, setFormContainerStyle] = useState({ right: "-100%", });
+    const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0", });
     const tableHeaderStyle = {
         background: "#f2f2f2",
         padding: "10px",
@@ -97,21 +76,22 @@ const [clientId,setClientId] = useState(null);
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
-    const toggleRow = async (banque) => {
-        if (expandedRows.includes(banque.id)) {
-            setExpandedRows(expandedRows.filter((id) => id !== banque.id));
-        } else {
-            try {
-                // Charger les lignes de factures pour la banque sélectionnée
-                const lignes = ligneEntrerComptes; // Vous devez implémenter cette fonction
+    // const toggleRow = async (banque) => {
+    //     if (expandedRows.includes(banque.id)) {
+    //         setExpandedRows(expandedRows.filter((id) => id !== banque.id));
+    //     } else {
+    //         try {
+    //             // Charger les lignes de factures pour la banque sélectionnée
+    //             const lignes = ligneEntrerComptes; // Vous devez implémenter cette fonction
+    //
+    //             // Ajouter les lignes de factures spécifiques à la banque sélectionnée
+    //             setExpandedRows([...expandedRows, ...lignes]);
+    //         } catch (error) {
+    //             console.error("Erreur lors de la récupération des lignes de Commandes :", error);
+    //         }
+    //     }
+    // };
 
-                // Ajouter les lignes de factures spécifiques à la banque sélectionnée
-                setExpandedRows([...expandedRows, ...lignes]);
-            } catch (error) {
-                console.error("Erreur lors de la récupération des lignes de Commandes :", error);
-            }
-        }
-    };
     const handleShowLigneEntreeCompte = async (banque) => {
         setExpandedRows((prevRows) =>
             prevRows.includes(banque)
@@ -210,6 +190,46 @@ const [clientId,setClientId] = useState(null);
             return []; // or handle accordingly if client not found
         }
     };
+    const getReferenceByIdFacture = (factureId) => {
+        // Assuming you have a `clients` array containing client objects
+        console.log(factureId)
+        const facture = factures.find((f) => f.id === factureId);
+        console.
+            log('factures',factures)
+        console.
+        log('facture',facture)
+        // Check if the client is found
+        if (facture) {
+            // Assuming each client object has an `invoices` property which is an array
+
+            return facture.reference;
+        } else {
+            return ""; // or handle accordingly if client not found
+        }
+    };
+    const getAvanceByIdFacture = (factureId) => {
+        // Assuming you have a `clients` array containing client objects
+        console.log(factureId)
+        const facture = factures.find((f) => f.id === factureId);
+        console.
+        log('factures',factures)
+        console.
+        log('facture',facture)
+        // Check if the client is found
+        if (facture) {
+            // Assuming each client object has an `invoices` property which is an array
+
+            return facture.avance;
+        } else {
+            return ""; // or handle accordingly if client not found
+        }
+    };
+    const handleInputChange = (factureId, inputType, event) => {
+        const newValue = event.target.value;
+        if (inputType === "avance") {
+            setModifiedAvanceValues((prev) => ({...prev, [factureId]: newValue}));
+        }
+    }
     const getAvancebyFacture = (clientId) => {
         // Assuming you have a `clients` array containing client objects
         const client = clients.find((c) => c.id === clientId);
@@ -255,9 +275,57 @@ const [clientId,setClientId] = useState(null);
             return []; // or handle accordingly if client not found
         }
     };
+    const getAvanceByIdClient = (factureId) => {
+        // Assuming you have a `clients` array containing client objects
+        const facture = factures.find((c) => c.id === factureId);
 
+        // Check if the client is found
+        if (facture) {
+            // Assuming each client object has an `invoices` property which is an array
+            const ligneEntrees = facture.ligne_entrer_compte;
+            console.log("ligneEntrees", ligneEntrees);
+            // Return an array of invoice references or any other property you want
+            return ligneEntrees.map((ligneEntree) => ligneEntree.avance);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
 
+    const gettotalttcByIdFacture = (factureId) => {
+        // Assuming you have a `clients` array containing client objects
+        console.log(factureId)
+        const facture = factures.find((f) => f.id === factureId);
+        console.
+        log('factures',factures)
+        console.
+        log('facture',facture)
+        // Check if the client is found
+        if (facture) {
+            // Assuming each client object has an `invoices` property which is an array
 
+            return facture.total_ttc;
+        } else {
+            return ""; // or handle accordingly if client not found
+        }
+    };
+
+    const getDateFactureByIdFacture = (factureId) => {
+        // Assuming you have a `clients` array containing client objects
+        console.log(factureId)
+        const facture = factures.find((f) => f.id === factureId);
+        console.
+        log('factures',factures)
+        console.
+        log('facture',facture)
+        // Check if the client is found
+        if (facture) {
+            // Assuming each client object has an `invoices` property which is an array
+
+            return facture.date;
+        } else {
+            return ""; // or handle accordingly if client not found
+        }
+    };
     const handleCheckboxChange = (itemId) => {
         if (selectedItems.includes(itemId)) {
             setSelectedItems(selectedItems.filter((id) => id !== itemId));
@@ -618,155 +686,94 @@ const [clientId,setClientId] = useState(null);
             }
         });
     }
-    //------------------------- banque EDIT---------------------//
 
-    const handleEdit = (banques) => {
-        setEditingBanque(banques); // Set the banques to be edited
-        // Populate form data with banques details
-        setFormData({
-            client: banques.client_id,
-
-            numero_cheque: banques.numero_cheque,
-            mode_de_paiement: banques.mode_de_paiement,
-            datee: banques.datee,
-            Status:banques.Status,
-            remarque: banques.remarque,
-            avance:banques.avance,
-
-        });
-        if (formContainerStyle.right === '-500px') {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
-        } else {
-            closeForm();
-        }
-        // Show form
-        // setShowForm(true);
-    };
-    useEffect(() => {
-        if (editingBanqueId !== null) {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
-        }
-    }, [editingBanqueId]);
-
-    //------------------------- banque SUBMIT---------------------//
-
-    useEffect(() => {
-        fetchBanques();
-    }, []);
-
-    // const handleSubmit = (e) => {
-    //     e.preventDefault();
-    //     const url = editingBanque ? `http://localhost:8000/api/banques/${editingBanque.id}` : 'http://localhost:8000/api/banques';
-    //     const method = editingBanque ? 'put' : 'post';
-    //
-    //     axios({
-    //         method: method,
-    //         url: url,
-    //         data: formData,
-    //     }).then(() => {
-    //         fetchBanques();
-    //
-    //         // Mise à jour de filteredBanques pour inclure la nouvelle entrée ou la mise à jour
-    //         if (editingBanque) {
-    //             // Si c'est une mise à jour, trouvez l'index de l'élément modifié dans filteredBanques et mettez à jour cet élément
-    //             const index = filteredBanques.findIndex(banque => banque.id === editingBanque.id);
-    //             if (index !== -1) {
-    //                 const updatedBanques = [...filteredBanques];
-    //                 updatedBanques[index] = formData;
-    //                 setFilteredBanques(updatedBanques);
-    //             }
-    //         } else {
-    //             // Si c'est un ajout, ajoutez simplement la nouvelle entrée à filteredBanques
-    //             setFilteredBanques(prevBanques => [...prevBanques, formData]);
-    //         }
-    //
-    //         Swal.fire({
-    //             icon: 'success',
-    //             title: 'Succès!',
-    //             text: `banque ${editingBanque ? 'modifié' : 'ajouté'} avec succès.`,
-    //         });
-    //
-    //         setFormData({
-    //             client_id: "",
-    //             numero_cheque: "",
-    //             mode_de_paiement: "",
-    //             datee: "",
-    //
-    //             Status:"",
-    //             remarque: "",
-    //
-    //         });
-    //         setEditingBanque(null); // Clear editing banque
-    //
-    //         if (formContainerStyle.right === "-500px") {
-    //             setFormContainerStyle({ right: "0" });
-    //             setTableContainerStyle({ marginRight: "500px" });
-    //         } else {
-    //             closeForm();
-    //         }
-    //     }).catch((error) => {
-    //         console.error(`Erreur lors de ${editingBanque ? 'la modification' : "l'ajout"} du banque:`, error);
-    //         Swal.fire({
-    //             icon: 'error',
-    //             title: 'Erreur!',
-    //             text: `Échec de ${editingBanque ? 'la modification' : "l'ajout"} du banque.`,
-    //         });
-    //     });
-    // };
     const getElementValueById = (id) => {
         return document.getElementById(id)?.value || "";
     };
     const handleSubmit = async (e) => {
         e.preventDefault();
-try {
 
-
-        const banquesData = {
-            numero_cheque: formData.numero_cheque,
-            mode_de_paiement: formData.mode_de_paiement,
-            datee: formData.datee,
-            Status: formData.Status,
-            remarque: formData.remarque,
-            client_id: formData.client_id,
-        };
-        const banqueResponse = await axios.post(
-            "http://localhost:8000/api/banques",
-            banquesData,
-
-        );
-        console.log(banqueResponse)
-
-        const ligneEntrerCompteData = {
-            banques_id: banqueResponse.data.banque.id,
-            id_facture: formData.id_facture,
-            avance: formData.avance,
-        };
-        const selectedFacturesData = filteredFactures.map((selectedFacture) => {
-            return {
-                banques_id: banqueResponse.data.banque.id,
-                id_facture: selectedFacture.id,
-                avance: getElementValueById(`avance_${selectedFacture.id}`),
-
+try{
+        if(editingBanque){
+            const banquesData = {
+                numero_cheque: formData.numero_cheque,
+                mode_de_paiement: formData.mode_de_paiement,
+                datee: formData.datee,
+                Status: formData.Status,
+                remarque: formData.remarque,
+                client_id: formData.client_id,
             };
-        });
-        console.log("selectedFacturesData", selectedFacturesData);
-        for (const ligneEntreBanques of selectedFacturesData) {
-            await axios.post(
-                "http://localhost:8000/api/ligneentrercompte",
-                ligneEntreBanques,
+            const banqueResponse = await axios.put(
+                `http://localhost:8000/api/banques/${editingBanque.id}`,
+                banquesData,
 
             );
+            console.log(banqueResponse)
+            const selectedFacturesData = editingBanque.ligne_entrer_compte.map((selectedligneEntree) => {
+                const avance = getElementValueById(`avance_${selectedligneEntree.id_facture}`);
+                const restee = gettotalttcByIdFacture(selectedligneEntree.id_facture) - avance;
+                return {
+                    id:selectedligneEntree.id,
+                    client_id:formData.client_id,
+                    entrer_comptes_id: editingBanque.id,
+                    id_facture: selectedligneEntree.id_facture,
+                    avance: avance,
+                    restee: restee,
+
+                };
+            });
+            console.log("selectedFacturesData", selectedFacturesData);
+            for (const ligneEntreBanques of selectedFacturesData) {
+                console.log("ligneEntreBanques", ligneEntreBanques);
+                await axios.put(
+                    `http://localhost:8000/api/ligneentrercompte/${ligneEntreBanques.id}`,
+                    ligneEntreBanques,
+
+                );
+            }
+        }else {
+
+                console.log('editingBanque',editingBanque)
+                const banquesData = {
+                    numero_cheque: formData.numero_cheque,
+                    mode_de_paiement: formData.mode_de_paiement,
+                    datee: formData.datee,
+                    Status: formData.Status,
+                    remarque: formData.remarque,
+                    client_id: formData.client_id,
+                };
+                const banqueResponse = await axios.post(
+                    "http://localhost:8000/api/banques",
+                    banquesData,
+
+                );
+                console.log(banqueResponse)
+
+                const selectedFacturesData = filteredFactures.map((selectedFacture) => {
+                    const avance = getElementValueById(`avance_${selectedFacture.id}`);
+                    const restee = gettotalttcByIdFacture(selectedFacture.id) - avance;
+                    return {
+                        client_id:formData.client_id,
+                        entrer_comptes_id: banqueResponse.data.banque.id,
+                        id_facture: selectedFacture.id,
+                        avance: avance,
+                        restee: restee,
+
+                    };
+                });
+                console.log("selectedFacturesData", selectedFacturesData);
+                for (const ligneEntreBanques of selectedFacturesData) {
+
+                    console.log("avance", ligneEntreBanques.avance);
+                    if (ligneEntreBanques.avance !== null) {
+                        await axios.post(
+                            "http://localhost:8000/api/ligneentrercompte",
+                            ligneEntreBanques,
+                        );
+                    }
+                }
         }
-        // try {
-        //     const banquesResponse = await axios.post('http://localhost:8000/api/banques', banquesData);
-        //     console.log('Response from /api/banques:', banquesResponse.data);
-        //
-        //     const ligneEntrerComptesResponse = await axios.post('http://localhost:8000/api/ligneentrercompte', ligneEntrerCompteData);
-        //     console.log('Response from /api/ligneentrercompte:', ligneEntrerComptesResponse.data);
-        //
-        //     setFormData(formData);
+
 
             // Afficher une alerte de succès
             Swal.fire({
@@ -786,7 +793,58 @@ try {
                 text: 'Échec de l\'ajout des données.',
             });
         }
+
     };
+
+    //------------------------- banque EDIT---------------------//
+
+    const handleEdit = async (banques) => {
+        setEditingBanque(banques); // Set the banques to be edited
+
+        try {
+
+            setFormData({
+                client_id: banques.client_id,
+                numero_cheque: banques.numero_cheque,
+                mode_de_paiement: banques.mode_de_paiement,
+                datee: banques.datee,
+                Status: banques.Status,
+                remarque: banques.remarque,
+                reference: banques.reference,
+                total_ttc: banques.total_ttc,
+                date: banques.date,
+                avance: banques.avance,
+            });
+            const facturesForClient = factures.filter(facture => facture.client_id === parseInt(banques.client_id) && facture.status != "regler"  );
+            setFilteredFactures(facturesForClient);
+            // Show the form and adjust styles
+            if (formContainerStyle.right === '-100%') {
+                setFormContainerStyle({ right: '0' });
+                setTableContainerStyle({ marginRight: '100%' });
+            } else {
+                closeForm();
+            }
+        } catch (error) {
+            console.error("Error fetching facture data:", error);
+            // Handle error
+        }
+    };
+
+    useEffect(() => {
+        if (editingBanqueId !== null) {
+            setFormContainerStyle({ right: '0' });
+            setTableContainerStyle({ marginRight: '100%' });
+        }
+    }, [editingBanqueId]);
+
+
+    //------------------------- banque SUBMIT---------------------//
+
+    useEffect(() => {
+        fetchBanques();
+    }, []);
+
+
 
 
     //------------------------- banque FORM---------------------//
@@ -794,16 +852,29 @@ try {
 
 
     const handleShowFormButtonClick = () => {
-        if (formContainerStyle.right === '-500px') {
+        if (formContainerStyle.right === '-100%') {
             setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
+            setTableContainerStyle({ marginRight: '3000px' });
         } else {
             closeForm();
         }
     };
+    const populateProductInputs = (factureId, inputType) => {
+        //console.log("ligneCommandes", existingLigneCommandes);
+        if(editingBanque) {
+            const existingLigneEntree = ligneEntrerComptes.find(
+                (ligneEntree) => ligneEntree.id_facture === factureId
+            );
 
+            if (existingLigneEntree) {
+                return existingLigneEntree[inputType];
+            }
+        }
+        return "";
+    };
     const closeForm = () => {
-        setFormContainerStyle({ right: '-500px' });
+        setFilteredFactures([]);
+        setFormContainerStyle({ right: '-100%' });
         setTableContainerStyle({ marginRight: '0' });
         setShowForm(false); // Hide the form
         setFormData({ // Clear form data
@@ -831,7 +902,7 @@ try {
                     <Toolbar />
 
                     <div>
-                        <h3>Banques</h3>
+                        <h3>Entrer Banques</h3>
                         <div className="search-container d-flex flex-row-reverse " role="search">
                             <Search onSearch={handleSearch} type="search" />
                         </div>
@@ -874,7 +945,8 @@ try {
                                     <Form.Label>Mode de Paiement</Form.Label>
                                     <Form.Control as="select" name="mode_de_paiement" value={formData.mode_de_paiement} onChange={handleChange}>
                                         <option value="">Sélectionner un mode de paiement</option>
-                                        <option value="Chèque">Chèque</option>
+                                        <option value="Effet">Effet</option>
+                                        <option value="Chéque">Chéque</option>
                                         <option value="Espèce">Espèce</option>
                                         <option value="Garantie">Garantie</option>
                                         <option value="Virement">Virement</option>
@@ -933,8 +1005,13 @@ try {
                                                                 placeholder="Montant"
                                                                 id={`avance_${facture.id}`}
                                                                 name={`avance_${facture.id}`}
-                                                                value={formData[`avance_${facture.id}`] || ''}
-                                                                onChange={handleChange}
+                                                                value={
+                                                                    modifiedAvanceValues[facture.id] ||
+                                                                    populateProductInputs(facture.id, "avance")
+                                                                }
+                                                                onChange={(event) =>
+                                                                    handleInputChange(facture.id, "avance", event)
+                                                                }
                                                             />
                                                         </td>
                                                     </td>
@@ -976,7 +1053,10 @@ try {
                                 </thead>
                                <tbody>
                                {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
+
+
                                    <React.Fragment key={banques.id}>
+
                                        <tr>
                                            <td>
 
@@ -1003,13 +1083,16 @@ try {
                                                </button>
                                                : ""}
 
-                                           {getReferenceByIdClient(banques.client_id)[0]}</td>
+                                               {banques.ligne_entrer_compte.length > 0 && banques.ligne_entrer_compte[0].id_facture ?
+                                                   getReferenceByIdFacture(banques.ligne_entrer_compte[0].id_facture)
+                                                   : ""}
+                                           </td>
                                            <td>{gettotalttcByIdClient(banques.client_id)[0]}</td>
                                            <td>{getDateFactureByIdClient(banques.client_id)[0]}</td>
                                            <td>{banques.numero_cheque}</td>
                                            <td>{banques.mode_de_paiement}</td>
                                            <td>{banques.datee}</td>
-                                           <td>{banques.avance}</td>
+                                           <td>{getAvanceByIdClient(banques.client_id)[0]}</td>
                                            <td>{banques.Status}</td>
                                            <td>{banques.remarque}</td>
                                            <td className="d-inline-flex">
@@ -1022,44 +1105,56 @@ try {
                                            </td>
                                        </tr>
 
+
                                        {expandedRows.includes(banques.id) && (
                                            <tr>
-                                               <td colSpan="8">
+                                               <td colSpan="12">
                                                    <div>
-                                                       <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
+                                                       <table className="table table-bordered" style={{ fontSize: "0.9rem" }}>
                                                            <thead>
                                                            <tr>
                                                                <th style={tableHeaderStyle}>N° Facture</th>
                                                                <th style={tableHeaderStyle}>Total TTC</th>
                                                                <th style={tableHeaderStyle}>Date</th>
                                                                <th style={tableHeaderStyle}>Avance</th>
-
+                                                               <th style={tableHeaderStyle}>Reste</th>
                                                            </tr>
                                                            </thead>
                                                            <tbody>
-
-                                                           {ligneEntrerComptes.map((ligneEntreCompte) => (
-                                                               <tr key={ligneEntreCompte.id}>
-
-                                                                   <td>{ligneEntreCompte.id_facture}</td>
-                                                                   <td>{gettotalttcByIdClient(ligneEntreCompte.id)}</td>
-                                                                   <td>{getDateFactureByIdClient(ligneEntreCompte.id)}</td>
-                                                                   <td>{ligneEntreCompte.avance}</td>
-
-                                                               </tr>
+                                                           {banques.ligne_entrer_compte.map((ligneEntreCompte) => (
+                                                               // Vérifiez si une avance a été saisie pour cette facture
+                                                               ligneEntreCompte.avance !== null &&
+                                                               ligneEntreCompte.avance !== "" && (
+                                                                   <tr key={ligneEntreCompte.id}>
+                                                                       <td>
+                                                                           {getReferenceByIdFacture(
+                                                                               ligneEntreCompte.id_facture
+                                                                           )}
+                                                                       </td>
+                                                                       <td>
+                                                                           {gettotalttcByIdFacture(
+                                                                               ligneEntreCompte.id_facture
+                                                                           )}
+                                                                       </td>
+                                                                       <td>
+                                                                           {getDateFactureByIdFacture(
+                                                                               ligneEntreCompte.id_facture
+                                                                           )}
+                                                                       </td>
+                                                                       <td>{ligneEntreCompte.avance}</td>
+                                                                       <td>{ligneEntreCompte.restee}</td>
+                                                                   </tr>
+                                                               )
                                                            ))}
-
-
-
                                                            </tbody>
                                                        </table>
                                                    </div>
                                                </td>
                                            </tr>
                                        )}
-
                                    </React.Fragment>
                                ))}
+
 
                                </tbody>
                             </table>
@@ -1068,15 +1163,15 @@ try {
                             <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
                                 <FontAwesomeIcon icon={faTrash} /></Button>
 
-                            <TablePagination
-                                rowsPerPageOptions={[5, 10, 25]}
-                                component="div"
-                                count={filteredBanques.length}
-                                rowsPerPage={rowsPerPage}
-                                page={page}
-                                onPageChange={handleChangePage}
-                                onRowsPerPageChange={handleChangeRowsPerPage}
-                            />
+                            {/*<TablePagination*/}
+                            {/*    rowsPerPageOptions={[5, 10, 25]}*/}
+                            {/*    component="div"*/}
+                            {/*    count={filteredBanques.length}*/}
+                            {/*    rowsPerPage={rowsPerPage}*/}
+                            {/*    page={page}*/}
+                            {/*    onPageChange={handleChangePage}*/}
+                            {/*    onRowsPerPageChange={handleChangeRowsPerPage}*/}
+                            {/*/>*/}
                         </div>
                     </div>
 

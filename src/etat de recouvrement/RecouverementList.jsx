@@ -21,7 +21,7 @@ const RecouverementList = () => {
 
 
 
-        const [recouvrements, setRecouvrements] = useState([]);
+    const [recouvrements, setRecouvrements] = useState([]);
 
 
 
@@ -30,7 +30,9 @@ const RecouverementList = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredRecouvrements, setFilteredRecouvrements] = useState([]);
+    const [banques, setBanques] = useState([]);
     const [factures, setFactures] = useState([]);
+
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -43,15 +45,18 @@ const RecouverementList = () => {
     const [editingRecouverementId, setEditingRecouverementId] = useState(null);
 
     const [clients, setClients] = useState([]);
+    const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
+
+
     const [expandedDetailsRows, setExpandedDetailsRows] = useState([]);
-   const [expandedRows , setExpandedRows]=useState([]);
+    const [expandedRows , setExpandedRows]=useState([]);
 
     const [totalTTC, setTotalTTC] = useState(0);
 
     const [showAvanceDetails, setShowAvanceDetails] = useState(false);
 
 
-        //---------------form-------------------//
+    //---------------form-------------------//
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         client: "",
@@ -73,13 +78,24 @@ const RecouverementList = () => {
                 "http://localhost:8000/api/factures");
             setFactures(responseFactures.data.facture);
             console.log("response",responseFactures);
+
+            const responseLigneentrer = await axios.get(
+                "http://localhost:8000/api/ligneentrercompte");
+            setLigneEntrerComptes(responseLigneentrer.data.ligneentrercomptes);
+            console.log("lignenetrecomptes",responseLigneentrer.data.ligneentrercomptes);
+
+            const responsebanques = await axios.get(
+                "http://localhost:8000/api/banques");
+            setBanques(responsebanques.data.banques);
+            console.log("banques",responsebanques.data.banques);
+
             const response = await axios.get(
                 "http://localhost:8000/api/etat-recouvrements");
             setRecouvrements(response.data.etat_recouvrements);
             console.log("response",response);
             const clientResponse = await axios.get(
-            "http://localhost:8000/api/clients"
-        );
+                "http://localhost:8000/api/clients"
+            );
             console.log("API Response for Clients:", clientResponse.data.client);
             setClients(clientResponse.data.client);
         } catch (error) {
@@ -232,8 +248,38 @@ const RecouverementList = () => {
             return []; // or handle accordingly if client not found
         }
     };
+    const getAvanceByIdClient = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
 
-   // Calcul du total des total_ttc affichés pour un client donné
+        // Check if the client is found
+        if (client) {
+            // Assuming each client object has an `invoices` property which is an array
+            const ligneEntrees = client.ligne_entrer_compte;
+            console.log("ligneEntrees", ligneEntrees);
+            // Return an array of invoice references or any other property you want
+            return ligneEntrees.map((ligneEntree) => ligneEntree.avance);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getResteByIdClient = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
+
+        // Check if the client is found
+        if (client) {
+            // Assuming each client object has an `invoices` property which is an array
+            const ligneEntrees = client.ligne_entrer_compte;
+            console.log("ligneEntrees", ligneEntrees);
+            // Return an array of invoice references or any other property you want
+            return ligneEntrees.map((ligneEntree) => ligneEntree.restee);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+
+    // Calcul du total des total_ttc affichés pour un client donné
     const calculateTotalTTCByIdClient = (clientId) => {
         const total_ttc_list = gettotalttcByIdClient(clientId);
         // Additionner tous les total_ttc
@@ -250,10 +296,25 @@ const RecouverementList = () => {
         // Check if the client is found
         if (client) {
             // Assuming each client object has an `invoices` property which is an array
-            const banques = client.banques;
+            const banques = client.entrer_comptes;
             console.log("banques", banques);
             // Return an array of invoice references or any other property you want
             return banques.map((banques) => banques.datee);
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getnumerochequedeBanqueByIdClient = (clientId) => {
+        // Assuming you have a `clients` array containing client objects
+        const client = clients.find((c) => c.id === clientId);
+
+        // Check if the client is found
+        if (client) {
+            // Assuming each client object has an `invoices` property which is an array
+            const banques = client.entrer_comptes;
+            console.log("banques", banques);
+            // Return an array of invoice references or any other property you want
+            return banques.map((banques) => banques.numero_cheque);
         } else {
             return []; // or handle accordingly if client not found
         }
@@ -265,7 +326,7 @@ const RecouverementList = () => {
         // Check if the client is found
         if (client) {
             // Assuming each client object has an `invoices` property which is an array
-            const banques = client.banques;
+            const banques = client.entrer_comptes;
             console.log("banques", banques);
             // Return an array of invoice references or any other property you want
             return banques.map((banques) => banques.mode_de_paiement);
@@ -280,7 +341,7 @@ const RecouverementList = () => {
         // Check if the client is found
         if (client) {
             // Assuming each client object has an `invoices` property which is an array
-            const banques = client.banques;
+            const banques = client.entrer_comptes;
             console.log("banques", banques);
             // Return an array of invoice references or any other property you want
             return banques.map((banques) => banques.Montant);
@@ -295,8 +356,8 @@ const RecouverementList = () => {
         return totale;
     };
     const calculateResteByIdClient = (clientId) => {
-        const totalTTC = calculateTotalTTCByIdClient(clientId);
-        const avance = calculateTotalAvanceByIdClient(clientId);
+        const totalTTC = gettotalttcByIdClient(clientId);
+        const avance = getAvanceByIdClient(clientId);
 
         const reste = totalTTC - avance;
         return reste;
@@ -304,124 +365,143 @@ const RecouverementList = () => {
 
     //------------------------- fournisseur print ---------------------//
 
-    const printList = (tableId, title, recouverementList) => {
-        const printWindow = window.open(" ", "_blank", " ");
+    const PrintList = ({ tableId, title, recouvrementList , filtredrecouvrements  }) => {
+        const handlePrint = () => {
+            const printWindow = window.open("", "_blank", "");
 
-        if (printWindow) {
-            const tableToPrint = document.getElementById(tableId);
+            if (printWindow) {
+                const tableToPrint = document.getElementById(tableId);
 
-            if (tableToPrint) {
-                const newWindowDocument = printWindow.document;
-                newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <h1 class="h1"> Gestion Commandes </h1>
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-              <style>
-  
-                body {
-                  font-family: 'Arial', sans-serif;
-                  margin-bottom: 60px;
-                }
-  
-                .page-header {
-                  text-align: center;
-                  font-size: 24px;
-                  margin-bottom: 20px;
-                }
-  
-                .h1 {
-                  text-align: center;
-                }
-  
-                .list-title {
-                  font-size: 18px;
-                  margin-bottom: 10px;
-                }
-  
-                .header {
-                  font-size: 16px;
-                  margin-bottom: 10px;
-                }
-  
-                table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-bottom: 20px;
-                }
-  
-                th, td {
-                  border: 1px solid #ddd;
-                  padding: 8px;
-                  text-align: left;
-                }
-  
+                if (tableToPrint) {
+                    const newWindowDocument = printWindow.document;
+                    newWindowDocument.write(`
+          <!DOCTYPE html>
+          <html lang="fr">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+            <style>
+              body {
+                font-family: 'Arial', sans-serif;
+                margin-bottom: 60px;
+              }
+              .page-header {
+                text-align: center;
+                font-size: 24px;
+                margin-bottom: 20px;
+              }
+              .h1 {
+                text-align: center;
+              }
+              .list-title {
+                font-size: 18px;
+                margin-bottom: 10px;
+              }
+              .header {
+                font-size: 16px;
+                margin-bottom: 10px;
+              }
+              table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 20px;
+              }
+              th, td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+              }
+              .footer {
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+                text-align: center;
+                font-size: 14px;
+                margin-top: 30px;
+                background-color: #fff;
+              }
+              @media print {
                 .footer {
                   position: fixed;
                   bottom: 0;
-                  width: 100%;
-                  text-align: center;
-                  font-size: 14px;
-                  margin-top: 30px;
-                  background-color: #fff;
                 }
-  
-                @media print {
-                  .footer {
-                    position: fixed;
-                    bottom: 0;
-                  }
-  
-                  body {
-                    margin-bottom: 0;
-                  }
-                  .no-print {
-                    display: none;
-                  }
+                body {
+                  margin-bottom: 0;
                 }
-  
-                .content-wrapper {
-                  margin-bottom: 100px;
+                .no-print {
+                  display: none;
                 }
-  
-                .extra-space {
-                  margin-bottom: 30px;
-                }
-              </style>
-            </head>
-            <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${Array.isArray(recouverementList)
-                    ? recouverementList.map((item) => `<li>${item}</li>`).join("")
-                    : ""
-                }
-              </ul>
-              <div class="content-wrapper">
-                ${tableToPrint.outerHTML}
-              </div>
-              <script>
-                setTimeout(() => {
-                  window.print();
-                  window.onafterprint = function () {
-                    window.close();
-                  };
-                }, 1000);
-              </script>
-            </body>
-            </html>
-          `);
+              }
+              .content-wrapper {
+                margin-bottom: 100px;
+              }
+              .extra-space {
+                margin-bottom: 30px;
+              }
+            </style>
+          </head>
+          <body>
+     <div class="page-header print-no-date">${title}</div>
+    <div class="content-wrapper">
+      <table>
+        <thead>
+          <tr>
+                        <th>Client</th>
+                        <th >N°Facture</th>
+                        <th>Date de Facture</th>
+                        <th>Montant TTC</th>
+                        <th>Avance</th>
+                        <th>Reste</th>
+                        <th>N° Chéque</th>
+                        <th>Mode paiement</th>
+                        <th>Date Entrer compte</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clients.map((client) => `
+            <tr key=${client.id}>
+              <td>${client.raison_sociale}</td>
+              <td>${getReferenceByIdClient(client.id)}</td>
+              <td>${getDatedeBanqueByIdClient(client.id)}</td>
+              <td>${gettotalttcByIdClient(client.id)}</td>
+              <td>${getAvanceByIdClient(client.id)}</td>
+              <td>${getResteByIdClient(client.id)}</td>
+              <td>${getnumerochequedeBanqueByIdClient(client.id)}</td>
+              <td>${getModepaiementdeBanqueByIdClient(client.id)}</td>
+              <td>${getDatedeBanqueByIdClient(client.id)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <script>
+      setTimeout(() => {
+        window.print();
+        window.onafterprint = function () {
+          window.close();
+        };
+      }, 1000);
+    </script>
+  </body>
+          </html>
+        `);
 
-                newWindowDocument.close();
+                    newWindowDocument.close();
+                } else {
+                    console.error(`Table with ID '${tableId}' not found.`);
+                }
             } else {
-                console.error(`Table with ID '${tableId}' not found.`);
+                console.error("Error opening print window.");
             }
-        } else {
-            console.error("Error opening print window.");
-        }
+        };
+
+        return (
+            <button className="btn btn-secondary btn-sm" onClick={handlePrint}>
+                <FontAwesomeIcon icon={faPrint} className="me-2" />
+            </button>
+        );
     };
     //------------------------- fournisseur export to pdf ---------------------//
 
@@ -430,7 +510,7 @@ const RecouverementList = () => {
 
         // Define the columns and rows for the table
         const columns = [
-            "Numéro",
+            "Client",
             "Client",
             "Numéro Facture",
             "Date de Facture",
@@ -652,7 +732,7 @@ const RecouverementList = () => {
         }
     };
 
-   // ------------------------- recouverement FORM---------------------//
+    // ------------------------- recouverement FORM---------------------//
     const calculateTotalAvance = (recouvrements) => {
         console.log("recouvrements", recouvrements);
         if (recouvrements && Array.isArray(recouvrements)) {
@@ -722,6 +802,13 @@ const RecouverementList = () => {
                 );
             }
         }
+    };
+    const handleShowDetails = async (banque) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(banque)
+                ? prevRows.filter((row) => row !== banque)
+                : [...prevRows, banque]
+        );
     };
     const toggleRow = async (Clients) => {
         if (expandedRows.includes(Clients)) {
@@ -804,120 +891,133 @@ const RecouverementList = () => {
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
                                     <th style={tableHeaderStyle}>Client</th>
-                                    <th style={tableHeaderStyle}>Montant</th>
+                                    <th style={tableHeaderStyle}>N°Facture</th>
+                                    <th style={tableHeaderStyle}>Date de Facture</th>
+                                    <th style={tableHeaderStyle}>Montant TTC</th>
                                     <th style={tableHeaderStyle}>Avance</th>
                                     <th style={tableHeaderStyle}>Reste</th>
-
+                                    <th style={tableHeaderStyle}>N° Chéque</th>
+                                    <th style={tableHeaderStyle}>Mode paiement</th>
+                                    <th style={tableHeaderStyle}>Date Entrer compte</th>
                                 </tr>
                                 </thead>
                                 <tbody>
-                                {clients && clients.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((client) => (
-                                    <React.Fragment key={client.id}>
-                                        <tr>
-                                            <td></td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-light"
-                                                    onClick={() => toggleRow(client.id)}
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={
-                                                            expandedRows.includes(client.id)
-                                                                ? faMinus
-                                                                : faPlus
-                                                        }
-                                                    />
-                                                </button>
-                                                {/*{getClientNameById(*/}
-                                                {/*    recouvrements.client_id*/}
-                                                {/*)}*/}
-                                                {client.raison_sociale}
-                                            </td>
+                                {factures && factures.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((facture) => {
+                                    const ligneEntreCompte = ligneEntrerComptes.find(
+                                        (ligneEntree) => ligneEntree.id_facture === facture.id
+                                    );
 
-                                            <td>{calculateTotalTTCByIdClient(client.id)}</td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-light ml-2"
-                                                    onClick={() => toggleDetailsRow(client.id)}
-                                                >
-                                                    <FontAwesomeIcon
-                                                        icon={
-                                                            expandedDetailsRows.includes(client.id)
-                                                                ? faMinus
-                                                                : faPlus
-                                                        }
-                                                    />
-                                                </button>
-                                                {calculateTotalAvanceByIdClient(client.id)}
-                                            </td>
-                                            <td>{calculateResteByIdClient(client.id)}</td>
+                                    const banquesFacture = banques.filter(
+                                        (banque) => banque.ligne_entrer_compte.some(entry => entry.id_facture === facture.id)
+                                    );
 
-                                        </tr>
+                                    console.log('banquesFacture:', banquesFacture);
 
-                                        {expandedRows.includes(client.id) && (
-                                            <tr>
-                                                <td colSpan="8">
-                                                    <div>
-                                                        <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
-                                                            <thead>
-                                                            <tr>
-                                                                <th  style={tableHeaderStyle}>N° Facture</th>
-                                                                <th  style={tableHeaderStyle}>Total TTC</th>
-                                                                <th  style={tableHeaderStyle}>Date de Facture</th>
-                                                            </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                            {getReferenceByIdClient(client.id).map((facture, index) => (
-                                                                <tr key={index}>
-                                                                    <td>{facture}</td>
-                                                                    <td>{gettotalttcByIdClient(client.id)[index]}</td>
-                                                                    <td>{getDatedeFactureByIdClient(client.id)[index]}</td>
+                                    return (
+                                        <React.Fragment key={facture.id}>
+                                            {/* Ajoutez une condition pour afficher uniquement si une avance a été saisie */}
+                                            {ligneEntreCompte && ligneEntreCompte.avance !== null && ligneEntreCompte.avance !== "" && (
+                                                <tr>
+                                                    <td></td>
+                                                    <td>{facture.client.raison_sociale}</td>
+                                                    <td>{facture.reference}</td>
+                                                    <td>{facture.date}</td>
+                                                    <td>{facture.total_ttc}</td>
+                                                    <td>{ligneEntreCompte ? ligneEntreCompte.avance : "N/A"}</td>
+                                                    <td>{ligneEntreCompte ? ligneEntreCompte.restee : "N/A"}</td>
+                                                    <td>
+                                                        {banquesFacture.length > 0 ? (
+                                                            <React.Fragment>
+                                                                <div>{banquesFacture[0].numero_cheque}</div>
+                                                                {banquesFacture.length > 1 && (
+                                                                    <button
+                                                                        className="btn btn-sm btn-light"
+                                                                        onClick={() => toggleRow(facture.id)}
+                                                                    >
+                                                                        <FontAwesomeIcon
+                                                                            icon={
+                                                                                expandedRows.includes(facture.id)
+                                                                                    ? faMinus
+                                                                                    : faPlus
+                                                                            }
+                                                                        />
+                                                                    </button>
+                                                                )}
+                                                            </React.Fragment>
+                                                        ) : (
+                                                            "N/A"
+                                                        )}
+                                                    </td>
+
+
+                                                    <td>
+                                                        {banquesFacture.length > 0 ? (
+                                                            <div>{banquesFacture[0].mode_de_paiement}</div>
+                                                        ) : (
+                                                            "N/A"
+                                                        )}
+                                                    </td>
+                                                    <td>
+                                                        {banquesFacture.length > 0 ? (
+                                                            <div>{banquesFacture[0].datee}</div>
+                                                        ) : (
+                                                            "N/A"
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            )}
+
+                                            {expandedRows.includes(facture.id) && (
+                                                <tr key={facture.id + '-expanded'}>
+                                                    <td colSpan="12">
+                                                        <div>
+                                                            <table className="table table-bordered" style={{ fontSize: '0.9rem' }}>
+                                                                <thead>
+                                                                <tr>
+                                                                    <th style={tableHeaderStyle}>N° chéque</th>
+                                                                    <th style={tableHeaderStyle}>Mode de paiement</th>
+                                                                    <th style={tableHeaderStyle}>Date</th>
+                                                                    <th style={tableHeaderStyle}>Avance</th> {/* Ajout de la colonne Avance */}
                                                                 </tr>
-                                                            ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
+                                                                </thead>
+                                                                <tbody>
+                                                                {banquesFacture.map((banque, index) => {
+                                                                    // Trouver la ligneEntrerCompte correspondante à cette facture
+                                                                    const ligneEntrerCompteForFacture = ligneEntrerComptes.find(
+                                                                        (ligneEntree) => ligneEntree.id_facture === facture.id
+                                                                    );
 
-                                        {expandedDetailsRows.includes(client.id) && (
-                                            <tr>
-                                                <td colSpan="6">
-                                                    <div>
-                                                        <table className="table table-bordered">
-                                                            <thead>
-                                                            <tr>
-                                                                <th  style={tableHeaderStyle}>Montant</th>
-                                                                <th  style={tableHeaderStyle}>Date</th>
-                                                                <th  style={tableHeaderStyle}>Mode de paiement</th>
-                                                            </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                            {getDatedeBanqueByIdClient(client.id).map((date, index) => (
-                                                                <tr key={index}>
-                                                                    <td>{getAvancedeBanqueByIdClient(client.id)[index]}</td>
-                                                                    <td>{date}</td>
-                                                                    <td>{getModepaiementdeBanqueByIdClient(client.id)[index]}</td>
-                                                                </tr>
-                                                            ))}
-                                                            </tbody>
+                                                                    return (
+                                                                        <tr key={index}>
+                                                                            <td>{banque.numero_cheque}</td>
+                                                                            <td>{banque.mode_de_paiement}</td>
+                                                                            <td>{banque.datee}</td>
+                                                                            <td>
+                                                                                {ligneEntrerCompteForFacture ? ligneEntrerCompteForFacture.avance : "N/A"}
+                                                                            </td>
+                                                                        </tr>
+                                                                    );
+                                                                })}
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            )}
 
-                                                        </table>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )}
-                                    </React.Fragment>
-                                ))}
-
-
-
+                                        </React.Fragment>
+                                    );
+                                })}
                                 </tbody>
+
+
+
+
+
                             </table>
-
-
-
+                            {/*<Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>*/}
+                            {/*    <FontAwesomeIcon icon={faTrash} />*/}
+                            {/*</Button>*/}
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"
@@ -928,6 +1028,7 @@ const RecouverementList = () => {
                                 onRowsPerPageChange={handleChangeRowsPerPage}
                             />
                         </div>
+
                     </div>
                     {/*<div className="mt-4"> /!* Ajout de la classe mt-4 pour ajouter de la marge au-dessus *!/*/}
                     {/*    <div className="border p-3"> /!* Utilisation de la classe border et p-3 pour encadrer et ajouter du padding *!/*/}
