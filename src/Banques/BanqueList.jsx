@@ -175,17 +175,112 @@ const [clientId,setClientId] = useState(null);
 
 
 
-    const getReferenceByIdClient = (clientId) => {
+    const getReferenceByIdBanque = (banqueId) => {
         // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
 
+console.log("ligne Entree",ligneEntree)
         // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.reference);
+        if (ligneEntree) {
+            const references = [];
+
+            // Parcourir chaque entrée filtrée
+            ligneEntree.forEach((entry) => {
+                // Trouver les factures correspondant à l'entrée actuelle
+                const invoice = factures.find((f) => f.id === entry.id_facture);
+                console.log("invoice", invoice);
+                references.push(invoice.reference);
+                // Ajouter les références des factures trouvées au tableau de références
+                // invoices.forEach((invoice) => {
+                //     references.push(invoice.reference);
+                // });
+            });
+
+            // Retourner le tableau de références des factures
+            return references;
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const gettotalByIdBanque = (banqueId) => {
+        // Assuming you have a `clients` array containing client objects
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
+
+        console.log("ligne Entree",ligneEntree)
+        // Check if the client is found
+        if (ligneEntree) {
+            const total = [];
+
+            // Parcourir chaque entrée filtrée
+            ligneEntree.forEach((entry) => {
+                // Trouver les factures correspondant à l'entrée actuelle
+                const invoice = factures.find((f) => f.id === entry.id_facture);
+                console.log("invoice", invoice);
+                total.push(invoice.total_ttc);
+                // Ajouter les références des factures trouvées au tableau de références
+                // invoices.forEach((invoice) => {
+                //     references.push(invoice.reference);
+                // });
+            });
+
+            // Retourner le tableau de références des factures
+            return total;
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+
+
+    const getavanceByIdBanque = (banqueId) => {
+        // Assuming you have a `clients` array containing client objects
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
+
+        console.log("ligne Entree",ligneEntree)
+        // Check if the client is found
+        if (ligneEntree) {
+            const avance = [];
+
+            // Parcourir chaque entrée filtrée
+            ligneEntree.forEach((entry) => {
+                // Trouver les factures correspondant à l'entrée actuelle
+                // const invoice = factures.find((f) => f.id === entry.id_facture);
+                // console.log("invoice", invoice);
+                avance.push(entry.avance);
+                // Ajouter les références des factures trouvées au tableau de références
+                // invoices.forEach((invoice) => {
+                //     references.push(invoice.reference);
+                // });
+            });
+
+            // Retourner le tableau de références des factures
+            return avance;
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getDateByIdBanque = (banqueId) => {
+        // Assuming you have a `clients` array containing client objects
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
+
+        console.log("ligne Entree",ligneEntree)
+        // Check if the client is found
+        if (ligneEntree) {
+            const dates = [];
+
+            // Parcourir chaque entrée filtrée
+            ligneEntree.forEach((entry) => {
+                // Trouver les factures correspondant à l'entrée actuelle
+                const invoice = factures.find((f) => f.id === entry.id_facture);
+                console.log("invoice", invoice);
+                dates.push(invoice.date);
+                // Ajouter les références des factures trouvées au tableau de références
+                // invoices.forEach((invoice) => {
+                //     references.push(invoice.reference);
+                // });
+            });
+
+            // Retourner le tableau de références des factures
+            return dates;
         } else {
             return []; // or handle accordingly if client not found
         }
@@ -765,7 +860,7 @@ try{
                 for (const ligneEntreBanques of selectedFacturesData) {
 
                     console.log("avance", ligneEntreBanques.avance);
-                    if (ligneEntreBanques.avance !== null) {
+                    if (ligneEntreBanques.avance !== "") {
                         await axios.post(
                             "http://localhost:8000/api/ligneentrercompte",
                             ligneEntreBanques,
@@ -1068,7 +1163,7 @@ try{
                                                )}
                                            </td>
                                            <td>
-                                           {getReferenceByIdClient(banques.client_id).length > 1
+                                           {getReferenceByIdBanque(banques.id).length > 1
                                                ?  <button
                                                    className="btn btn-sm btn-light"
                                                    onClick={() => handleShowLigneEntreeCompte(banques.id)}
@@ -1087,12 +1182,12 @@ try{
                                                    getReferenceByIdFacture(banques.ligne_entrer_compte[0].id_facture)
                                                    : ""}
                                            </td>
-                                           <td>{gettotalttcByIdClient(banques.client_id)[0]}</td>
-                                           <td>{getDateFactureByIdClient(banques.client_id)[0]}</td>
+                                           <td>{gettotalByIdBanque(banques.id)[0]}</td>
+                                           <td>{getDateByIdBanque(banques.id)[0]}</td>
                                            <td>{banques.numero_cheque}</td>
                                            <td>{banques.mode_de_paiement}</td>
                                            <td>{banques.datee}</td>
-                                           <td>{getAvanceByIdClient(banques.client_id)[0]}</td>
+                                           <td>{getavanceByIdBanque(banques.id)[0]}</td>
                                            <td>{banques.Status}</td>
                                            <td>{banques.remarque}</td>
                                            <td className="d-inline-flex">
