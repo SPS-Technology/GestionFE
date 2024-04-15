@@ -17,6 +17,8 @@ import {
   faFileExcel,
   faPrint,
   faFilter,
+  faPlus,
+  faMinus
 } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -27,21 +29,21 @@ import { Toolbar } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
 const ChargeCommande = () => {
-  // const [existingChargementCommande, setExistingChargementCommande] = useState([]);
-  //   const [livreurs, setLivreurs] = useState([]);
   const [vehicule_livreurs, setVehicule_livreurs] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRealDate, setFilterRealDate] = useState(false);
   const [filterPlannedDate, setFilterPlannedDate] = useState(false);
-//   const [filteredChargementCommandes, setFilteredChargementCommandes] =
-    // useState([]);
+  //   const [filteredChargementCommandes, setFilteredChargementCommandes] =
+  // useState([]);
+  // const [existingChargementCommande, setExistingChargementCommande] = useState([]);
+  //   const [livreurs, setLivreurs] = useState([]);
+  const [expandedRows, setExpandedRows] = useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [chargementCommandes, setChargementCommandes] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
-  useState("");
   const [dateLivraisonReeleFilter, setDateLivraisonReeleFilter] = useState("");
   const [vehiculeFilter, setVehiculeFilter] = useState("");
   //-------------------edit-----------------------//
@@ -590,6 +592,14 @@ const ChargeCommande = () => {
     }
   }, [editingChargementCommandeId]);
 
+
+  const handleShowLigneCommandes = async (chargementCommandes) => {
+    setExpandedRows((prevRows) =>
+      prevRows.includes(chargementCommandes)
+        ? prevRows.filter((row) => row !== chargementCommandes)
+        : [...prevRows, chargementCommandes]
+    );
+  };
   //------------------------- chargementCommande SUBMIT---------------------//
 
   // Update notifications state
@@ -757,6 +767,8 @@ const ChargeCommande = () => {
                       <tr>
                         <th>Date Debut</th>
                         <th>Date Fin</th>
+                        <th>{""}</th>
+                        <th>{""}</th>
                         <th>Livreurs</th>
                         <th>Véhicules</th>
                       </tr>
@@ -1090,9 +1102,9 @@ const ChargeCommande = () => {
                   <th scope="col">
                     <input type="checkbox" onChange={handleSelectAllChange} />
                   </th>
-                  <th scope="col">Vehicule</th>
-                  <th scope="col">Livreur</th>
                   <th scope="col">Commande</th>
+                  <th scope="col">Livreur</th>
+                  <th scope="col">Vehicule</th>
                   <th scope="col">Remarque</th>
                   <th scope="col">Confort</th>
                   <th scope="col">Date Prevue</th>
@@ -1101,53 +1113,70 @@ const ChargeCommande = () => {
                 </tr>
               </thead>
               <tbody>
-              {filteredData.length > 0
+                {filteredData.length > 0
                   ? filteredData
                       .slice(
                         page * rowsPerPage,
                         page * rowsPerPage + rowsPerPage
                       )
                       .map((chargementCommande) => (
-                        <tr key={chargementCommande.id}>
-                          <td>
-                            <input
-                              type="checkbox"
-                              onChange={() =>
-                                handleCheckboxChange(chargementCommande.id)
-                              }
-                              checked={selectedItems.includes(
-                                chargementCommande.id
+                        <React.Fragment key={chargementCommande.id}>
+                          <tr key={chargementCommande.id}>
+                            <td>
+                              <input
+                                type="checkbox"
+                                onChange={() =>
+                                  handleCheckboxChange(chargementCommande.id)
+                                }
+                                checked={selectedItems.includes(
+                                  chargementCommande.id
+                                )}
+                              />
+                            </td>
+                            <td>
+                              <Button
+                                className="btn btn-sm btn-light "
+                                style={{ marginRight: "10px" }}
+                                onClick={() =>
+                                  handleShowLigneCommandes(chargementCommande.id)
+                                }
+                              >
+                                <FontAwesomeIcon
+                                  icon={
+                                    expandedRows.includes(chargementCommande.id)
+                                      ? faMinus
+                                      : faPlus
+                                  }
+                                />
+                              </Button>
+                              {getCommandeReference(
+                                chargementCommande.commande_id
                               )}
-                            />
-                          </td>
-                          <td>
-                            {getCommandeReference(
-                              chargementCommande.commande_id
-                            )}
-                          </td>
-                          <td>{chargementCommande.livreur.nom}</td>
-                          <td>{chargementCommande.vehicule.matricule}</td>
-                          <td>{chargementCommande.confort}</td>
-                          <td>{chargementCommande.remarque}</td>
-                          <td>{chargementCommande.dateLivraisonPrevue}</td>
-                          <td>{chargementCommande.dateLivraisonReelle}</td>
-                          <td className="d-inline-flex">
-                            <Button
-                              className="btn btn-sm btn-info m-1"
-                              onClick={() => handleEdit(chargementCommande)}
-                            >
-                              <i className="fas fa-edit"></i>
-                            </Button>
-                            <Button
-                              className="btn btn-danger btn-sm m-1"
-                              onClick={() =>
-                                handleDelete(chargementCommande.id)
-                              }
-                            >
-                              <FontAwesomeIcon icon={faTrash} />
-                            </Button>
-                          </td>
-                        </tr>
+                            </td>
+                            <td>{chargementCommande.livreur.nom}</td>
+                            <td>{chargementCommande.vehicule.matricule}</td>
+                            <td>{chargementCommande.confort}</td>
+                            <td>{chargementCommande.remarque}</td>
+                            <td>{chargementCommande.dateLivraisonPrevue}</td>
+                            <td>{chargementCommande.dateLivraisonReelle}</td>
+                            <td className="d-inline-flex">
+                              <Button
+                                className="btn btn-sm btn-info m-1"
+                                onClick={() => handleEdit(chargementCommande)}
+                              >
+                                <i className="fas fa-edit"></i>
+                              </Button>
+                              <Button
+                                className="btn btn-danger btn-sm m-1"
+                                onClick={() =>
+                                  handleDelete(chargementCommande.id)
+                                }
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </Button>
+                            </td>
+                          </tr>
+                        </React.Fragment>
                       ))
                   : chargementCommandes
                       .slice(
@@ -1227,14 +1256,11 @@ const ChargeCommande = () => {
                   <FontAwesomeIcon icon={faFileExcel} />
                 </Button>
               </div>
-            </div> 
+            </div>
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
-              count={
-                chargementCommandes &&
-                chargementCommandes.length
-              }
+              count={chargementCommandes && chargementCommandes.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}
