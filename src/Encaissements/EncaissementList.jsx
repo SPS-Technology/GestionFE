@@ -20,6 +20,8 @@ import {IoIosPersonAdd} from "react-icons/io";
 const EncaissementList = () => {
 
     const [comptes, setComptes] = useState([]);
+    const [filteredBanques, setFilteredBanques] = useState([]);
+
 
     const [encaissements, setEncaissements] = useState([]);
     const [ligneEncaissements,setLigneEncaissements]=useState([]);
@@ -106,6 +108,23 @@ const EncaissementList = () => {
         const banqueId = target.value;
         setFormData({ ...formData, [target.name]: banqueId });
         console.log("formData",formData);
+
+
+    };
+
+    const handleClientSelection = (target) => {
+        const banque_id = parseInt(target.value);
+        console.log('banque Id :',banque_id)
+        // setFormData({ ...formData, [target.name]: clientId });
+        // console.log("formData",formData);
+        // Filtrer les factures en fonction de l'ID du client sélectionné
+        console.log(banques)
+        const banque = banques.find((b) => b.id === banque_id);
+        console.log(banque)
+        // console.log(banque.ligneEntrerCompte)
+         const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
+        setFilteredBanques(facturesFormodePaimenent);
+        console.log("filtered Factures",filteredBanques);
     };
 
     const handleSearch = (term) => {
@@ -645,7 +664,7 @@ const EncaissementList = () => {
                                     <Form.Select
                                         name="banque_id"
                                         value={formData.banque_id}
-                                        onChange={(e) => handleBanqueSelection(e.target)}
+                                        onChange={(e) => handleClientSelection(e.target)}
                                         className="form-select form-select-sm"
                                     >
                                         <option value="">Sélectionner un encaissement</option>
@@ -679,7 +698,7 @@ const EncaissementList = () => {
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            {/*{filteredFactures.map((facture, index) => (*/}
+                                            {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
                                                 <tr>
                                                     <td>{}</td>
                                                     <td>{}</td>
@@ -694,7 +713,7 @@ const EncaissementList = () => {
 
 
                                                 </tr>
-                                            {/*))}*/}
+                                            ))}
                                             </tbody>
                                         </Table>
                                     </Form.Group>
