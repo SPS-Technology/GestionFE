@@ -353,12 +353,13 @@ const ProduitList = () => {
       data: updatedFormData,
     })
       .then(() => {
-        fetchProduits();
+       
         Swal.fire({
           icon: "success",
           title: "Success!",
           text: `Product ${editingProduit ? "updated" : "added"} successfully.`,
         });
+        fetchProduits();  
         setFormData({
           Code_produit: "",
           designation: "",
@@ -610,13 +611,13 @@ const ProduitList = () => {
           calibreData
         );
 
-        fetchProduits();
         console.log(response.data);
         Swal.fire({
           icon: "success",
           title: "Success!",
           text: "Calibre ajoutée avec succès.",
         });
+        fetchProduits();
       } catch (error) {
         console.error("Error adding calibre:", error);
         Swal.fire({
@@ -860,7 +861,7 @@ const ProduitList = () => {
                       <th style={tableHeaderStyle}>Calibre</th>
                       <th style={tableHeaderStyle}>Prix vente</th>
                       <th style={tableHeaderStyle}>categorie</th>
-                      <th style={tableHeaderStyle}>user</th>
+                      {/* <th style={tableHeaderStyle}>user</th> */}
                       <th
                         className="text-center"
                         style={Object.assign({}, tableHeaderStyle, {
@@ -902,7 +903,7 @@ const ProduitList = () => {
                               ? produit.categorie.categorie
                               : "no categorie"}
                           </td>
-                          <td>{produit.user.name}</td>
+                          {/* <td>{produit.user.name}</td> */}
 
                           <td
                             className="d-inline-flex"

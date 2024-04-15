@@ -37,6 +37,8 @@ const ClientList = () => {
     CodeClient: "",
     raison_sociale: "",
     abreviation: "",
+    type_client: "",
+    categorie: "",
     adresse: "",
     tele: "",
     ville: "",
@@ -49,6 +51,8 @@ const ClientList = () => {
     CodeClient: "",
     raison_sociale: "",
     abreviation: "",
+    type_client: "",
+    categorie: "",
     adresse: "",
     tele: "",
     ville: "",
@@ -215,11 +219,19 @@ const ClientList = () => {
   }, []);
 
   const handleChangeSC = (e) => {
-    setFormDataSC({ ...formDataSC, [e.target.name]: e.target.type === "file" ? e.target.files[0] : e.target.value,  });
+    setFormDataSC({
+      ...formDataSC,
+      [e.target.name]:
+        e.target.type === "file" ? e.target.files[0] : e.target.value,
+    });
   };
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]:  e.target.type === "file" ? e.target.files[0] : e.target.value, });
+    setFormData({
+      ...formData,
+      [e.target.name]:
+        e.target.type === "file" ? e.target.files[0] : e.target.value,
+    });
   };
 
   // const handleChange = (e) => {
@@ -239,6 +251,8 @@ const ClientList = () => {
       raison_sociale: client.raison_sociale,
       abreviation: client.abreviation,
       adresse: client.adresse,
+      type_client: client.type_client,
+      categorie: client.categorie,
       tele: client.tele,
       ville: client.ville,
       zone_id: client.zone_id,
@@ -290,7 +304,7 @@ const ClientList = () => {
   //   axios({
   //     method: method,
   //     url: url,
-  //     data: formDatad, 
+  //     data: formDatad,
   //   })
   //     .then(() => {
   //       fetchClients();
@@ -299,7 +313,7 @@ const ClientList = () => {
   //         title: "Succès!",
   //         text: `Client ${editingClient ? "modifié" : "ajouté"} avec succès.`,
   //       });
-      
+
   //       setFormData({
   //         CodeClient: "",
   //         raison_sociale: "",
@@ -358,14 +372,16 @@ const ClientList = () => {
       ? `http://localhost:8000/api/clients/${editingClient.id}`
       : "http://localhost:8000/api/clients";
     const method = editingClient ? "put" : "post";
-  
+
     let requestData;
-  
+
     if (editingClient) {
       requestData = {
         CodeClient: formData.CodeClient,
         raison_sociale: formData.raison_sociale,
         abreviation: formData.abreviation,
+        type_client: formData.type_client,
+        categorie: formData.categorie,
         adresse: formData.adresse,
         tele: formData.tele,
         ville: formData.ville,
@@ -378,6 +394,8 @@ const ClientList = () => {
       formDatad.append("CodeClient", formData.CodeClient);
       formDatad.append("raison_sociale", formData.raison_sociale);
       formDatad.append("abreviation", formData.abreviation);
+      formDatad.append("categorie", formData.categorie);
+      formDatad.append("type_client", formData.type_client);
       formDatad.append("adresse", formData.adresse);
       formDatad.append("tele", formData.tele);
       formDatad.append("ville", formData.ville);
@@ -385,18 +403,18 @@ const ClientList = () => {
       formDatad.append("ice", formData.ice);
       formDatad.append("code_postal", formData.code_postal);
       if (formData.logoC) {
-             formDatad.append("logoC", formData.logoC);
-           }
+        formDatad.append("logoC", formData.logoC);
+      }
       requestData = formDatad;
     }
-  
+
     try {
       const response = await axios({
         method: method,
         url: url,
         data: requestData,
       });
-  
+
       if (response.status === 200) {
         fetchClients();
         const successMessage = `Client ${
@@ -407,24 +425,28 @@ const ClientList = () => {
           title: "Succès!",
           text: successMessage,
         });
-  
+
         setFormData({
           CodeClient: "",
           raison_sociale: "",
           abreviation: "",
           adresse: "",
           tele: "",
+          type_client: "",
+          categorie: "",
           ville: "",
           zone_id: "",
           ice: "",
           code_postal: "",
-          logoC: null, 
+          logoC: null,
         });
         setErrors({
           CodeClient: "",
           raison_sociale: "",
           abreviation: "",
           adresse: "",
+          type_client: "",
+          categorie: "",
           tele: "",
           ville: "",
           zone_id: "",
@@ -439,15 +461,17 @@ const ClientList = () => {
         const serverErrors = error.response.data.error;
         console.log(serverErrors);
         setErrors({
-          CodeClient: serverErrors.CodeClient
-            ? serverErrors.CodeClient[0]
-            : "",
+          CodeClient: serverErrors.CodeClient ? serverErrors.CodeClient[0] : "",
           raison_sociale: serverErrors.raison_sociale
             ? serverErrors.raison_sociale[0]
             : "",
           abreviation: serverErrors.abreviation
             ? serverErrors.abreviation[0]
             : "",
+          type_client: serverErrors.type_client
+            ? serverErrors.type_client[0]
+            : "",
+          categorie: serverErrors.categorie ? serverErrors.categorie[0] : "",
           adresse: serverErrors.adresse ? serverErrors.adresse[0] : "",
           tele: serverErrors.tele ? serverErrors.tele[0] : "",
           ville: serverErrors.ville ? serverErrors.ville[0] : "",
@@ -460,7 +484,7 @@ const ClientList = () => {
       }
     }
   };
-  
+
   //------------------------- CLIENT FORM---------------------//
 
   const handleShowFormButtonClick = () => {
@@ -484,6 +508,8 @@ const ClientList = () => {
       tele: "",
       ville: "",
       zone_id: "",
+      type_client: "",
+      categorie: "",
       user_id: "",
       ice: "",
       code_postal: "",
@@ -492,6 +518,8 @@ const ClientList = () => {
       CodeClient: "",
       raison_sociale: "",
       abreviation: "",
+      type_client: "",
+      categorie: "",
       adresse: "",
       tele: "",
       ville: "",
@@ -526,12 +554,12 @@ const ClientList = () => {
     e.preventDefault();
     const selectedClientIds = getSelectedClientIds();
     const url = editingSiteClient
-    ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}`
-    : "http://localhost:8000/api/siteclients";
-  const method = editingSiteClient ? "put" : "post";
-  
+      ? `http://localhost:8000/api/siteclients/${editingSiteClient.id}`
+      : "http://localhost:8000/api/siteclients";
+    const method = editingSiteClient ? "put" : "post";
+
     let requestData;
-  
+
     if (editingClient) {
       requestData = {
         CodeSiteclient: formDataSC.CodeSiteclient,
@@ -559,17 +587,17 @@ const ClientList = () => {
       formDataScd.append("client_id", selectedClientIds.join(", "));
       if (formDataSC.logoSC) {
         formDataScd.append("logoSC", formDataSC.logoSC);
-           }
+      }
       requestData = formDataScd;
     }
-  
+
     try {
       const response = await axios({
         method: method,
         url: url,
         data: requestData,
       });
-  
+
       if (response.status === 200) {
         fetchClients();
         const successMessage = `SiteClient ${
@@ -580,7 +608,7 @@ const ClientList = () => {
           title: "Succès!",
           text: successMessage,
         });
-  
+
         setFormData({
           CodeSiteclient: "",
           raison_sociale: "",
@@ -634,7 +662,6 @@ const ClientList = () => {
       }
     }
   };
- 
 
   const handleEditSC = (siteClient) => {
     setEditingSiteClient(siteClient); // Set the client to be edited
@@ -1114,7 +1141,7 @@ const ClientList = () => {
                   <Form.Control
                     type="file"
                     name="logoC"
-                    onChange={handleChange} 
+                    onChange={handleChange}
                     className="form-control-sm"
                   />
                   <Form.Text className="text-danger">{errors.logoC}</Form.Text>
@@ -1164,6 +1191,41 @@ const ClientList = () => {
                     {errors.abreviation}
                   </Form.Text>
                 </Form.Group>
+                <Form.Group className="col-sm-5 m-2" controlId="type_client">
+                  <Form.Label>Type de client</Form.Label>
+                  <Form.Select
+                    name="type_client"
+                    value={formData.type_client}
+                    onChange={handleChange}
+                    className="form-select form-select-sm"
+                  >
+                    <option value="">Sélectionnez...</option>
+                    <option value="prospect">Prospect</option>
+                    <option value="client">Client</option>
+                  </Form.Select>
+                  <Form.Text className="text-danger">
+                    {errors.type_client}
+                  </Form.Text>
+                </Form.Group>
+
+                <Form.Group className="col-sm-5 m-2" controlId="categorie">
+                  <Form.Label>Catégorie</Form.Label>
+                  <Form.Select
+                    name="categorie"
+                    value={formData.categorie}
+                    onChange={handleChange}
+                    className="form-select form-select-sm"
+                  >
+                    <option value="">Sélectionnez...</option>
+                    <option value="premium">Premium</option>
+                    <option value="direct">Direct</option>
+                    <option value="revendeur">Revendeur</option>
+                  </Form.Select>
+                  <Form.Text className="text-danger">
+                    {errors.categorie}
+                  </Form.Text>
+                </Form.Group>
+
                 <Form.Group className="col-sm-10 m-2" controlId="adresse">
                   <Form.Label>Adresse</Form.Label>
                   <Form.Control
@@ -1254,7 +1316,7 @@ const ClientList = () => {
                   />
                   <Form.Text className="text-danger">{errors.ice}</Form.Text>
                 </Form.Group>
-                <Form.Group className="col-sm-4 m-2" controlId="user_id">
+                {/* <Form.Group className="col-sm-4 m-2" controlId="user_id">
                   <Form.Label>Utilisateur</Form.Label>
                   <Form.Control
                     type="text"
@@ -1264,7 +1326,7 @@ const ClientList = () => {
                     placeholder="user_id"
                     className="form-control-sm"
                   />
-                </Form.Group>
+                </Form.Group> */}
                 <Form.Group className="col m-5 text-center">
                   <Button className="btn btn-danger col-6" type="submit">
                     {editingClient ? "Modifier" : "Ajouter"}
@@ -1290,13 +1352,14 @@ const ClientList = () => {
                   </h4>
                 </Form.Label>
                 <Form.Group className="col-sm-5 m-2" controlId="logoSC">
-                  <Form.Label>Logo du Site  Client</Form.Label>
+                  <Form.Label>Logo du Site Client</Form.Label>
                   <Form.Control
                     type="file"
                     name="logoSC"
-                    onChange={handleChangeSC} 
+                    onChange={handleChangeSC}
                     className="form-control-sm"
-                  />                </Form.Group>
+                  />{" "}
+                </Form.Group>
                 <Form.Group
                   className="col-sm-5 m-2 "
                   controlId="CodeSiteclient"
@@ -1484,7 +1547,9 @@ const ClientList = () => {
                         <th>Code Postal</th>
                         <th>ICE</th>
                         <th>Zone</th>
-                        <th>User</th>
+                        <th>Categorie</th>
+                        <th>type de client</th>
+                        {/* <th>User</th> */}
                         <th className="text-center">Action</th>
                       </tr>
                     </thead>
@@ -1551,7 +1616,8 @@ const ClientList = () => {
                               <td>{client.code_postal}</td>
                               <td>{client.ice}</td>
                               <td>{client.zone.zone}</td>
-                              <td>{client.user.name}</td>
+                              <td>{client.categorie}</td>
+                              <td>{client.type_client}</td>
                               <td className="d-inline-flex">
                                 <button
                                   className="btn btn-sm btn-info m-1"

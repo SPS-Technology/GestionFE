@@ -20,10 +20,11 @@ import FactureList from './Facture/FactureList';
 import DevisList from './Devis/DevisList';
 import StockList from './Stock/StockList';
 import PrepareCommande from './Commande/PrepareCommande';
-import ChargeCommande from './Commande/ChargeCommade';
 import InterfaceLogo from './Client/InterfaceLogo';
 import SiteClientsPage from './Client/SiteClientsPage';
 import BonLivraisonInfo from './Client/BonLivraisonInfo ';
+import Details from './Commande/Details';
+import ChargeCommande from './Commande/ChargeCommade';
 
 
 const App = () => {
@@ -45,6 +46,7 @@ const App = () => {
         <Route path="/produits" element={<ProduitList />} />
         <Route path="/stock" element={<StockList />} />
         <Route path="/preparingCommand" element={<PrepareCommande />} />
+        <Route path="/details" element={<Details />} />
         <Route path="/chargingCommand" element={<ChargeCommande />} />
         <Route path="/livraisons" element={<LivraisonList />} />
         <Route path="/devis" element={<DevisList />} />

@@ -4,18 +4,32 @@ import { createTheme, ThemeProvider } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Navigation from "../Acceuil/Navigation";
 import { Form, Button } from "react-bootstrap";
+import { Toolbar } from "@mui/material";
+import PrintList from "./PrintList";
+import ExportPdfButton from "./exportToPdf";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash, faPlus, faMinus } from "@fortawesome/free-solid-svg-icons";
+import {
+  faTrash,
+  faPlus,
+  faMinus,
+  faFileExcel,
+} from "@fortawesome/free-solid-svg-icons";
+import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import Select from "react-dropdown-select";
 import "jspdf-autotable";
 import Swal from "sweetalert2";
-
+import Search from "../Acceuil/Search";
+import TablePagination from "@mui/material/TablePagination";
+import "../style1.css";
 const CommandeList = () => {
+  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [page, setPage] = useState(0);
   const [commandes, setCommandes] = useState([]);
-
+  const [selectedClient, setSelectedClient] = useState([]);
   const [clients, setClients] = useState([]);
   const [expandedRows, setExpandedRows] = useState([]);
+  const [expandedClient, setExpandedClient] = useState([]);
   const [filteredCommandes, setFilteredCommandes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectAll, setSelectAll] = useState(false);
@@ -29,20 +43,23 @@ const CommandeList = () => {
   const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
   const [selectedClientId, setSelectedClientId] = useState(null);
+  const [authId, setAuthId] = useState([]);
+  const [selectedSiteClient, setSelectedSiteClient] = useState(null);
   useState(null);
   const [formData, setFormData] = useState({
     reference: "",
     dateCommande: "",
     client_id: "",
+    site_id: "",
     mode_payement: "",
     status: "",
-    user_id: "",
+    user_id: authId,
     produit_id: "",
     prix_unitaire: "",
     quantite: "",
   });
   const [existingLigneCommandes, setExistingLigneCommandes] = useState([]);
-
+  const [siteClients, setSiteClients] = useState([]);
   const [editingCommandes, setEditingCommandes] = useState(null);
   const [editingCommandesId, setEditingCommandesId] = useState(null);
   const [showForm, setShowForm] = useState(false);
@@ -74,7 +91,14 @@ const CommandeList = () => {
   //     console.error("Error fetching data:", error);
   //   }
   // };
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
 
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 5));
+    setPage(0);
+  };
   useEffect(() => {
     if (editingCommandesId) {
       fetchExistingLigneCommandes(editingCommandesId);
@@ -94,17 +118,41 @@ const CommandeList = () => {
   };
 
   const handleShowTotalDetails = (commande) => {
+    const selectedProducts = commande.ligne_commandes.map((ligneCommande) => {
+      const product = produits.find(
+        (produit) => produit.id === ligneCommande.produit_id
+      );
+      return {
+        id: ligneCommande.id,
+        Code_produit: product.Code_produit,
+        calibre_id: product.calibre_id,
+        calibre: product.calibre,
+        designation: product.designation,
+        produit_id: ligneCommande.produit_id,
+        quantite: ligneCommande.quantite,
+        prix_unitaire: ligneCommande.prix_unitaire,
+      };
+    });
+    setSelectedProductsData(selectedProducts);
+
     setExpandTotal((prevRows) =>
-      prevRows.includes(commande)
-        ? prevRows.filter((row) => row !== commande)
-        : [...prevRows, commande]
+      prevRows.includes(commande.id)
+        ? prevRows.filter((row) => row !== commande.id)
+        : [...prevRows, commande.id]
     );
   };
-  const handleShowLigneCommandes = async (commande) => {
+  const handleShowLigneCommandes = async (commandeId) => {
     setExpandedRows((prevRows) =>
-      prevRows.includes(commande)
-        ? prevRows.filter((row) => row !== commande)
-        : [...prevRows, commande]
+      prevRows.includes(commandeId)
+        ? prevRows.filter((row) => row !== commandeId)
+        : [...prevRows, commandeId]
+    );
+  };
+  const handleShowSiteClients = async (commandeId) => {
+    setExpandedClient((prevRows) =>
+      prevRows.includes(commandeId)
+        ? prevRows.filter((row) => row !== commandeId)
+        : [...prevRows, commandeId]
     );
   };
   const handleShowStatusCommandes = async (commande) => {
@@ -114,62 +162,35 @@ const CommandeList = () => {
         : [...prevRows, commande]
     );
   };
-  // const fetchLigneCommandes = async (CommandesId) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8000/api/ligneCommandes/${CommandesId}`
-  //     );
-  //     return response.data.ligneCommandes;
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de la récupération des lignes de Commandes :",
-  //       error
-  //     );
-  //     return [];
-  //   }
-  // };
-  // const fetchStatusCommandes = async (CommandesId) => {
-  //   try {
-  //     const response = await axios.get(
-  //       `http://localhost:8000/api/statusCommandes/${CommandesId}`
-  //     );
-  //     return response.data.statusCommandes;
-  //   } catch (error) {
-  //     console.error(
-  //       "Erreur lors de la récupération des lignes de Commandes :",
-  //       error
-  //     );
-  //     return [];
-  //   }
-  // };
-
-  // useEffect(() => {
-  //   // Préchargement des lingeCommandes pour chaque Commandes
-  //   commandes.forEach(async (Commandes) => {
-  //     if (!Commandes.ligne_commandes) {
-  //       const ligneCommandes = await fetchLigneCommandes(Commandes.id);
-  //       setClients((prevCommandes) => {
-  //         return prevCommandes.map((prevCommandes) => {
-  //           if (prevCommandes.id === Commandes.id) {
-  //             return { ...prevCommandes, ligneCommandes };
-  //           }
-  //           return prevCommandes;
-  //         });
-  //       });
-  //     }
-  //   });
-  // }, [commandes]);
-
+  const exportToExcel = () => {
+    const selectedClients = clients.filter((client) =>
+      selectedItems.includes(client.id)
+    );
+    const ws = XLSX.utils.json_to_sheet(selectedClients);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Clients");
+    XLSX.writeFile(wb, "clients.xlsx");
+  };
   const fetchData = async () => {
     try {
-      const [commandesResponse, clientsResponse, produitsResponse] =
-        await Promise.all([
-          axios.get("http://localhost:8000/api/commandes"),
-          axios.get("http://localhost:8000/api/clients"),
-          axios.get("http://localhost:8000/api/produits"),
-        ]);
+      const [
+        userResponse,
+        commandesResponse,
+        clientsResponse,
+        siteClientResponse,
+        produitsResponse,
+      ] = await Promise.all([
+        axios.get("http://localhost:8000/api/user"),
+        axios.get("http://localhost:8000/api/commandes"),
+        axios.get("http://localhost:8000/api/clients"),
+        axios.get("http://localhost:8000/api/siteclients"),
+        axios.get("http://localhost:8000/api/produits"),
+      ]);
+      setAuthId(userResponse.data.id);
       setCommandes(commandesResponse.data.commandes);
+      console.log("commandes",commandesResponse.data)
       setClients(clientsResponse.data.client);
+      setSiteClients(siteClientResponse.data.siteclient);
       setProduits(produitsResponse.data.produit);
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -188,6 +209,7 @@ const CommandeList = () => {
     }
   }, [editingCommandes]);
   const handleChange = (e) => {
+    console.log(e.target.value);
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -215,13 +237,12 @@ const CommandeList = () => {
     const correspondingLigneCommande = ligneCommandes.find(
       (ligne) => ligne.produit_id === correspondingProduct.id
     );
-
     return correspondingLigneCommande ? correspondingLigneCommande.quantite : 0;
   };
-  const populateProductInputs = (productId, inputType) => {
-    console.log("productId", productId);
-    const existingLigneCommande = existingLigneCommandes.find(
-      (ligneCommande) => ligneCommande.produit_id === productId
+  const populateProductInputs = (ligneCommandId, inputType) => {
+    console.log("ligneCommandId", ligneCommandId);
+    const existingLigneCommande = selectedProductsData.find(
+      (ligneCommande) => ligneCommande.id === ligneCommandId
     );
     console.log("existing LigneCommande", existingLigneCommandes);
 
@@ -251,23 +272,23 @@ const CommandeList = () => {
     e.preventDefault();
 
     try {
-      const userResponse = await axios.get("http://localhost:8000/api/users", {
-        withCredentials: true,
-        headers: {
-          "X-CSRF-TOKEN": csrfToken,
-        },
-      });
+      // const userResponse = await axios.get("http://localhost:8000/api/users", {
+      //   withCredentials: true,
+      //   headers: {
+      //     "X-CSRF-TOKEN": csrfToken,
+      //   },
+      // });
 
-      const authenticatedUserId = userResponse.data.id;
-      console.log("auth user", authenticatedUserId);
+      // const authenticatedUserId = userResponse.data[0].id;
+      // console.log("auth user", authenticatedUserId);
       // Préparer les données du Commandes
       const CommandesData = {
         dateCommande: formData.dateCommande,
         status: formData.status,
         mode_payement: formData.mode_payement,
-
-        client_id: selectedClientId,
-        user_id: authenticatedUserId,
+        site_id: selectedSiteClient ? selectedSiteClient.id : null,
+        client_id: selectedClient.id,
+        user_id: authId,
       };
 
       let response;
@@ -279,36 +300,42 @@ const CommandeList = () => {
             dateCommande: formData.dateCommande,
             status: formData.status,
             mode_payement: formData.mode_payement,
-
-            client_id: selectedClientId,
-            user_id: authenticatedUserId,
+            site_id: selectedSiteClient ? selectedSiteClient.id : null,
+            client_id: selectedClient.id,
+            user_id: authId,
           }
         );
         const existingLigneCommandesResponse = await axios.get(
           `http://localhost:8000/api/ligneCommandes/${editingCommandes.id}`
         );
+
         const existingLigneCommandes =
           existingLigneCommandesResponse.data.ligneCommandes;
-        const selectedPrdsData = selectedProductsData.map((selectedProduct) => {
-          const existingLigneCommande = existingLigneCommandes.find(
-            (ligneCommande) => ligneCommande.produit_id === selectedProduct.id
-          );
+        console.log("existing LigneCommandes", existingLigneCommandes);
+        const selectedPrdsData = selectedProductsData.map(
+          (selectedProduct, index) => {
+            // const existingLigneCommande = existingLigneCommandes.find(
+            //   (ligneCommande) =>
+            //     ligneCommande.produit_id === selectedProduct.produit_id
+            // );
 
-          return {
-            id: existingLigneCommande ? existingLigneCommande.id : undefined,
-            commande_id: editingCommandes.id,
-            produit_id: selectedProduct.id,
-            quantite: getElementValueById(`quantite_${selectedProduct.id}`),
-            prix_unitaire: getElementValueById(
-              `prix_unitaire_${selectedProduct.id}`
-            ),
-            // Update other properties as needed
-          };
-        });
+            return {
+              id: selectedProduct.id,
+              commande_id: editingCommandes.id,
+              produit_id: selectedProduct.produit_id,
+              quantite: getElementValueById(
+                `quantite_${index}_${selectedProduct.produit_id}`
+              ),
+              prix_unitaire: getElementValueById(
+                `prix_unitaire_${index}_${selectedProduct.produit_id}`
+              ),
+              // Update other properties as needed
+            };
+          }
+        );
+        console.log("selectedPrdsData:", selectedPrdsData);
         for (const ligneCommandeData of selectedPrdsData) {
           // Check if ligneCommande already exists for this produit_id and update accordingly
-
-          console.log("existing LigneCommande:", ligneCommandeData);
 
           if (ligneCommandeData.id) {
             // If exists, update the existing ligneCommande
@@ -336,6 +363,7 @@ const CommandeList = () => {
             );
           }
         }
+
         const existingStatusesResponse = await axios.get(
           "http://localhost:8000/api/statusCommande"
         );
@@ -367,16 +395,20 @@ const CommandeList = () => {
           "http://localhost:8000/api/commandes",
           CommandesData
         );
-        const selectedPrdsData = selectedProductsData.map((selectProduct) => {
-          return {
-            commande_id: response.data.commande.id,
-            produit_id: selectProduct.id,
-            quantite: getElementValueById(`quantite_${selectProduct.id}`),
-            prix_unitaire: getElementValueById(
-              `prix_unitaire_${selectProduct.id}`
-            ),
-          };
-        });
+        const selectedPrdsData = selectedProductsData.map(
+          (selectProduct, index) => {
+            return {
+              commande_id: response.data.commande.id,
+              produit_id: selectProduct.produit_id,
+              quantite: getElementValueById(
+                `quantite_${index}_${selectProduct.produit_id}`
+              ),
+              prix_unitaire: getElementValueById(
+                `prix_unitaire_${index}_${selectProduct.produit_id}`
+              ),
+            };
+          }
+        );
         console.log("selectedPrdsData", selectedPrdsData);
         for (const ligneCommandesData of selectedPrdsData) {
           // Sinon, il s'agit d'une nouvelle ligne de Commandes
@@ -400,45 +432,21 @@ const CommandeList = () => {
           }
         );
       }
-      console.log("response of postCommande: ", response);
+      console.log("response of postCommande: ", response.data);
 
-      //   // Envoyer une requête PUT pour mettre à jour le Commandes
-      //   const updatedCommandesResponse = await axios.put(
-      //     `http://localhost:8000/api/commandes/${response.data.Commandes.id}`,
-      //     updatedCommandesData
-      //   );
-
-      //   console.log("Commandes mis à jour:", updatedCommandesResponse.data);
-      // }
-
-      // Préparer les données des lignes de Commandes
-
-      // console.log("selectedProductsData11", selectedProductsData);
-
-      // Récupérer les données mises à jour
       fetchData();
 
-      // Réinitialiser les données du formulaire
-      setFormData({
-        reference: "",
-        dateCommande: "",
-        client_id: "",
-        mode_payement: "",
-        status: "",
-        user_id: "",
-        produit_id: "",
-        prix_unitaire: "",
-        quantite: "",
-      });
-
-      // Fermer le formulaire si nécessaire
-      setShowForm(false);
+      setSelectedClient([]);
+      setSelectedSiteClient([]);
+      setSelectedProductsData([]);
+      fetchExistingLigneCommandes();
+      closeForm();
 
       // Afficher un message de succès à l'utilisateur
       Swal.fire({
         icon: "success",
-        title: "Succès !",
-        text: "Succès.",
+        title: "Commande ajoutée avec succès",
+        text: "La commande a été ajoutée avec succès.",
       });
     } catch (error) {
       console.error("Erreur lors de la soumission des données :", error);
@@ -464,7 +472,33 @@ const CommandeList = () => {
     // If the product is not found, return an empty string or any default value
     return "";
   };
+  const getClientValue = (clientId, field) => {
+    // Find the product in the produits array based on produitId
+    const client = clients.find((p) => p.id === clientId);
+
+    // If the product is found, return the value of the specified field
+    if (client) {
+      return client[field];
+    }
+
+    // If the product is not found, return an empty string or any default value
+    return "";
+  };
+  const getSiteClientValue = (siteClientId, field) => {
+    const siteClient = siteClients.find((s) => s.id === siteClientId);
+
+    // If the product is found, return the value of the specified field
+    if (siteClient) {
+      return siteClient[field];
+    }
+
+    // If the product is not found, return an empty string or any default value
+    return "";
+  };
   const handleEdit = (commande) => {
+    fetchExistingLigneCommandes(commande.id);
+    setModifiedQuantiteValues({});
+    setModifiedPrixValues({});
     setEditingCommandesId(commande.id);
     setEditingCommandes(commande);
     console.log(commande);
@@ -472,6 +506,7 @@ const CommandeList = () => {
       reference: commande.reference,
       dateCommande: commande.dateCommande,
       client_id: commande.client_id,
+      site_id: commande.site_id,
       mode_payement: commande.mode_payement,
       status: commande.status,
     });
@@ -483,7 +518,7 @@ const CommandeList = () => {
         (produit) => produit.id === ligneCommande.produit_id
       );
       return {
-        id: product.id,
+        id: ligneCommande.id,
         Code_produit: product.Code_produit,
         calibre_id: product.calibre_id,
         designation: product.designation,
@@ -496,32 +531,66 @@ const CommandeList = () => {
 
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "0" });
-      setTableContainerStyle({ marginRight: "500px" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
   };
-  const handleInputChange = (productId, inputType, event) => {
+  const handleInputChange = (index, inputType, event) => {
     const newValue = event.target.value;
-    if (inputType === "prix_unitaire") {
-      setModifiedPrixValues((prev) => ({ ...prev, [productId]: newValue }));
-    } else if (inputType === "quantite") {
-      setModifiedQuantiteValues((prev) => ({ ...prev, [productId]: newValue }));
+    console.log("selectedProductsData", selectedProductsData);
+    console.log("index", index);
+    if (selectedProductsData[index]) {
+      const productId = selectedProductsData[index].produit_id;
+
+      if (inputType === "prix_unitaire") {
+        setModifiedPrixValues((prev) => {
+          const updatedValues = {
+            ...prev,
+            [`${index}_${productId}`]: newValue,
+          };
+          console.log("Modified prix values:", updatedValues);
+          return updatedValues;
+        });
+      } else if (inputType === "quantite") {
+        setModifiedQuantiteValues((prev) => {
+          const updatedValues = {
+            ...prev,
+            [`${index}_${productId}`]: newValue,
+          };
+          console.log("Modified quantite values:", updatedValues);
+          return updatedValues;
+        });
+      }
     }
   };
+
+  // const handleInputChange = (index, inputType, event) => {
+  //   const newValue = event.target.value;
+  //   const productId = selectedProductsData[index].id;
+
+  //   if (inputType === "prix_unitaire") {
+  //     setModifiedPrixValues((prev) => ({
+  //       ...prev,
+  //       [`${productId}_${index}`]: newValue,
+  //     }));
+  //   } else if (inputType === "quantite") {
+  //     setModifiedQuantiteValues((prev) => ({
+  //       ...prev,
+  //       [`${productId}_${index}`]: newValue,
+  //     }));
+  //   }
+  // };
   const handleDelete = (id) => {
     Swal.fire({
-      title: "Êtes-vous sûr de vouloir supprimer ce Commandes ?",
-      showDenyButton: true,
-      showCancelButton: false,
-      confirmButtonText: "Oui",
-      denyButtonText: "Non",
-      customClass: {
-        actions: "my-actions",
-        cancelButton: "order-1 right-gap",
-        confirmButton: "order-2",
-        denyButton: "order-3",
-      },
+      title: "Confirmation de suppression",
+      text: "Êtes-vous sûr de vouloir supprimer cette commande ? Cette action est irréversible.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Oui, supprimer",
+      cancelButtonText: "Annuler",
     }).then((result) => {
       if (result.isConfirmed) {
         axios
@@ -551,24 +620,30 @@ const CommandeList = () => {
   const handleShowFormButtonClick = () => {
     if (formContainerStyle.right === "-100%") {
       setFormContainerStyle({ right: "-0%" });
-      setTableContainerStyle({ marginRight: "600px" });
+      setTableContainerStyle({ marginRight: "1200px" });
     } else {
       closeForm();
     }
   };
 
   const closeForm = () => {
+    handleDeleteAllSelection();
+    handleClientSelection(null); // Réinitialise la sélection du client
+    handleSiteClientSelection(null); // Réinitialise la sélection du site client
     setFormContainerStyle({ right: "-100%" });
     setTableContainerStyle({ marginRight: "0" });
     setShowForm(false); // Hide the form
+    setSelectedClient([null]);
+    setSelectedSiteClient([null]);
     setFormData({
       // Clear form data
       reference: "",
       dateCommande: "",
       client_id: "",
+      site_id: "",
       mode_payement: "",
       status: "",
-      user_id: "",
+      user_id: authId,
       produit_id: "",
       prix_unitaire: "",
       quantite: "",
@@ -577,22 +652,51 @@ const CommandeList = () => {
   };
   //---------------------------Produit--------------------------
 
-  const handleClientSelection = (selected) => {
-    console.log("selectedClientId", selected[0].value);
-    setSelectedClientId(selected[0].value);
+  // const handleClientSelection = (selectedOption) => {
+  //   console.log("Selected option:", selectedOption);
+  //   if (selectedOption && selectedOption.length > 0) {
+  //     // Handle the selected client
+  //     console.log("Selected client:", selectedOption[0].value);
+  //     setFormData((prevFormData) => ({
+  //       ...prevFormData,
+  //       client_id: selectedOption.value,
+  //     }));
+  //   } else {
+  //     console.log("No client selected");
+  //   }
+  // };
+
+  const handleProductSelection = (selectedProduct, index) => {
+    console.log("selectedProduct", selectedProduct);
+    const updatedSelectedProductsData = [...selectedProductsData];
+    updatedSelectedProductsData[index] = selectedProduct;
+    setSelectedProductsData(updatedSelectedProductsData);
+    console.log("selectedProductsData", selectedProductsData);
   };
-
-  const handleProductSelection = (productId) => {
-    const selectedProduct = produits.find(
-      (product) => product.id === productId
-    );
-
-    if (selectedProduct) {
-      setSelectedProductsData((prevData) => [...prevData, selectedProduct]);
+  const handleClientSelection = (selected) => {
+    if (selected) {
+      setSelectedClient(selected);
+      console.log("selectedClient", selectedClient);
+    } else {
+      setSelectedClient(null);
     }
-    console.log("selectedProductData ", selectedProductsData);
-
-    setSelectedProductId(null); // Clear the selected product ID
+  };
+  // const handleClientSelection = (selected) => {
+  //   if (selected && selected.length > 0) {
+  //     console.log("selectedOptionClient", selected);
+  //     setSelectedClientId(selected[0].value);
+  //     const client = clients.find((c) => c.id === selectedClientId);
+  //     setSelectedClient(client);
+  //     console.log("selected client", selectedClient);
+  //   }
+  // };
+  const handleSiteClientSelection = (selected) => {
+    if (selected) {
+      setSelectedSiteClient(selected);
+      console.log("selectedSiteClient", selectedSiteClient);
+    } else {
+      setSelectedSiteClient(null);
+    }
   };
 
   useEffect(() => {
@@ -745,10 +849,21 @@ const CommandeList = () => {
     // Enregistrer le fichier PDF avec le nom 'Commandes.pdf'
     doc.save("Commandes.pdf");
   };
-  const handleDeleteProduct = (index) => {
+  const handleDeleteProduct = (index, id) => {
     const updatedSelectedProductsData = [...selectedProductsData];
     updatedSelectedProductsData.splice(index, 1);
     setSelectedProductsData(updatedSelectedProductsData);
+    if (id) {
+      axios
+        .delete(`http://localhost:8000/api/ligneCommandes/${id}`)
+        .then(() => {
+          fetchData();
+        });
+    }
+  };
+  const handleDeleteAllSelection = () => {
+    // Clear the selected products data
+    setSelectedProductsData([]);
   };
   const handleProductCheckboxChange = (selectedOptions) => {
     const selectedProductIds = selectedOptions.map((option) => option.value);
@@ -783,505 +898,862 @@ const CommandeList = () => {
   //     getTotalHT(ligneCommandes) + calculateTVA(getTotalHT(ligneCommandes))
   //   );
   // };
+  const handleAddEmptyRow = () => {
+    setSelectedProductsData([...selectedProductsData, {}]);
+    console.log("selectedProductData", selectedProductsData);
+  };
+
+  const handleDeleteSelected = () => {
+    Swal.fire({
+      title: "Confirmation de suppression",
+      text: "Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ? Cette action est irréversible.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Oui, supprimer",
+      cancelButtonText: "Annuler",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const promises = selectedItems.map((id) => {
+          return axios
+            .delete(`http://localhost:8000/api/commandes/${id}`)
+            .then(() => {
+              return { id, success: true };
+            })
+            .catch(() => {
+              return { id, success: false };
+            });
+        });
+
+        Promise.all(promises).then((results) => {
+          const successCount = results.filter((res) => res.success).length;
+          if (successCount === results.length) {
+            Swal.fire({
+              icon: "success",
+              title: "Success!",
+              text: "Toute les commandes sélectionnées ont été supprimées avec succès.",
+            });
+          } else {
+            Swal.fire({
+              icon: "error",
+              title: "Error!",
+              text: "Certains commandes n'ont pas pu être supprimées.",
+            });
+          }
+          fetchData();
+          setSelectedItems([]);
+        });
+      } else {
+        setSelectedItems([]);
+      }
+    });
+  };
 
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
-          <h2 className="mt-3">Liste des Commandes</h2>
-          <div className="container">
-            <Button
-              variant="primary"
-              className="col-2 btn btn-sm m-2"
-              id="showFormButton"
-              onClick={handleShowFormButtonClick}
-            >
-              {showForm ? "Modifier le formulaire" : "Ajouter un Commandes"}
-            </Button>
-            <div
-              id="formContainer"
-              className="col"
-              style={{ ...formContainerStyle }}
-            >
-              <Form className="row" onSubmit={handleSubmit}>
-                <div className="col-md-4">
-                  <Form.Group controlId="client_id">
-                    <Form.Label>Client:</Form.Label>
+          <Toolbar />
+          <div className="d-flex justify-content-center align-items-center">
+            <div className="col-md-auto" style={{ width: "700px" }}>
+              <Search onSearch={handleSearch} type="search" />
+            </div>
+          </div>
+
+          <div className="d-flex justify-content-end align-items-center">
+            <div className="btn-group col-1">
+              <PrintList
+                tableId="produitsTable"
+                title="Liste des produits"
+                produitList={produits}
+                filteredProduits={filteredCommandes}
+              />
+              <ExportPdfButton
+                produits={produits}
+                selectedItems={selectedItems}
+                disabled={selectedItems.length === 0}
+              />
+              <Button
+                className="btn btn-success btn-sm ml-2"
+                onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
+              >
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
+            </div>
+          </div>
+
+          <h3>Liste des Commandes</h3>
+          <Button
+            variant="primary"
+            className=" btn btn-sm m-4"
+            id="showFormButton"
+            onClick={handleShowFormButtonClick}
+          >
+            {showForm ? "Modifier le formulaire" : "Passer une Commande"}
+          </Button>
+          <div
+            id="formContainerCommande"
+            style={{ ...formContainerStyle, padding: "50px" }}
+          >
+            <Form className="row" onSubmit={handleSubmit}>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="client_id" className="col-form-label">
+                      Client:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
+                    {console.log("selected client  :", selectedClient)}
                     <Select
                       options={clients.map((client) => ({
                         value: client.id,
                         label: client.raison_sociale,
                       }))}
-                      onChange={handleClientSelection}
-                      value={formData.client_id}
+                      onChange={(selected) => {
+                        if (selected && selected.length > 0) {
+                          const client = clients.find(
+                            (client) => client.id === selected[0].value
+                          );
+                          handleClientSelection({
+                            id: selected[0].value,
+                            raison_sociale: client.raison_sociale,
+                            adresse: client.adresse,
+                            tele: client.tele,
+                            abreviation: client.abreviation,
+                            code_postal: client.code_postal,
+                            ice: client.ice,
+                            zone: client.zone,
+                            siteclients: client.siteclients,
+                          });
+                        } else {
+                          handleClientSelection(null); // Handle deselection
+                        }
+                      }}
+                      values={
+                        formData.client_id
+                          ? [
+                              {
+                                value: formData.client_id,
+                                label: getClientValue(
+                                  formData.client_id,
+                                  "raison_sociale"
+                                ),
+                              },
+                            ]
+                          : []
+                      }
+                      placeholder="Client ..."
                     />
-                  </Form.Group>
+                  </div>
                 </div>
+              </div>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="site_id" className="col-form-label">
+                      Site Client:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
+                    {console.log("selected siteClient  :", selectedSiteClient)}
+                    <Select
+                      options={
+                        selectedClient && selectedClient.siteclients
+                          ? selectedClient.siteclients.map((site) => ({
+                              value: site.id,
+                              label: site.raison_sociale,
+                            }))
+                          : []
+                      }
+                      onChange={(selected) => {
+                        if (selected && selected.length > 0) {
+                          const site = siteClients.find(
+                            (site) => site.id === selected[0].value
+                          );
+                          handleSiteClientSelection({
+                            id: selected[0].value,
+                            raison_sociale: site.raison_sociale,
+                            adresse: site.adresse,
+                            tele: site.tele,
+                            abreviation: site.abreviation,
+                            code_postal: site.code_postal,
+                            ice: site.ice,
+                            zone: site.zone,
+                          });
+                        } else {
+                          handleSiteClientSelection(null); // Handle deselection
+                        }
+                      }}
+                      values={
+                        formData.site_id
+                          ? [
+                              {
+                                value: formData.site_id,
+                                label: getSiteClientValue(
+                                  formData.site_id,
+                                  "raison_sociale"
+                                ),
+                              },
+                            ]
+                          : []
+                      }
+                      placeholder="Site client ..."
+                    />
+                  </div>
+                </div>
+              </div>
 
-                <div className="col-md-4">
-                  <Form.Group controlId="mode_payement">
-                    <Form.Label>Mode Paiement:</Form.Label>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-6">
+                    <label htmlFor="mode_payement" className="col-form-label">
+                      Mode Paiement:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
                     <Form.Select
                       name="mode_payement"
-                      value={formData.mode_payement}
+                      value={
+                        formData ? formData.mode_payement : "Mode de Paiement"
+                      }
                       onChange={handleChange}
                     >
-                      <option disabled selected>
-                        Mode de Paiement
-                      </option>
+                      <option>mode de paiement</option>
                       <option value="Espece">Espece</option>
                       <option value="Tpe">Tpe</option>
                       <option value="Cheque">Cheque</option>
                       {/* Add more payment types as needed */}
                     </Form.Select>
-                  </Form.Group>
+                  </div>
                 </div>
+              </div>
 
-                <div className="col-md-4">
-                  {editingCommandes && (
-                    <Form.Group controlId="status">
-                      <Form.Label>Status:</Form.Label>
+              <div className="col-md-12">
+                {editingCommandes && (
+                  <div className="row mb-3">
+                    <div className="col-sm-6">
+                      <label htmlFor="status" className="col-form-label">
+                        Status:
+                      </label>
+                    </div>
+                    <div className="col-sm-6">
                       <Form.Select
+                        id="status"
                         name="status"
                         value={formData.status}
                         onChange={handleChange}
                       >
-                        <option disabled selected>
-                          Status
-                        </option>
                         <option value="En cours">En cours</option>
                         <option value="Valide">Valide</option>
                         <option value="Non Valide">Non Valide</option>
-                        {/* Add more payment types as needed */}
+                        {/* Add more statuses as needed */}
                       </Form.Select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="col-md-12">
+                <div className="row mb-4">
+                  <div className="col-sm-6">
+                    <label htmlFor="dateCommande" className="col-form-label">
+                      Date Commande:
+                    </label>
+                  </div>
+                  <div className="col-sm-6">
+                    <Form.Group controlId="dateCommande">
+                      <Form.Control
+                        controlId="dateCommande"
+                        type="date"
+                        name="dateCommande"
+                        value={formData.dateCommande}
+                        onChange={handleChange}
+                        className="form-control-sm"
+                      />
                     </Form.Group>
-                  )}
+                  </div>
                 </div>
+              </div>
+              <div>
+                <Button
+                  className="btn btn-sm mb-2 "
+                  variant="primary"
+                  onClick={handleAddEmptyRow}
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                </Button>
+                <strong>Ajouter Produit</strong>
+              </div>
 
-                <div className="col-md-4">
-                  <Form.Group controlId="dateCommande">
-                    <Form.Label>Date Commande:</Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="dateCommande"
-                      value={formData.dateCommande}
-                      onChange={handleChange}
-                      className="form-control-sm"
-                    />
-                  </Form.Group>
+              <div className="col-md-12">
+                <div className="row mb-3">
+                  <div className="col-sm-12">
+                    <Form.Group controlId="selectedProduitTable">
+                      <div className="table-responsive">
+                        <table className="table table-bordered ">
+                          <thead>
+                            <tr>
+                              <th>Code Produit</th>
+                              <th>Designation</th>
+                              <th>Calibre</th>
+                              <th>Quantité</th>
+                              <th>Prix vente</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedProductsData.map((productData, index) => (
+                              <tr key={index}>
+                                <td>
+                                  <Select
+                                    options={produits.map((produit) => ({
+                                      value: produit.id,
+                                      label: produit.Code_produit,
+                                    }))}
+                                    onChange={(selected) => {
+                                      const produit = produits.find(
+                                        (prod) => prod.id === selected[0].value
+                                      );
+                                      handleProductSelection(
+                                        {
+                                          produit_id: selected[0].value,
+                                          Code_produit: produit.Code_produit,
+                                          designation: produit.designation,
+                                          calibre_id: produit.calibre_id,
+                                          calibre: produit.calibre,
+                                        },
+                                        index
+                                      );
+                                    }}
+                                    values={
+                                      productData.produit_id
+                                        ? [
+                                            {
+                                              value: productData.produit_id,
+                                              label: productData.Code_produit,
+                                            },
+                                          ]
+                                        : []
+                                    }
+                                    placeholder="Code ..."
+                                  />
+                                </td>
+                                <td>{productData.designation}</td>
+                                <td>{productData.calibre_id}</td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    id={`quantite_${index}_${productData.produit_id}`}
+                                    className="quantiteInput"
+                                    placeholder="Quantite"
+                                    value={
+                                      modifiedQuantiteValues[
+                                        `${index}_${productData.produit_id}`
+                                      ] ||
+                                      populateProductInputs(
+                                        productData.id,
+                                        "quantite"
+                                      )
+                                    }
+                                    onChange={(event) =>
+                                      handleInputChange(
+                                        index,
+                                        "quantite",
+                                        event
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="text"
+                                    id={`prix_unitaire_${index}_${productData.produit_id}`}
+                                    className="prixInput"
+                                    placeholder="Prix"
+                                    value={
+                                      modifiedPrixValues[
+                                        `${index}_${productData.produit_id}`
+                                      ] ||
+                                      populateProductInputs(
+                                        productData.id,
+                                        "prix_unitaire"
+                                      )
+                                    }
+                                    onChange={(event) =>
+                                      handleInputChange(
+                                        index,
+                                        "prix_unitaire",
+                                        event
+                                      )
+                                    }
+                                  />
+                                </td>
+                                <td>
+                                  <Button
+                                    className=" btn btn-danger btn-sm m-1"
+                                    onClick={() =>
+                                      handleDeleteProduct(
+                                        index,
+                                        productData.produit_id
+                                      )
+                                    }
+                                  >
+                                    <FontAwesomeIcon icon={faTrash} />
+                                  </Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </Form.Group>
+                  </div>
                 </div>
+              </div>
 
-                <div className="col-md-12">
-                  {console.log("selectedProductsData:", selectedProductsData)}
-                  <Form.Group controlId="selectedProduitTable">
-                    <table className="table table-bordered table-responsive-sm">
-                      <thead>
-                        <tr>
-                          <th>
-                            <Select
-                              options={produits.map((produit) => ({
-                                value: produit.id,
-                                label: produit.Code_produit,
-                                placeholder: "Code Produit",
-                              }))}
-                              onChange={(selected) =>
-                                handleProductSelection(
-                                  selected[0].value,
-                                  selected[0].designation
-                                )
-                              }
-                              value={selectedProductId}
-                            />
-                          </th>
-                          <th>Designation</th>
-                          <th>Calibre</th>
-                          <th>Quantité</th>
-                          <th>Prix vente</th>
-                          <th>Action</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedProductsData.map((productData, index) => (
-                          <tr key={index}>
-                            <td>
-                              {getProduitValue(productData.id, "Code_produit")}
-                            </td>
-                            <td>
-                              {getProduitValue(productData.id, "designation")}
-                            </td>
-                            <td>
-                              {getProduitValue(productData.id, "calibre_id")}
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                id={`quantite_${productData.id}`}
-                                className="quantiteInput"
-                                placeholder="Quantite"
-                                value={
-                                  modifiedQuantiteValues[productData.id] ||
-                                  populateProductInputs(
-                                    productData.id,
-                                    "quantite"
-                                  )
-                                }
-                                onChange={(event) =>
-                                  handleInputChange(
-                                    productData.id,
-                                    "quantite",
-                                    event
-                                  )
-                                }
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="text"
-                                id={`prix_unitaire_${productData.id}`}
-                                className="prixInput"
-                                placeholder="Prix"
-                                value={
-                                  modifiedPrixValues[productData.id] ||
-                                  populateProductInputs(
-                                    productData.id,
-                                    "prix_unitaire"
-                                  )
-                                }
-                                onChange={(event) =>
-                                  handleInputChange(
-                                    productData.id,
-                                    "prix_unitaire",
-                                    event
-                                  )
-                                }
-                              />
-                            </td>
-                            <td>
-                              <Button
-                                className=" btn btn-danger btn-sm m-1"
-                                onClick={() => handleDeleteProduct(index)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </Form.Group>
-                </div>
-
-                <div className="col-md-12 mt-3">
+              <div className="col-md-12">
+                <div className="text-center">
+                  <Button type="submit" className=" btn-sm col-4">
+                    {editingCommandes ? "Modifier" : "Valider"}
+                  </Button>
                   <Button
-                    className="btn btn-sm"
-                    variant="primary"
-                    type="submit"
+                    className=" btn-sm btn-secondary col-4 offset-1 "
+                    onClick={closeForm}
                   >
-                    Submit
+                    Annuler
                   </Button>
                 </div>
-              </Form>
-            </div>
-            <div
-              id="tableContainer"
-              className="table-responsive-sm"
-              style={tableContainerStyle}
-            >
-              <table className="table table-bordered">
-                <thead
-                  className="text-center "
-                  style={{ backgroundColor: "#ddd" }}
-                >
-                  <tr>
-                    <th>
-                      <input
-                        type="checkbox"
-                        checked={selectAll}
-                        onChange={handleSelectAllChange}
-                      />
-                    </th>
-                    <th colSpan="2">reference</th>
-                    <th>dateCommande</th>
-                    <th>Client</th>
-                    <th>Mode de Paiement</th>
+              </div>
+            </Form>
+          </div>
 
-                    <th colSpan="2">Status</th>
-                    <th colSpan="2">Total</th>
+          <div
+            id="tableContainer"
+            className="table-responsive-sm"
+            style={tableContainerStyle}
+          >
+            <table className="table table-responsive table-bordered">
+              <thead
+                className="text-center "
+                style={{ backgroundColor: "#ddd" }}
+              >
+                <tr>
+                  <th>
+                    <input
+                      type="checkbox"
+                      checked={selectAll}
+                      onChange={handleSelectAllChange}
+                    />
+                  </th>
+                  <th>reference</th>
+                  <th>Client</th>
+                  <th>Site Client</th>
+                  <th>Date Commande</th>
 
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-center">
-                  {commandes &&
-                    commandes.map((commande) => (
-                      <React.Fragment key={commande.id}>
-                        <tr>
-                          <td>
-                            {/* <input
+                  <th>Mode de Paiement</th>
+
+                  <th>Status</th>
+                  <th>Total</th>
+
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody className="text-center">
+                {filteredCommandes &&
+                  filteredCommandes.map((commande) => (
+                    <React.Fragment key={commande.id}>
+                      {console.log(
+                        "Ligne_Commandes:",
+                        commande.ligne_commandes
+                      )}
+                      <tr>
+                        <td>
+                          {/* <input
                               type="checkbox"
                               checked={selectedItems.some(
                                 (item) => item.id === Commandes.id
                               )}
                               onChange={() => handleSelectItem(Commandes)}
                             /> */}
-                            <input
-                              type="checkbox"
-                              onChange={() => handleCheckboxChange(commande.id)}
-                              checked={selectedItems.includes(commande.id)}
+                          <input
+                            type="checkbox"
+                            onChange={() => handleCheckboxChange(commande.id)}
+                            checked={selectedItems.includes(commande.id)}
+                          />
+                        </td>
+                        <td>
+                          <Button
+                            className="btn btn-sm btn-light "
+                            style={{ marginRight: "10px" }}
+                            onClick={() =>
+                              handleShowLigneCommandes(commande.id)
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expandedRows.includes(commande.id)
+                                  ? faMinus
+                                  : faPlus
+                              }
                             />
-                          </td>
-                          <td>
-                            <div className="no-print ">
-                              <Button
-                                className="btn btn-sm btn-light"
-                                onClick={() =>
-                                  handleShowLigneCommandes(commande.id)
-                                }
-                              >
-                                <FontAwesomeIcon
-                                  icon={
-                                    expandedRows.includes(commande.id)
-                                      ? faMinus
-                                      : faPlus
-                                  }
-                                />
-                              </Button>
-                            </div>
-                          </td>
-                          <td>{commande.reference}</td>
-                          <td>{commande.dateCommande}</td>
-                          <td>{commande.client_id}</td>
-                          <td>{commande.mode_payement}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-light"
-                              onClick={() =>
-                                handleShowStatusCommandes(commande.id)
+                          </Button>
+
+                          {commande.reference}
+                        </td>
+                        <td>
+                          {/* <Button
+                            className="btn btn-sm btn-light"
+                            style={{ marginRight: "10px" }}
+                            onClick={() =>
+                              handleShowSiteClients(commande.client_id)
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expandedClient.includes(commande.client_id)
+                                  ? faMinus
+                                  : faPlus
                               }
-                            >
-                              <FontAwesomeIcon
-                                icon={
-                                  expand_status.includes(commande.id)
-                                    ? faMinus
-                                    : faPlus
-                                }
-                              />
-                            </button>
-                          </td>
-                          <td>{commande.status}</td>
-                          <td>
-                            <button
-                              className="btn btn-sm btn-light"
-                              onClick={() =>
-                                handleShowTotalDetails(commande.id)
+                            />
+                          </Button> */}
+
+                          {getClientValue(commande.client_id, "raison_sociale")}
+                        </td>
+                        <td className={commande.site_id ? "" : "text-danger"}>
+                          {commande.site_id
+                            ? getSiteClientValue(
+                                commande.site_id,
+                                "raison_sociale"
+                              )
+                            : "aucun site"}
+                        </td>
+                        <td>{commande.dateCommande}</td>
+
+                        <td>{commande.mode_payement}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-light"
+                            style={{ marginRight: "10px" }}
+                            onClick={() =>
+                              handleShowStatusCommandes(commande.id)
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expand_status.includes(commande.id)
+                                  ? faMinus
+                                  : faPlus
                               }
+                            />
+                          </button>
+
+                          {commande.status}
+                        </td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-light"
+                            style={{ marginRight: "10px" }}
+                            onClick={() => handleShowTotalDetails(commande)}
+                          >
+                            <FontAwesomeIcon
+                              icon={
+                                expand_total.includes(commande.id)
+                                  ? faMinus
+                                  : faPlus
+                              }
+                            />
+                          </button>
+
+                          {calculateTotalQuantity(commande.ligne_commandes)}
+                        </td>
+                        <td>
+                          <div className="d-inline-flex text-center">
+                            <Button
+                              className=" btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(commande)}
                             >
-                              <FontAwesomeIcon
-                                icon={
-                                  expand_total.includes(commande.id)
-                                    ? faMinus
-                                    : faPlus
-                                }
-                              />
-                            </button>
-                          </td>
-                          <td>
-                            {calculateTotalQuantity(commande.ligne_commandes)}
-                          </td>
-                          <td>
-                            <div className="d-inline-flex text-center">
-                              <Button
-                                className=" btn btn-sm btn-info m-1"
-                                onClick={() => handleEdit(commande)}
-                              >
-                                <i className="fas fa-edit"></i>
-                              </Button>
-                              <Button
-                                className=" btn btn-danger btn-sm m-1"
-                                onClick={() => handleDelete(commande.id)}
-                              >
-                                <FontAwesomeIcon icon={faTrash} />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                        {expandedRows.includes(commande.id) &&
-                          commande.ligne_commandes && (
-                            <tr>
-                              <td
-                                colSpan="11"
-                                style={{
-                                  padding: "0",
-                                }}
-                              >
-                                <div id="lignesCommandes">
-                                  <table
-                                    className=" table-bordered"
-                                    style={{
-                                      borderCollapse: "collapse",
-                                      backgroundColor: "#f2f2f2",
-                                      width: "100%",
-                                    }}
-                                  >
-                                    <thead>
-                                      <tr>
-                                        <th>Produit</th>
-                                        <th>Quantite</th>
-                                        <th>Prix Vente</th>
-                                        {/* <th className="text-center">Action</th> */}
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {commande.ligne_commandes.map(
-                                        (ligneCommande) => (
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className=" btn btn-danger btn-sm m-1"
+                              onClick={() => handleDelete(commande.id)}
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                      {expandedRows.includes(commande.id) &&
+                        commande.ligne_commandes && (
+                          <tr>
+                            <td
+                              colSpan="11"
+                              style={{
+                                padding: "0",
+                              }}
+                            >
+                              <div id="lignesCommandes">
+                                <table
+                                  className=" table-bordered"
+                                  style={{
+                                    borderCollapse: "collapse",
+                                    // backgroundColor: "#f2f2f2",
+                                    width: "100%",
+                                  }}
+                                >
+                                  <thead>
+                                    <tr>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Code Produit
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        designation
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Calibre
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Quantite
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Prix Unitaire
+                                      </th>
+                                      {/* <th className="text-center">Action</th> */}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {commande.ligne_commandes.map(
+                                      (ligneCommande) => {
+                                        const produit = produits.find(
+                                          (prod) =>
+                                            prod.id === ligneCommande.produit_id
+                                        );
+                                        console.log("prod",produit)
+                                        console.log("id",ligneCommande.produit_id)
+                                        return (
                                           <tr key={ligneCommande.id}>
-                                            <td>{ligneCommande.produit_id}</td>
+                                            <td>{produit.Code_produit}</td>
+                                            <td>{produit.designation}</td>
+                                            <td>{produit.calibre.calibre}</td>
                                             <td>{ligneCommande.quantite}</td>
                                             <td>
                                               {ligneCommande.prix_unitaire} DH
                                             </td>
-                                            {/* <td className="no-print">
-                                              <button
-                                                className="btn btn-sm btn-info m-1"
-                                                onClick={() => {
-                                                  handleEditSC(siteClient);
-                                                }}>
-                                                <i className="fas fa-edit"></i>
-                                              </button>
-                                              <button className="btn btn-sm btn-danger m-1"
-                                                onClick={() => handleDeleteSiteClient(siteClient.id)}>
-                                                <FontAwesomeIcon icon={faTrash} />
-                                              </button>
-                                            </td> */}
+                                            {/* Ajoutez ici d'autres colonnes ou actions si nécessaire */}
                                           </tr>
-                                        )
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        {expand_total.includes(commande.id) && (
-                          <tr>
-                            <td
-                              style={{
-                                padding: "0",
-                              }}
-                              colSpan="11"
-                            >
-                              {/* Increased colspan to accommodate the new Total column */}
-                              <table
-                                className="table-bordered"
-                                style={{
-                                  borderCollapse: "collapse",
-                                  backgroundColor: "#f2f2f2",
-                                  width: "100%",
-                                }}
-                              >
-                                <thead>
-                                  <tr>
-                                    <th></th>
-                                    {produits
-                                      .filter((produit) =>
-                                        commande.ligne_commandes.some(
-                                          (ligne) =>
-                                            ligne.produit_id === produit.id
-                                        )
-                                      )
-                                      .map((produit) => (
-                                        <th key={produit.designation}>
-                                          {produit.designation}
-                                        </th>
-                                      ))}
-                                    <th>Total (Unité) / Calibre</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {uniqueCalibres.map((calibre) => (
-                                    <tr key={calibre}>
-                                      <td>
-                                        <strong>calibre : [{calibre}]</strong>
-                                      </td>
-                                      {produits
-                                        .filter((produit) =>
-                                          commande.ligne_commandes.some(
-                                            (ligne) =>
-                                              ligne.produit_id === produit.id
-                                          )
-                                        )
-                                        .map((produit) => (
-                                          <td key={produit.designation}>
-                                            {getQuantity(
-                                              commande.ligne_commandes,
-                                              calibre,
-                                              produit.designation
-                                            )}
-                                          </td>
-                                        ))}
-                                      <td>
-                                        <strong>
-                                          {getTotalForCalibre(
-                                            commande.ligne_commandes,
-                                            calibre,
-                                            produits
-                                          )}
-                                        </strong>
-                                      </td>
-                                    </tr>
-                                  ))}
-                                </tbody>
-                              </table>
+                                        );
+                                      }
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
                             </td>
                           </tr>
                         )}
-                        {expand_status.includes(commande.id) &&
-                          commande.status_commandes && (
-                            <tr>
-                              <td
-                                colSpan="11"
-                                style={{
-                                  padding: "0",
-                                }}
-                              >
-                                <div id="statusCommandes">
-                                  <table
-                                    className="table-bordered"
+                      {expand_total.includes(commande.id) && (
+                        <tr>
+                          <td
+                            style={{
+                              padding: "0",
+                            }}
+                            colSpan="11"
+                          >
+                            {/* Increased colspan to accommodate the new Total column */}
+                            <table
+                              className="table-bordered"
+                              style={{
+                                borderCollapse: "collapse",
+                                // backgroundColor: "#f2f2f2",
+                                width: "100%",
+                              }}
+                            >
+                              <thead>
+                                <tr>
+                                  <th></th>
+                                  {commande.ligne_commandes.map((ligne) => {
+                                    const produit = produits.find(
+                                      (prod) => prod.id === ligne.produit_id
+                                    );
+                                    return (
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                        key={produit.designation}
+                                      >
+                                        {produit.designation}
+                                      </th>
+                                    );
+                                  })}
+                                  {/* {selectedProductsData.map((ligne, index) => {
+                                    return (
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                        key={index}
+                                      >
+                                        {ligne.designation}
+                                      </th>
+                                    );
+                                  })} */}
+                                  <th
                                     style={{
-                                      borderCollapse: "collapse",
-                                      backgroundColor: "#f2f2f2",
-                                      width: "100%",
+                                      backgroundColor: "#ddd",
                                     }}
                                   >
-                                    <thead>
-                                      <tr>
-                                        <th>Status</th>
-                                        <th>Date Status</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {commande.status_commandes.map(
-                                        (statusCommande) => (
-                                          <tr key={statusCommande.id}>
-                                            <td>{statusCommande.status}</td>
-                                            <td>
-                                              {statusCommande.date_status}
-                                            </td>
-                                          </tr>
-                                        )
-                                      )}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                      </React.Fragment>
-                    ))}
-                </tbody>
-              </table>
-            </div>
+                                    Total (Unité) / Calibre
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {uniqueCalibres.map((calibre) => (
+                                  <tr key={calibre}>
+                                    <td
+                                      style={{
+                                        backgroundColor: "#ddd",
+                                      }}
+                                    >
+                                      <strong>calibre : [{calibre}]</strong>
+                                    </td>
+                                    {commande.ligne_commandes.map((ligne) => {
+                                      const produit = produits.find(
+                                        (prod) => prod.id === ligne.produit_id
+                                      );
+                                      return (
+                                        <td key={produit.designation}>
+                                          {getQuantity(
+                                            commande.ligne_commandes,
+                                            calibre,
+                                            produit.designation
+                                          )}
+                                        </td>
+                                      );
+                                    })}
+                                    {/* {selectedProductsData.map(
+                                      (ligne, index) => {
+                                        return (
+                                          <td key={index}>
+                                            {getQuantity(
+                                              commande.ligne_commandes,
+                                              calibre,
+                                              ligne.designation
+                                            )}
+                                          </td>
+                                        );
+                                      }
+                                    )} */}
+
+                                    <td>
+                                      <strong>
+                                        {getTotalForCalibre(
+                                          commande.ligne_commandes,
+                                          calibre,
+                                          produits
+                                        )}
+                                      </strong>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </td>
+                        </tr>
+                      )}
+                      {expand_status.includes(commande.id) &&
+                        commande.status_commandes && (
+                          <tr>
+                            <td
+                              colSpan="11"
+                              style={{
+                                padding: "0",
+                              }}
+                            >
+                              <div id="statusCommandes">
+                                <table
+                                  className="table-bordered"
+                                  style={{
+                                    borderCollapse: "collapse",
+                                    // backgroundColor: "#f2f2f2",
+                                    width: "100%",
+                                  }}
+                                >
+                                  <thead>
+                                    <tr>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Status
+                                      </th>
+                                      <th
+                                        style={{
+                                          backgroundColor: "#ddd",
+                                        }}
+                                      >
+                                        Date Status
+                                      </th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {commande.status_commandes.map(
+                                      (statusCommande) => (
+                                        <tr key={statusCommande.id}>
+                                          <td>{statusCommande.status}</td>
+                                          <td>{statusCommande.date_status}</td>
+                                        </tr>
+                                      )
+                                    )}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                    </React.Fragment>
+                  ))}
+              </tbody>
+            </table>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredCommandes.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+            <Button
+              className="btn btn-danger btn-sm"
+              onClick={handleDeleteSelected}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </Button>
           </div>
         </Box>
       </Box>

@@ -1044,27 +1044,27 @@ const Vehicule_livreur = () => {
                     <th style={tableHeaderStyle}>Action</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {filteredData.length > 0
-                    ? filteredData
-                        .slice(
-                          page * rowsPerPage,
-                          page * rowsPerPage + rowsPerPage
-                        )
-                        .map((vehicule_livreur) => (
-                          <tr key={vehicule_livreur.id}>
-                            <td>
-                              <input
-                                type="checkbox"
-                                onChange={() =>
-                                  handleCheckboxChange(vehicule_livreur.id)
-                                }
-                                checked={selectedItems.includes(
-                                  vehicule_livreur.id
-                                )}
-                              />
-                            </td>
-                            <td>{vehicule_livreur.livreur.nom}</td>
+                  <tbody>
+                    {filteredData.length > 0
+                      ? filteredData
+                          .slice(
+                            page * rowsPerPage,
+                            page * rowsPerPage + rowsPerPage
+                          )
+                          .map((vehicule_livreur) => (
+                            <tr key={vehicule_livreur.id}>
+                              <td>
+                                <input
+                                  type="checkbox"
+                                  onChange={() =>
+                                    handleCheckboxChange(vehicule_livreur.id)
+                                  }
+                                  checked={selectedItems.includes(
+                                    vehicule_livreur.id
+                                  )}
+                                />
+                              </td>
+                              <td>{vehicule_livreur.livreur.nom}</td>
                             <td>{vehicule_livreur.vehicule.matricule}</td>
                             <td>{vehicule_livreur.date_debut_affectation}</td>
                             <td>{vehicule_livreur.date_fin_affectation}</td>

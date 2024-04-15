@@ -103,13 +103,14 @@ const Navigation = () => {
     const selectedValue = event.target.value;
     setSelectedOption(selectedValue);
 
-    // Redirect to the corresponding route based on the selected option
     if (selectedValue === "charging") {
-      navigate("/chargingCommand"); // Replace with your actual route
+      navigate("/chargingCommand"); 
     } else if (selectedValue === "preparing") {
-      navigate("/preparingCommand"); // Replace with your actual route
+      navigate("/preparingCommand"); 
     } else if (selectedValue === "list") {
-      navigate("/commandes"); // Replace with your actual route
+      navigate("/commandes"); //
+    } else if (selectedValue === "details") {
+      navigate("/details"); 
     }
   };
   useEffect(() => {
@@ -361,6 +362,7 @@ const Navigation = () => {
                 <MenuItem value="list">Liste des Commandes</MenuItem>
                 <MenuItem value="charging">Chargement Commandes</MenuItem>
                 <MenuItem value="preparing">Préparation Commandes</MenuItem>
+                <MenuItem value="details">Details Commandes</MenuItem>
               </Select>
             </ListItem>
             <ListItem

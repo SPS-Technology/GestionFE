@@ -16,6 +16,7 @@ import {
   faFilePdf,
   faFileExcel,
   faPrint,
+  faFilter,
 } from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -27,12 +28,14 @@ import TextField from "@mui/material/TextField";
 import { Search as SearchIcon, Clear as ClearIcon } from "@mui/icons-material";
 const ChargeCommande = () => {
   // const [existingChargementCommande, setExistingChargementCommande] = useState([]);
-  const [livreurs, setLivreurs] = useState([]);
-  const [vehicules, setVehicules] = useState([]);
+  //   const [livreurs, setLivreurs] = useState([]);
+  const [vehicule_livreurs, setVehicule_livreurs] = useState([]);
   const [commandes, setCommandes] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [filteredChargementCommandes, setFilteredChargementCommandes] =
-    useState([]);
+  const [filterRealDate, setFilterRealDate] = useState(false);
+  const [filterPlannedDate, setFilterPlannedDate] = useState(false);
+//   const [filteredChargementCommandes, setFilteredChargementCommandes] =
+    // useState([]);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [chargementCommandes, setChargementCommandes] = useState([]);
@@ -49,13 +52,20 @@ const ChargeCommande = () => {
 
   //---------------form-------------------//
   const [showForm, setShowForm] = useState(false);
+  const [ShowFilterModal, setShowFilterModal] = useState(false);
   const [formData, setFormData] = useState({
-    veihicule_id: "",
+    vehicule_id: "",
     livreur_id: "",
+    confort: "",
+    remarque: "",
     commande_id: "",
     dateLivraisonPrevue: "",
     dateLivraisonReelle: "",
   });
+  //   const [filterFormData, setFilterFormData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [isFiltering, setIsFiltering] = useState(false);
+  const [isFilte, setIsFilte] = useState(false);
   const [formContainerStyle, setFormContainerStyle] = useState({
     right: "-100%",
   });
@@ -66,22 +76,22 @@ const ChargeCommande = () => {
   const fetchChargementCommandes = async () => {
     try {
       const livreurResponse = await axios.get(
-        "http://localhost:8000/api/livreurs"
+        "http://localhost:8000/api/vehicule-livreurs"
       );
 
       console.log("API Response for Livreurs:", livreurResponse.data.livreurs);
 
-      setLivreurs(livreurResponse.data.livreurs);
-      const vehiculesResponse = await axios.get(
-        "http://localhost:8000/api/vehicules"
-      );
+      setVehicule_livreurs(livreurResponse.data.vehicule_livreurs);
+      //   const vehiculesResponse = await axios.get(
+      //     "http://localhost:8000/api/vehicules"
+      //   );
 
-      console.log(
-        "API Response for Vehicules:",
-        vehiculesResponse.data.vehicules
-      );
+      //   console.log(
+      //     "API Response for Vehicules:",
+      //     vehiculesResponse.data.vehicules
+      //   );
 
-      setVehicules(vehiculesResponse.data.vehicules);
+      //   setVehicules(vehiculesResponse.data.vehicules);
       const commandesResponse = await axios.get(
         "http://localhost:8000/api/commandes"
       );
@@ -131,37 +141,37 @@ const ChargeCommande = () => {
   //   setFilteredChargementCommandes(filtered);
   // }, [chargementCommandes, vehiculeFilter, dateLivraisonReeleFilter]);
 
-  useEffect(() => {
-    const filtered =
-      chargementCommandes &&
-      chargementCommandes.filter((chargementCommande) =>
-        chargementCommande.veihicule_id
-          .toString()
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      );
-    setFilteredChargementCommandes(filtered);
-  }, [chargementCommandes, searchTerm]);
-  const getLivreurNom = (livreurId) => {
-    try {
-      const livreur = livreurs.find((livreur) => livreur.id === livreurId);
+  //   useEffect(() => {
+  //     const filtered =
+  //       chargementCommandes &&
+  //       chargementCommandes.filter((chargementCommande) =>
+  //         chargementCommande.veihicule_id
+  //           .toString()
+  //           .toLowerCase()
+  //           .includes(searchTerm.toLowerCase())
+  //       );
+  //     setFilteredChargementCommandes(filtered);
+  //   }, [chargementCommandes, searchTerm]);
+  //   const getLivreurNom = (livreurId) => {
+  //     try {
+  //       const livreur = livreurs.find((livreur) => livreur.id === livreurId);
 
-      return livreur ? livreur.nom : "";
-    } catch (error) {
-      console.error(`Error finding produit with ID ${livreurId}:`, error);
-      return "";
-    }
-  };
-  const getVehiculesMarque = (vehiclueId) => {
-    try {
-      const vehicule = vehicules.find((vehicule) => vehicule.id === vehiclueId);
+  //       return livreur ? livreur.nom : "";
+  //     } catch (error) {
+  //       console.error(`Error finding produit with ID ${livreurId}:`, error);
+  //       return "";
+  //     }
+  //   };
+  //   const getVehiculesMarque = (vehiclueId) => {
+  //     try {
+  //       const vehicule = vehicules.find((vehicule) => vehicule.id === vehiclueId);
 
-      return vehicule ? vehicule.marque : "";
-    } catch (error) {
-      console.error(`Error finding produit with ID ${vehiclueId}:`, error);
-      return "";
-    }
-  };
+  //       return vehicule ? vehicule.marque : "";
+  //     } catch (error) {
+  //       console.error(`Error finding produit with ID ${vehiclueId}:`, error);
+  //       return "";
+  //     }
+  //   };
   const getCommandeReference = (commandeId) => {
     try {
       const commande = commandes.find((commande) => commande.id === commandeId);
@@ -172,7 +182,17 @@ const ChargeCommande = () => {
       return "";
     }
   };
+  const [filterFormData, setFilterFormData] = useState({
+    startDate: "",
+    endDate: "",
+    livreur_id: "",
+    vehicule_id: "",
+  });
 
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilterFormData({ ...filterFormData, [name]: value });
+  };
   const handleSearch = (term) => {
     setSearchTerm(term);
   };
@@ -546,8 +566,10 @@ const ChargeCommande = () => {
     setEditingChargementCommande(chargementCommandes); // Set the chargementCommandes to be edited
     // Populate form data with chargementCommandes details
     setFormData({
-      veihicule_id: chargementCommandes.veihicule_id,
+      vehicule_id: chargementCommandes.veihicule_id,
       livreur_id: chargementCommandes.livreur_id,
+      remarque: chargementCommandes.remarque,
+      confort: chargementCommandes.confort,
       commande_id: chargementCommandes.commande_id,
       dateLivraisonPrevue: chargementCommandes.dateLivraisonPrevue,
       dateLivraisonReelle: chargementCommandes.dateLivraisonReelle,
@@ -599,8 +621,10 @@ const ChargeCommande = () => {
           } avec succès.`,
         });
         setFormData({
-          veihicule_id: "",
+          vehicule_id: "",
           livreur_id: "",
+          confort: "",
+          remarque: "",
           commande_id: "",
           dateLivraisonPrevue: "",
           dateLivraisonReelle: "",
@@ -650,6 +674,73 @@ const ChargeCommande = () => {
     });
     setEditingChargementCommande(null); // Clear editing chargementCommande
   };
+  const handleFilterSubmit = (e) => {
+    e.preventDefault();
+
+    const { startDate, endDate, livreur_id, vehicule_id } = filterFormData;
+
+    const filteredVehiculeLivreurs = chargementCommandes.filter((vl) => {
+      const dateLivraisonPrevue = new Date(vl.dateLivraisonPrevue);
+      const dateLivraisonReelle = new Date(vl.dateLivraisonReelle);
+
+      const isPrevueInRange =
+        (!startDate || dateLivraisonPrevue >= new Date(startDate)) &&
+        (!endDate || dateLivraisonPrevue <= new Date(endDate));
+
+      const isReelleInRange =
+        (!startDate || dateLivraisonReelle >= new Date(startDate)) &&
+        (!endDate || dateLivraisonReelle <= new Date(endDate));
+
+      const livreurFilter = !livreur_id || String(vl.livreur.id) === livreur_id;
+      const vehiculeFilter =
+        !vehicule_id || String(vl.vehicule.id) === vehicule_id;
+
+      const isFilterFilled =
+        startDate !== "" ||
+        endDate !== "" ||
+        livreur_id !== "" ||
+        vehicule_id !== "";
+
+      setIsFiltering(isFilterFilled);
+
+      let passFilter = false;
+
+      if (filterRealDate && filterPlannedDate) {
+        passFilter =
+          (isPrevueInRange || isReelleInRange) &&
+          livreurFilter &&
+          vehiculeFilter;
+      } else if (filterRealDate) {
+        passFilter = isReelleInRange && livreurFilter && vehiculeFilter;
+      } else if (filterPlannedDate) {
+        passFilter = isPrevueInRange && livreurFilter && vehiculeFilter;
+      } else {
+        passFilter =
+          (isPrevueInRange || isReelleInRange) &&
+          livreurFilter &&
+          vehiculeFilter;
+      }
+
+      return passFilter;
+    });
+
+    setFilteredData(filteredVehiculeLivreurs);
+
+    if (filteredVehiculeLivreurs.length === 0) {
+      Swal.fire({
+        icon: "info",
+        title: "Aucun résultat trouvé",
+        text: "Veuillez ajuster vos filtres.",
+      });
+
+      setIsFiltering(false);
+      setFilteredData(chargementCommandes);
+    }
+
+    console.log("filterFormData:", filterFormData);
+    console.log("filteredVehiculeLivreurs:", filteredVehiculeLivreurs);
+    setShowFilterModal(false);
+  };
 
   return (
     <ThemeProvider theme={createTheme()}>
@@ -657,7 +748,167 @@ const ChargeCommande = () => {
         <Navigation />
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 1 }}>
           <Toolbar />
+          <div className="d-flex align-items-start">
+            {isFilte && (
+              <div className="filter-container">
+                <Form onSubmit={handleFilterSubmit}>
+                  <table className="table table-borderless">
+                    <thead>
+                      <tr>
+                        <th>Date Debut</th>
+                        <th>Date Fin</th>
+                        <th>Livreurs</th>
+                        <th>Véhicules</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          <Form.Control
+                            type="date"
+                            name="startDate"
+                            value={filterFormData.startDate}
+                            onChange={handleFilterChange}
+                            className="form-control form-control-sm"
+                          />
+                        </td>
+                        <td>
+                          <Form.Control
+                            type="date"
+                            name="endDate"
+                            value={filterFormData.endDate}
+                            onChange={handleFilterChange}
+                            className="form-control form-control-sm"
+                          />
+                        </td>
+                        <td>
+                          <Form.Check
+                            type="checkbox"
+                            id="filterRealDate"
+                            label="Date Réelle"
+                            checked={filterRealDate}
+                            onChange={(e) =>
+                              setFilterRealDate(e.target.checked)
+                            }
+                          />
+                        </td>
+                        <td>
+                          <Form.Check
+                            type="checkbox"
+                            id="filterPlannedDate"
+                            label="Date Prévue"
+                            checked={filterPlannedDate}
+                            onChange={(e) =>
+                              setFilterPlannedDate(e.target.checked)
+                            }
+                          />
+                        </td>
 
+                        <td>
+                          <Form.Control
+                            as="select"
+                            name="livreur_id"
+                            value={filterFormData.livreur_id}
+                            onChange={handleFilterChange}
+                            className="form-control form-control-sm"
+                          >
+                            <option value="">Livreur</option>
+                            {(() => {
+                              const seenLivreurIds = new Set(); // Créer un ensemble pour stocker les ID des livreurs déjà rencontrés
+                              return vehicule_livreurs.map((item) => {
+                                if (
+                                  item.livreur &&
+                                  !seenLivreurIds.has(item.livreur.id)
+                                ) {
+                                  seenLivreurIds.add(item.livreur.id); // Ajouter l'ID du livreur à l'ensemble
+                                  return (
+                                    <option
+                                      key={item.livreur.id}
+                                      value={item.livreur.id}
+                                    >
+                                      {item.livreur.nom}
+                                    </option>
+                                  );
+                                }
+                                return null;
+                              });
+                            })()}
+                          </Form.Control>
+                        </td>
+                        <td>
+                          <Form.Control
+                            as="select"
+                            name="vehicule_id"
+                            value={filterFormData.vehicule_id}
+                            onChange={handleFilterChange}
+                            className="form-control form-control-sm"
+                          >
+                            <option value="">Sélectionner un véhicule</option>
+                            {(() => {
+                              const seenVehiculeIds = new Set(); // Créer un ensemble pour stocker les IDs des véhicules déjà rencontrés
+                              return vehicule_livreurs.map((veh) => {
+                                if (!seenVehiculeIds.has(veh.vehicule.id)) {
+                                  seenVehiculeIds.add(veh.vehicule.id); // Ajouter l'ID du véhicule à l'ensemble
+                                  return (
+                                    <option
+                                      key={veh.vehicule.id}
+                                      value={veh.vehicule.id}
+                                    >
+                                      {veh.vehicule.model}-
+                                      {veh.vehicule.matricule}
+                                    </option>
+                                  );
+                                }
+                                return null;
+                              });
+                            })()}
+                          </Form.Control>
+                        </td>
+
+                        <td>
+                          <Button
+                            variant="primary"
+                            type="submit"
+                            className="btn-sm"
+                          >
+                            Appliquer les filtres
+                          </Button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </Form>
+              </div>
+            )}
+          </div>
+
+          <Button
+            variant="info"
+            className="col-2 btn btn-sm m-2"
+            id="filterButton"
+            onClick={() => {
+              if (isFilte) {
+                setIsFilte(false);
+                setFilteredData(chargementCommandes);
+                setFilterFormData({
+                  vehicule_id: "",
+                  livreur_id: "",
+                  commande_id: "",
+                  dateLivraisonPrevue: "",
+                  dateLivraisonReelle: "",
+                });
+              } else {
+                setIsFilte(true);
+              }
+            }}
+            disabled={isFiltering && filteredData.length === 0}
+          >
+            <FontAwesomeIcon
+              icon={faFilter}
+              style={{ verticalAlign: "middle" }}
+            />{" "}
+            {isFilte ? "Annuler le filtre" : "Filtrer"}
+          </Button>
           <div className="search-container d-flex flex-row-reverse mb-3">
             <Search onSearch={handleSearch} />
           </div>
@@ -670,22 +921,6 @@ const ChargeCommande = () => {
             >
               {showForm ? "Modifier le formulaire" : "Charger une Commande"}
             </Button>
-            <div className="filter-container mt-4">
-              <div className="filter-controls">
-                <input
-                  type="text"
-                  placeholder="Véhicule"
-                  value={vehiculeFilter}
-                  onChange={handleVehiculeFilterChange}
-                />
-                <input
-                  type="text"
-                  placeholder="Date Livraison Reelle"
-                  value={dateLivraisonReeleFilter}
-                  onChange={handleDateLivraisonReeleFilterChange}
-                />
-              </div>
-            </div>
             <div id="formContainer" className="mt-2" style={formContainerStyle}>
               <Form className="col row" onSubmit={handleSubmit}>
                 <Form.Label className="text-center m-2">
@@ -697,7 +932,6 @@ const ChargeCommande = () => {
                 </Form.Label>
                 <Form.Group className="col-sm-5 m-2" controlId="livreur_id">
                   <Form.Label>Livreur</Form.Label>
-
                   <Form.Select
                     name="livreur_id"
                     value={formData.livreur_id}
@@ -706,31 +940,91 @@ const ChargeCommande = () => {
                     required
                   >
                     <option value="">Livreur</option>
-                    {livreurs.map((livreur) => (
-                      <option key={livreur.id} value={livreur.id}>
-                        {livreur.nom}
-                      </option>
-                    ))}
+                    {(() => {
+                      const seenLivreurIds = new Set();
+                      return vehicule_livreurs.map((item) => {
+                        if (
+                          item.livreur &&
+                          !seenLivreurIds.has(item.livreur.id)
+                        ) {
+                          seenLivreurIds.add(item.livreur.id);
+                          return (
+                            <option
+                              key={item.livreur.id}
+                              value={item.livreur.id}
+                            >
+                              {item.livreur.nom}
+                            </option>
+                          );
+                        }
+                        return null;
+                      });
+                    })()}
                   </Form.Select>
                 </Form.Group>
-                <Form.Group className="col-sm-5 m-2" controlId="veihicule_id">
-                  <Form.Label>Vehicule</Form.Label>
 
+                <Form.Group className="col-sm-5 m-2" controlId="vehicule_id">
+                  <Form.Label>Véhicule</Form.Label>
                   <Form.Select
-                    name="veihicule_id"
-                    value={formData.veihicule_id}
+                    name="vehicule_id"
+                    value={formData.vehicule_id}
                     onChange={handleChange}
                     className="form-select form-select-sm"
-                    required
+                    disabled={!formData.livreur_id}
                   >
-                    <option value="">Vehicule</option>
-                    {vehicules.map((vehicule) => (
-                      <option key={vehicule.id} value={vehicule.id}>
-                        {vehicule.marque}
-                      </option>
-                    ))}
+                    <option value="">Véhicule</option>
+                    {vehicule_livreurs
+                      .filter(
+                        (item) =>
+                          item.livreur_id === parseInt(formData.livreur_id)
+                      )
+                      .map((filteredItem) => (
+                        <option
+                          key={filteredItem.vehicule_id}
+                          value={filteredItem.vehicule_id}
+                        >
+                          {filteredItem.vehicule.matricule}{" "}
+                        </option>
+                      ))}
                   </Form.Select>
                 </Form.Group>
+                <Form.Group className="col-sm-5 m-2" controlId="remarque">
+                  <Form.Label>Remarque</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={3}
+                    name="remarque"
+                    value={formData.remarque}
+                    onChange={handleChange}
+                    placeholder="Saisissez votre remarque ici..."
+                  />
+                </Form.Group>
+                <Form.Group className="col-sm-5 m-2">
+                  <Form.Label>Confort</Form.Label>
+                  <div>
+                    <Form.Check
+                      inline
+                      label="Oui"
+                      type="radio"
+                      id="confortOui"
+                      name="confort"
+                      value="oui"
+                      checked={formData.confort === "oui"}
+                      onChange={handleChange}
+                    />
+                    <Form.Check
+                      inline
+                      label="Non"
+                      type="radio"
+                      id="confortNon"
+                      name="confort"
+                      value="non"
+                      checked={formData.confort === "non"}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </Form.Group>
+
                 <Form.Group className="col-sm-5 m-2" controlId="commande_id">
                   <Form.Label>Commande</Form.Label>
 
@@ -799,55 +1093,105 @@ const ChargeCommande = () => {
                   <th scope="col">Vehicule</th>
                   <th scope="col">Livreur</th>
                   <th scope="col">Commande</th>
+                  <th scope="col">Remarque</th>
+                  <th scope="col">Confort</th>
                   <th scope="col">Date Prevue</th>
                   <th scope="col">Date Reelle</th>
                   <th scope="col">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredChargementCommandes &&
-                  filteredChargementCommandes
-                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((chargementCommandes) => (
-                      <tr key={chargementCommandes.id}>
-                        <td>
-                          <input
-                            type="checkbox"
-                            onChange={() =>
-                              handleCheckboxChange(chargementCommandes.id)
-                            }
-                            checked={selectedItems.includes(
-                              chargementCommandes.id
+              {filteredData.length > 0
+                  ? filteredData
+                      .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                      )
+                      .map((chargementCommande) => (
+                        <tr key={chargementCommande.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              onChange={() =>
+                                handleCheckboxChange(chargementCommande.id)
+                              }
+                              checked={selectedItems.includes(
+                                chargementCommande.id
+                              )}
+                            />
+                          </td>
+                          <td>
+                            {getCommandeReference(
+                              chargementCommande.commande_id
                             )}
-                          />
-                        </td>
-                        <td>
-                          {getVehiculesMarque(chargementCommandes.veihicule_id)}
-                        </td>
-                        <td>{getLivreurNom(chargementCommandes.livreur_id)}</td>
-                        <td>
-                          {getCommandeReference(
-                            chargementCommandes.commande_id
-                          )}
-                        </td>
-                        <td>{chargementCommandes.dateLivraisonPrevue}</td>
-                        <td>{chargementCommandes.dateLivraisonReelle}</td>
-                        <td className="d-inline-flex">
-                          <Button
-                            className="btn btn-sm btn-info m-1"
-                            onClick={() => handleEdit(chargementCommandes)}
-                          >
-                            <i className="fas fa-edit"></i>
-                          </Button>
-                          <Button
-                            className="btn btn-danger btn-sm m-1"
-                            onClick={() => handleDelete(chargementCommandes.id)}
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td>{chargementCommande.livreur.nom}</td>
+                          <td>{chargementCommande.vehicule.matricule}</td>
+                          <td>{chargementCommande.confort}</td>
+                          <td>{chargementCommande.remarque}</td>
+                          <td>{chargementCommande.dateLivraisonPrevue}</td>
+                          <td>{chargementCommande.dateLivraisonReelle}</td>
+                          <td className="d-inline-flex">
+                            <Button
+                              className="btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(chargementCommande)}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className="btn btn-danger btn-sm m-1"
+                              onClick={() =>
+                                handleDelete(chargementCommande.id)
+                              }
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                  : chargementCommandes
+                      .slice(
+                        page * rowsPerPage,
+                        page * rowsPerPage + rowsPerPage
+                      )
+                      .map((chargementCommande) => (
+                        <tr key={chargementCommande.id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              onChange={() =>
+                                handleCheckboxChange(chargementCommande.id)
+                              }
+                              checked={selectedItems.includes(
+                                chargementCommande.id
+                              )}
+                            />
+                          </td>
+                          <td>{chargementCommande.commande.reference}</td>
+                          <td>{chargementCommande.livreur.nom}</td>
+                          <td>{chargementCommande.vehicule.matricule}</td>
+                          <td>{chargementCommande.confort}</td>
+                          <td>{chargementCommande.remarque}</td>
+                          <td>{chargementCommande.dateLivraisonPrevue}</td>
+                          <td>{chargementCommande.dateLivraisonReelle}</td>
+                          <td className="d-inline-flex">
+                            <Button
+                              className="btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(chargementCommande)}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </Button>
+                            <Button
+                              className="btn btn-danger btn-sm m-1"
+                              onClick={() =>
+                                handleDelete(chargementCommande.id)
+                              }
+                            >
+                              <FontAwesomeIcon icon={faTrash} />
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
               </tbody>
             </table>
             <div className="d-flex flex-row">
@@ -883,13 +1227,13 @@ const ChargeCommande = () => {
                   <FontAwesomeIcon icon={faFileExcel} />
                 </Button>
               </div>
-            </div>
+            </div> 
             <TablePagination
               rowsPerPageOptions={[5, 10, 25]}
               component="div"
               count={
-                filteredChargementCommandes &&
-                filteredChargementCommandes.length
+                chargementCommandes &&
+                chargementCommandes.length
               }
               rowsPerPage={rowsPerPage}
               page={page}

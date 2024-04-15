@@ -23,11 +23,20 @@ import TablePagination from "@mui/material/TablePagination";
 const LivraisonList = () => {
   const [livraisons, setLivraisons] = useState([]);
   const [clients, setClients] = useState([]);
+  const [siteclients, setSiteclients] = useState([]);
+  const [commandes, setCommandes] = useState([]);
   const [devises, setDevises] = useState([]);
   const [formData, setFormData] = useState({
     reference: "",
     date: "",
-    ref_BC: "",
+    commande_id: "",
+    client_id: "",
+    user_id: "",
+  });
+  const [errors, setErrors] = useState({
+    reference: "",
+    date: "",
+    commande_id: "",
     client_id: "",
     user_id: "",
   });
@@ -63,12 +72,22 @@ const LivraisonList = () => {
     try {
       const response = await axios.get("http://localhost:8000/api/livraisons");
       setLivraisons(response.data.livraison);
-
+      console.log("API Response:", response.data);
       const ClientResponse = await axios.get(
         "http://localhost:8000/api/clients"
       );
       // console.log("API Response:", response.data);
       setClients(ClientResponse.data.client);
+      const SiteclientResponse = await axios.get(
+        "http://localhost:8000/api/siteclients"
+      );
+
+      setSiteclients(SiteclientResponse.data.siteclient);
+      const CommandeResponse = await axios.get(
+        "http://localhost:8000/api/commandes"
+      );
+
+      setCommandes(CommandeResponse.data.commandes);
     } catch (error) {
       console.error("Error fetching factures:", error);
     }
@@ -109,11 +128,28 @@ const LivraisonList = () => {
         title: "Success!",
         text: "Form submitted successfully!",
       });
-
+      setErrors({
+        reference: "",
+        date: "",
+        commande_id: "",
+        client_id: "",
+        user_id: "",
+      });
       clearFormData();
       closeForm();
     } catch (error) {
-      console.error("Error:", error);
+      if (error.response) {
+        const serverErrors = error.response.data.error;
+        console.log(serverErrors);
+        setErrors({
+          reference: serverErrors.reference ? serverErrors.reference[0] : "",
+          date: serverErrors.date ? serverErrors.date[0] : "",
+          commande_id: serverErrors.commande_id
+            ? serverErrors.commande_id[0]
+            : "",
+          // periode: serverErrors.periode ? serverErrors.periode[0] : "",
+        });
+      }
       // Handle error as needed
     }
   };
@@ -122,7 +158,14 @@ const LivraisonList = () => {
     setFormData({
       reference: "",
       date: "",
-      ref_BC: "",
+      commande_id: "",
+      client_id: "",
+      user_id: "",
+    });
+    setErrors({
+      reference: "",
+      date: "",
+      commande_id: "",
       client_id: "",
       user_id: "",
     });
@@ -133,7 +176,7 @@ const LivraisonList = () => {
       id: livraison.id,
       reference: livraison.reference,
       date: livraison.date,
-      ref_BC: livraison.ref_BC,
+      commande_id: livraison.commande_id,
       client_id: livraison.client_id,
       user_id: livraison.user_id,
     });
@@ -162,7 +205,7 @@ const LivraisonList = () => {
       reference: "",
       date: "",
       ref_BL: "",
-      ref_BC: "",
+      commande_id: "",
       client_id: "",
       user_id: "",
     });
@@ -170,7 +213,9 @@ const LivraisonList = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
+  const getSiteClientInfo = (siteId) => {
+    return siteId ? siteclients.find((site) => site.id === siteId) : null;
+  };
   return (
     <ThemeProvider theme={createTheme()}>
       <Box sx={{ display: "flex" }}>
@@ -202,6 +247,9 @@ const LivraisonList = () => {
                     onChange={handleChange}
                     name="reference"
                   />
+                   <Form.Text className="text-danger">
+                      {errors.reference}
+                    </Form.Text>
                 </Form.Group>
                 <Form.Group className="m-2 col-4" controlId="date">
                   <Form.Label>Date:</Form.Label>
@@ -211,8 +259,11 @@ const LivraisonList = () => {
                     onChange={handleChange}
                     name="date"
                   />
+                   <Form.Text className="text-danger">
+                      {errors.date}
+                    </Form.Text>
                 </Form.Group>
-                <Form.Group className="m-2 col-4" controlId="ref_BC">
+                {/* <Form.Group className="m-2 col-4" controlId="ref_BC">
                   <Form.Label>N° BC</Form.Label>
                   <Form.Control
                     type="text"
@@ -220,8 +271,8 @@ const LivraisonList = () => {
                     onChange={handleChange}
                     name="ref_BC"
                   />
-                </Form.Group>
-                <Form.Group className="m-2 col-4" controlId="client_id">
+                </Form.Group> */}
+                {/* <Form.Group className="m-2 col-4" controlId="client_id">
                   <Form.Label>Client</Form.Label>
                   <Form.Select
                     value={formData.client_id}
@@ -235,8 +286,26 @@ const LivraisonList = () => {
                       </option>
                     ))}
                   </Form.Select>
+                </Form.Group> */}
+                <Form.Group className="m-2 col-4" controlId="commande_id">
+                  <Form.Label>Ref Commande</Form.Label>
+                  <Form.Select
+                    value={formData.commande_id}
+                    onChange={handleChange}
+                    name="commande_id"
+                  >
+                    <option value="">Sélectionner une commande</option>
+                    {commandes.map((cmd) => (
+                      <option key={cmd.id} value={cmd.id}>
+                        {cmd.reference}
+                      </option>
+                    ))}
+                  </Form.Select>
+                  <Form.Text className="text-danger">
+                      {errors.commande_id}
+                    </Form.Text>
                 </Form.Group>
-
+                
                 <Form.Group className="m-2 col-4" controlId="user_id">
                   <Form.Label>User_id</Form.Label>
                   <Form.Control
@@ -270,37 +339,49 @@ const LivraisonList = () => {
                   <tr>
                     <th>N° BL</th>
                     <th>Date</th>
-                    <th>N° BC</th>
+                    <th>Ref Commande</th>
                     <th>Client</th>
+                    <th>siteclient</th>
                     <th>Action</th>
                   </tr>
                 </thead>
                 <tbody className="text-center">
                   {filteredlivraisons
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                    .map((livraison) => (
-                      <tr key={livraison.id}>
-                        <td>{livraison.reference}</td>
-                        <td>{livraison.date}</td>
-                        <td>{livraison.ref_BC}</td>
-                        <td>{livraison.client.raison_sociale}</td>
+                    .map((livraison) => {
+                      // Récupérer les informations du site client
+                      const siteClient = getSiteClientInfo(
+                        livraison.commande.site_id
+                      );
+                      return (
+                        <tr key={livraison.id}>
+                          <td>{livraison.reference}</td>
+                          <td>{livraison.date}</td>
 
-                        <td>
-                          <button
-                            className="btn btn-sm btn-info m-1"
-                            onClick={() => handleEdit(livraison)}
-                          >
-                            <i className="fas fa-edit"></i>
-                          </button>
-                          {/* <Button
-                                className="btn btn-sm m-2"
-                                onClick={() => handleLivraisonExport(livraison.id)}
-                              >
-                                <FontAwesomeIcon icon={faFilePdf} />
-                          </Button> */}
-                        </td>
-                      </tr>
-                    ))}
+                          <td>{livraison.commande.reference}</td>
+                          <td>{livraison.client.raison_sociale}</td>
+                          <td>
+                            {siteClient
+                              ? siteClient.raison_sociale
+                              : "aucun site"}
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-sm btn-info m-1"
+                              onClick={() => handleEdit(livraison)}
+                            >
+                              <i className="fas fa-edit"></i>
+                            </button>
+                            {/* <Button
+                className="btn btn-sm m-2"
+                onClick={() => handleLivraisonExport(livraison.id)}
+              >
+                <FontAwesomeIcon icon={faFilePdf} />
+          </Button> */}
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
               <TablePagination

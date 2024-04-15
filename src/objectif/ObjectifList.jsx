@@ -339,7 +339,7 @@ const ObjectifList = () => {
       unite: "",
       valeur: "",
       periode: "",
-    }); 
+    });
     setErrors({
       type_objectif: "",
       unite: "",
@@ -356,37 +356,37 @@ const ObjectifList = () => {
         <Box component="main" sx={{ flexGrow: 1, p: 3, mt: 4 }}>
           <Toolbar />
           <h3 className="text-left" style={{ color: "#A31818" }}>
-          <ImStarHalf
-                style={{
-                  fontSize: "24px",
-                  marginRight: "8px",
-                  verticalAlign: "middle",
-                }}
-              />
-             Liste des objectifs
-          </h3> 
+            <ImStarHalf
+              style={{
+                fontSize: "24px",
+                marginRight: "8px",
+                verticalAlign: "middle",
+              }}
+            />
+            Liste des objectifs
+          </h3>
           <div className="d-flex flex-row justify-content-end">
-              <div className="btn-group col-2">
-                <PrintList
-                  tableId="LivreurTable"
-                  title="Liste des objectifs"
-                  ObjectifList={objectifs}
-                  filteredobjectifs={filteredObjectifs}
-                />
-                <ExportPdfButton
-                  objectifs={objectifs}
-                  selectedItems={selectedItems}
-                />
-                <Button
-                  className="btn btn-success btn-sm ml-2"
-                  onClick={exportToExcel}
-                  disabled={selectedItems.length === 0}
-                >
-                  <FontAwesomeIcon icon={faFileExcel} />
-                </Button>
-              </div>
+            <div className="btn-group col-2">
+              <PrintList
+                tableId="LivreurTable"
+                title="Liste des objectifs"
+                ObjectifList={objectifs}
+                filteredobjectifs={filteredObjectifs}
+              />
+              <ExportPdfButton
+                objectifs={objectifs}
+                selectedItems={selectedItems}
+              />
+              <Button
+                className="btn btn-success btn-sm ml-2"
+                onClick={exportToExcel}
+                disabled={selectedItems.length === 0}
+              >
+                <FontAwesomeIcon icon={faFileExcel} />
+              </Button>
             </div>
-            <div className="search-container d-flex justify-content-center align-items-center mb-3">
+          </div>
+          <div className="search-container d-flex justify-content-center align-items-center mb-3">
             <Search onSearch={handleSearch} />
           </div>
           <div className="container-d-flex justify-content-start">

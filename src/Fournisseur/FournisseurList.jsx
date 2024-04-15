@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import { Form, Button } from "react-bootstrap";
-import "../style.css";
+import "../style1.css";
 import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
 import TablePagination from "@mui/material/TablePagination";
@@ -765,7 +765,7 @@ const FournisseurList = () => {
                     <th scope="col">Abréviation</th>
                     <th scope="col">Code Postal</th>
                     <th scope="col">ICE</th>
-                    <th scope="col">User</th>
+                    {/* <th scope="col">User</th> */}
                     <th scope="col">Action</th>
                   </tr>
                 </thead>
@@ -791,7 +791,7 @@ const FournisseurList = () => {
                         <td>{fournisseurs.abreviation}</td>
                         <td>{fournisseurs.code_postal}</td>
                         <td>{fournisseurs.ice}</td>
-                        <td>{fournisseurs.user.name}</td>
+                        {/* <td>{fournisseurs.user.name}</td> */}
                         <td className="d-inline-flex">
                           <Button
                             className="btn btn-sm btn-info m-1"
