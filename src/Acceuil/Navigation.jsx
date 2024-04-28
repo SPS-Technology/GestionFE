@@ -326,6 +326,39 @@ const Navigation = () => {
               <ListItemText primary="Produits" />
             </ListItem>
             <ListItem
+                button
+                component={Link}
+                to="/devis"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <AddCircleIcon  />
+              </ListItemIcon>
+              <ListItemText primary="Devis" />
+            </ListItem>
+            <ListItem
+                button
+                component={Link}
+                to="/factures"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <AddCircleIcon  />
+              </ListItemIcon>
+              <ListItemText primary="Facture" />
+            </ListItem>
+            <ListItem
+                button
+                component={Link}
+                to="/livraisons"
+                style={{ color: "grey" }}
+            >
+              <ListItemIcon>
+                <AddCircleIcon  />
+              </ListItemIcon>
+              <ListItemText primary="Livraison" />
+            </ListItem>
+            <ListItem
               button
               component={Link}
               to="/commandes"

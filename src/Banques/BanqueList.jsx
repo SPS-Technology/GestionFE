@@ -43,7 +43,7 @@ const BanqueList = () => {
 
     const [searchTerm, setSearchTerm] = useState("");
 
-const [clientId,setClientId] = useState(null);
+    const [clientId,setClientId] = useState(null);
     const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
 
 

@@ -17,6 +17,9 @@ import ReclamationList from "./Reclamations/ReclamationList";
 import BanqueList from "./Banques/BanqueList";
 import CompteList from "./Compte/CompteList";
 import EncaissementList from "./Encaissements/EncaissementList";
+import DevisList from "./Devis/DevisList";
+import FactureList from "./Facture/FactureList";
+import LivraisonList from "./Livraison/LivraisonList";
 
 
 const App = () => {
@@ -40,6 +43,10 @@ const App = () => {
         <Route path="/banques" element={<BanqueList/>}/>
         <Route path="/comptes" element={<CompteList/>}/>
         <Route path="/encaissements" element={<EncaissementList/>}/>
+        <Route path="/devis" element={<DevisList/>}/>
+        <Route path="/factures" element={<FactureList/>}/>
+        <Route path="/livraisons" element={<LivraisonList/>}/>
+
       </Routes>
       </AuthProvider>
     </div>

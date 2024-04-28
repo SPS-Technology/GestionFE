@@ -21,10 +21,15 @@ const EncaissementList = () => {
 
     const [comptes, setComptes] = useState([]);
     const [filteredBanques, setFilteredBanques] = useState([]);
+    const [Banque, setBanque] = useState([]);
+    const  [clients,setClients]=useState([]);
+    const  [factures,setFactures]=useState([]);
 
 
     const [encaissements, setEncaissements] = useState([]);
     const [ligneEncaissements,setLigneEncaissements]=useState([]);
+    const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
+
 
     const [banques, setBanques] = useState([]);
 
@@ -75,6 +80,11 @@ const EncaissementList = () => {
             const responsebanques = await axios.get("http://localhost:8000/api/banques");
             setBanques(responsebanques.data.banques);
             console.log("API Response for Banques:", responsebanques.data.banques);
+            const responseLigneentrer = await axios.get(
+                "http://localhost:8000/api/ligneentrercompte");
+            setLigneEntrerComptes(responseLigneentrer.data.ligneentrercomptes);
+            console.log("lignenetrecomptes",responseLigneentrer.data.ligneentrercomptes);
+
 
             const ligneEncaissementResponse = await axios.get("http://localhost:8000/api/ligneencaissement");
             setLigneEncaissements(ligneEncaissementResponse.data.ligneencaissements );
@@ -86,6 +96,19 @@ const EncaissementList = () => {
             );
             console.log("API Response for Comptes:", compteResponse.data.comptes);
             setComptes(compteResponse.data.comptes);
+
+
+            const clientResponse = await axios.get(
+                "http://localhost:8000/api/clients"
+            );
+            console.log("API Response for clients:", clientResponse.data.client);
+            setClients(clientResponse.data.client);
+
+            const factureResponse = await axios.get(
+                "http://localhost:8000/api/factures"
+            );
+            console.log("API Response for facture:", factureResponse.data.facture);
+            setFactures(factureResponse.data.facture);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -115,12 +138,13 @@ const EncaissementList = () => {
     const handleClientSelection = (target) => {
         const banque_id = parseInt(target.value);
         console.log('banque Id :',banque_id)
+        const banque = banques.filter((b) => b.id === banque_id);
+        console.log(banque)
         // setFormData({ ...formData, [target.name]: clientId });
         // console.log("formData",formData);
         // Filtrer les factures en fonction de l'ID du client sélectionné
         console.log(banques)
-        const banque = banques.find((b) => b.id === banque_id);
-        console.log(banque)
+        setBanque(banque);
         // console.log(banque.ligneEntrerCompte)
          const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
         setFilteredBanques(facturesFormodePaimenent);
@@ -698,23 +722,32 @@ const EncaissementList = () => {
                                             </tr>
                                             </thead>
                                             <tbody>
-                                            {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
-                                                <tr>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
-                                                    <td>{}</td>
+                                            {Banque && Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
 
+                                                const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+                                                 console.log(ligneEntrerCompte)
+                                                const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
 
-                                                </tr>
-                                            ))}
+                                                // Afficher les données de Banque et client s'il existe
+                                                return (
+                                                    <tr key={banque.id}>
+                                                        <td>{facture.client.raison_sociale}</td>
+                                                        <td>{facture.reference}</td>
+                                                        <td>{facture.total_ttc}</td>
+                                                        <td>{facture.date}</td>
+                                                        <td>{banque.numero_cheque}</td>
+                                                        <td>{banque.mode_de_paiement}</td>
+                                                        <td>{banque.datee}</td>
+                                                        <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                                        <td>{banque.Status}</td>
+                                                        <td>{banque.remarque}</td>
+                                                    </tr>
+                                                );
+                                            })}
                                             </tbody>
+
+
+
                                         </Table>
                                     </Form.Group>
                                 </div>
