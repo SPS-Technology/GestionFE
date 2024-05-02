@@ -19,7 +19,7 @@ const FactureList = () => {
     const [factures, setFactures] = useState([]);
     const [clients, setClients] = useState([]);
     const [devises, setDevises] = useState([]);
-    const [formData, setFormData] = useState({ reference: "", date: "", ref_BL: "", ref_BC: "", modePaiement: "",total_ttc:"" });
+    const [formData, setFormData] = useState({ reference: "", date: "", ref_BL: "", ref_BC: "", modePaiement: "",total_ttc:"",client_id:"", user_id: "", });
     const [formContainerStyle, setFormContainerStyle] = useState({ right: '-100%' });
     const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
     const [showForm, setShowForm] = useState(false);
@@ -114,6 +114,47 @@ const FactureList = () => {
         }
     };
 
+
+    const handleDelete = (id) => {
+        Swal.fire({
+            title: "Êtes-vous sûr de vouloir supprimer cette facture ?",
+            showDenyButton: true,
+            showCancelButton: false,
+            confirmButtonText: "Oui",
+            denyButtonText: "Non",
+            customClass: {
+                actions: "my-actions",
+                cancelButton: "order-1 right-gap",
+                confirmButton: "order-2",
+                denyButton: "order-3",
+            },
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Supprimer la facture avec l'ID donné
+                axios.delete(`http://localhost:8000/api/factures/${id}`)
+                    .then(() => {
+                        // Rafraîchir la liste des factures (si nécessaire)
+                        fetchFactures(); // Assurez-vous que cette fonction récupère à nouveau la liste des factures après la suppression
+                        Swal.fire({
+                            icon: "success",
+                            title: "Succès!",
+                            text: "Facture supprimée avec succès.",
+                        });
+                    })
+                    .catch((error) => {
+                        console.error("Erreur lors de la suppression de la facture:", error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Erreur!",
+                            text: "Échec de la suppression de la facture.",
+                        });
+                    });
+            } else {
+                console.log("Suppression annulée");
+            }
+        });
+    };
+
     const clearFormData = () => {
         // Reset the form data to empty values
         setFormData({
@@ -164,6 +205,7 @@ const FactureList = () => {
             zone_id: '',
             user_id: '',
             total_ttc: '',
+            client_id: '',
             ice: '',
             code_postal: '',
         });
@@ -525,8 +567,12 @@ const FactureList = () => {
                                                     className="btn btn-sm btn-info m-1"
                                                     onClick={() => handleEdit(facture)}
                                                 >
+
                                                     <i className="fas fa-edit"></i>
                                                 </button>
+                                                <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(facture)}>
+                                                    <FontAwesomeIcon icon={faTrash} />
+                                                </Button>
                                                 <Button
                                                     className="btn btn-sm m-2"
                                                     onClick={() => handleFactureExport(facture.id)}

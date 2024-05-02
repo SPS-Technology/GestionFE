@@ -283,31 +283,31 @@ const LivraisonList = () => {
                   />
                 </Form.Group> */}
                                 <Form.Group className="m-2 col-4" controlId="client_id">
-                  <Form.Label>Client</Form.Label>
-                  <Form.Select
-                    value={formData.client_id}
-                    onChange={handleChange}
-                    name="client_id"
-                  >
-                    <option value="">Sélectionner un client</option>
-                    {clients.map((client) => (
-                      <option key={client.id} value={client.id}>
-                        {client.raison_sociale}
-                      </option>
-                    ))}
-                  </Form.Select>
-                </Form.Group>
+                                  <Form.Label>Client</Form.Label>
+                                  <Form.Select
+                                    value={formData.client_id}
+                                    onChange={handleChange}
+                                    name="client_id"
+                                  >
+                                    <option value="">Sélectionner un client</option>
+                                    {clients.map((client) => (
+                                      <option key={client.id} value={client.id}>
+                                        {client.raison_sociale}
+                                      </option>
+                                    ))}
+                                  </Form.Select>
+                                </Form.Group>
                                 <Form.Group className="m-2 col-4" controlId="commande_id">
-                                    <Form.Label>Ref Commande</Form.Label>
+                                    <Form.Label>Commande</Form.Label>
                                     <Form.Select
                                         value={formData.commande_id}
                                         onChange={handleChange}
                                         name="commande_id"
                                     >
                                         <option value="">Sélectionner une commande</option>
-                                        {commandes.map((cmd) => (
-                                            <option key={cmd.id} value={cmd.id}>
-                                                {cmd.reference}
+                                        {commandes.map((commande) => (
+                                            <option key={commande.id} value={commande.id}>
+                                                {commande.reference}
                                             </option>
                                         ))}
                                     </Form.Select>

@@ -91,7 +91,7 @@ const ClientList = () => {
         }
     };
 
-    const toggleRow = async (clientId) => {
+    const toggleRow = async () => {
         if (expandedRows.includes(clientId)) {
             setExpandedRows(expandedRows.filter((id) => id !== clientId));
         } else {
@@ -1072,7 +1072,7 @@ const ClientList = () => {
                                                                 onChange={() => handleSelectItem(client)}
                                                             />
                                                         </td>
-                                                        <td >{client.raison_sociale}</td>
+                                                        <td>{client.raison_sociale}</td>
                                                         <td>{client.abreviation}</td>
                                                         <td>{client.adresse}</td>
                                                         <td>{client.tele}</td>
@@ -1121,15 +1121,15 @@ const ClientList = () => {
                                                                         {client.siteClients.map((siteClient) => (
 
                                                                             <tr key={siteClient.id}>
-                                                                                <td>{siteClient.raison_sociale}</td>
-                                                                                <td>{siteClient.abreviation}</td>
-                                                                                <td>{siteClient.adresse}</td>
-                                                                                <td>{siteClient.tele}</td>
-                                                                                <td>{siteClient.ville}</td>
-                                                                                <td>{siteClient.code_postal}</td>
-                                                                                <td>{siteClient.ice}</td>
-                                                                                <td>{siteClient.zone_id}</td>
-                                                                                <td>{siteClient.user.name}</td>
+                                                                                {/*<td>{siteClient.raison_sociale}</td>*/}
+                                                                                {/*<td>{siteClient.abreviation}</td>*/}
+                                                                                {/*<td>{siteClient.adresse}</td>*/}
+                                                                                {/*<td>{siteClient.tele}</td>*/}
+                                                                                {/*<td>{siteClient.ville}</td>*/}
+                                                                                {/*<td>{siteClient.code_postal}</td>*/}
+                                                                                {/*<td>{siteClient.ice}</td>*/}
+                                                                                {/*<td>{siteClient.zone_id}</td>*/}
+                                                                                {/*<td>{siteClient.user.name}</td>*/}
                                                                                 <td className="no-print">
                                                                                     <button
                                                                                         className="btn btn-sm btn-info m-1"

@@ -25,10 +25,13 @@ import {CiDeliveryTruck} from "react-icons/ci";
 
 
 const DevisList = () => {
-    const [existingLigneCommandes, setExistingLigneCommandes] = useState([]);
-
+    const [existingLigneDevis, setExistingLigneDevis] = useState([]);
+    const [authId, setAuthId] = useState([]);
+    const [selectedClient, setSelectedClient] = useState([]);
+    const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
     const [devises, setDevises] = useState([]);
-    const [lignedevises, setLigneDevis] = useState([]);
+    const [ligneDevises, setLigneDevis] = useState([]);
     const [modifiedPrixValues, setModifiedPrixValues] = useState({});
     const [modifiedQuantiteValues, setModifiedQuantiteValues] = useState({});
     const [clients, setClients] = useState([]);
@@ -78,15 +81,45 @@ const DevisList = () => {
         setSelectedProductsData([...selectedProductsData, {}]);
         console.log("selectedProductData", selectedProductsData);
     };
-    const populateProductInputs = (ligneCommandId, inputType) => {
-        console.log("ligneCommandId", ligneCommandId);
-        const existingLigneCommande = selectedProductsData.find(
-            (ligneCommande) => ligneCommande.id === ligneCommandId
-        );
-        console.log("existing LigneCommande", existingLigneCommandes);
+    const handleClientSelection = (selected) => {
+        if (selected) {
+            setSelectedClient(selected);
+            console.log("selectedClient", selectedClient);
+        } else {
+            setSelectedClient(null);
+        }
+    };
+    const getClientValue = (clientId, field) => {
+        // Find the product in the produits array based on produitId
+        const client = clients.find((c) => c.id === clientId);
 
-        if (existingLigneCommande) {
-            return existingLigneCommande[inputType];
+        // If the product is found, return the value of the specified field
+        if (client) {
+            return client[field];
+        }
+
+        // If the product is not found, return an empty string or any default value
+        return "";
+    };
+    const fetchExistingLigneDevis = async (devisId) => {
+        axios
+            .get(`http://localhost:8000/api/ligneDevis/${devisId}`)
+            .then((ligneDevisResponse) => {
+                const existingLigneDevis =
+                    ligneDevisResponse.data.ligneDevis;
+
+                setExistingLigneDevis(existingLigneDevis);
+            });
+    };
+    const populateProductInputs = (ligneDevisId, inputType) => {
+        console.log("ligneDevisId", ligneDevisId);
+        const existingLigneDevis = selectedProductsData.find(
+            (ligneDevis) => ligneDevis.id === ligneDevisId
+        );
+        console.log("existing LigneDevis", existingLigneDevis);
+
+        if (existingLigneDevis) {
+            return existingLigneDevis[inputType];
         }
         return "";
     };
@@ -97,7 +130,7 @@ const DevisList = () => {
         if (selectedProductsData[index]) {
             const productId = selectedProductsData[index].produit_id;
 
-            if (inputType === "prix_unitaire") {
+            if (inputType === "prix_vente") {
                 setModifiedPrixValues((prev) => {
                     const updatedValues = {
                         ...prev,
@@ -124,7 +157,7 @@ const DevisList = () => {
         setSelectedProductsData(updatedSelectedProductsData);
         if (id) {
             axios
-                .delete(`http://localhost:8000/api/ligneCommandes/${id}`)
+                .delete(`http://localhost:8000/api/ligneDevis/${id}`)
                 .then(() => {
                     fetchDevis();
                 });
@@ -132,19 +165,20 @@ const DevisList = () => {
     };
     const fetchDevis = async () => {
         try {
-            const response = await axios.get("http://localhost:8000/api/devises");
-            setDevises(response.data.devis);
-
-            const lignedevisResponse = await axios.get(
-                "http://localhost:8000/api/lignedevis"
-            );
-            setLigneDevis(lignedevisResponse.data.lignedevis);
-
             const clientResponse = await axios.get(
                 "http://localhost:8000/api/clients"
             );
             // console.log("API Response:", response.data);
             setClients(clientResponse.data.client);
+            const response = await axios.get("http://localhost:8000/api/devises");
+            setDevises(response.data.devis);
+
+            const ligneDevisResponse = await axios.get(
+                "http://localhost:8000/api/ligneDevis"
+            );
+            setLigneDevis(ligneDevisResponse.data.ligneDevis);
+
+
 
             const produitResponse = await axios.get(
                 "http://localhost:8000/api/produits"
@@ -155,6 +189,11 @@ const DevisList = () => {
                 "http://localhost:8000/api/factures"
             );
             setFactures(factureResponse.data.facture);
+            const userResponse = await axios.get(
+                "http://localhost:8000/api/user"
+            );
+            console.log("user authentifie ",userResponse)
+            setAuthId(userResponse.data.id);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -167,14 +206,17 @@ const DevisList = () => {
         } else {
             try {
                 // Récupérer les lignes de devis associées à ce devis
-                const lignedevis = await fetchLigneDevis(devisId);
+                const ligneDevis = await fetchLigneDevis(devisId);
 
                 // Mettre à jour l'état pour inclure les lignes de devis récupérées
-                setDevises((prevDevises) =>
-                    prevDevises.map((devis) =>
-                        devis.id === devisId ? { ...devis, lignedevis } : devis
-                    )
-                );
+                setDevises((prevDevises) => {
+                    return prevDevises.map((devis) => {
+                        if (devis.id === devisId) {
+                            return { ...devis, ligneDevis };
+                        }
+                        return devis;
+                    });
+                });
 
                 // Ajouter l'ID du devis aux lignes étendues
                 setExpandedRows([...expandedRows, devisId]);
@@ -187,12 +229,21 @@ const DevisList = () => {
         }
     };
 
+    const handleShowLigneEntreeCompte = async (devisId) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(devisId)
+                ? prevRows.filter((row) => row !== devisId)
+                : [...prevRows, devisId]
+        );
+    };
+
+
     const fetchLigneDevis = async (devisId) => {
         try {
             const response = await axios.get(
-                `http://localhost:8000/api/devises/${devisId}/lignedevis`
+                `http://localhost:8000/api/devises/${devisId}/ligneDevis`
             );
-            return response.data.lignedevis;
+            return response.data.ligneDevis;
         } catch (error) {
             console.error(
                 "Erreur lors de la récupération des lignes de devis :",
@@ -205,12 +256,12 @@ const DevisList = () => {
     useEffect(() => {
         // Préchargement des lingedevises pour chaque devis
         devises.forEach(async (devis) => {
-            if (!devis.lignedevis) {
-                const lignedevis = await fetchLigneDevis(devis.id);
+            if (!devis.ligneDevis) {
+                const ligneDevis = await fetchLigneDevis(devis.id);
                 setClients((prevDevises) => {
                     return prevDevises.map((prevDevis) => {
                         if (prevDevis.id === devis.id) {
-                            return { ...prevDevis, lignedevis };
+                            return { ...prevDevis, ligneDevis };
                         }
                         return prevDevis;
                     });
@@ -231,13 +282,15 @@ const DevisList = () => {
         return document.getElementById(id)?.value || "";
     };
 
-    const handleGenerateFacture = async () => {
+    const handleGenerateFacture = async (devis) => {
+
         try {
             // Préparer les données de la facture
             const factureData = {
-                client_id: formData.client_id,
-                user_id: formData.user_id,
-                id_devis: editingDevis.id, // Utiliser l'ID du devis actuel
+                client_id: devis.client_id,
+                user_id: authId,
+                id_devis: devis.id,
+                // total// Utiliser l'ID du devis actuel
             };
 
             // Envoyer une requête POST pour créer la facture
@@ -253,14 +306,16 @@ const DevisList = () => {
         }
     };
 
-    const handleGenerateBonLivraison = async () => {
+    const handleGenerateBonLivraison = async (devis) => {
+
         try {
             // Préparer les données du bon de livraison
             const bonLivraisonData = {
-                reference: formData.reference,
-                date: formData.date,
-                client_id: formData.client_id,
-                user_id: formData.user_id,
+                reference: devis.reference,
+                date: devis.date,
+                client_id: devis.client_id,
+                user_id: authId,
+
             };
 
             // Envoyer une requête POST pour créer le bon de livraison
@@ -276,101 +331,265 @@ const DevisList = () => {
         }
     };
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //
+    //     try {
+    //         // Préparer les données du devis
+    //         const devisData = {
+    //             reference: formData.reference,
+    //             date: formData.date,
+    //             validation_offer: formData.validation_offer,
+    //             modePaiement: formData.modePaiement,
+    //             status: formData.status,
+    //             client_id: formData.client_id,
+    //             user_id: formData.user_id,
+    //             total_ttc: formData.total_ttc,
+    //         };
+    //
+    //         let response;
+    //         if (editingDevis) {
+    //             // Mettre à jour le devis existant
+    //             response = await axios.put(
+    //                 `http://localhost:8000/api/devises/${editingDevis.id}`,
+    //                 devisData
+    //             );
+    //         } else {
+    //             // Créer un nouveau devis
+    //             response = await axios.post(
+    //                 "http://localhost:8000/api/devises",
+    //                 devisData
+    //             );
+    //         }
+    //
+    //         if (formData.status === "Valider") {
+    //             // Afficher les boutons pour générer manuellement la facture et le bon de livraison
+    //             setFactureGenerated(false);
+    //             setBonLivraisonGenerated(false);
+    //         }
+    //
+    //         // Préparer les données des lignes de devis
+    //         const selectedPrdsData = selectedProductsData.map((selectProduct) => {
+    //             return {
+    //                 id: selectProduct.id, // Ajoutez l'ID de la ligne de devis
+    //                 Code_produit: selectProduct.Code_produit,
+    //                 designation: selectProduct.designation,
+    //                 id_devis: response.data.devis
+    //                     ? response.data.devis.id
+    //                     : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
+    //                 quantite: selectProduct.quantite,
+    //                 prix_vente: selectProduct.prix_vente,
+    //             };
+    //         });
+    //
+    //         // Envoyer une requête POST pour chaque produit sélectionné
+    //         for (const ligneDevisData of selectedPrdsData) {
+    //             if (ligneDevisData.id) {
+    //                 // Si l'ID existe, il s'agit d'une modification
+    //                 await axios.put(
+    //                     `http://localhost:8000/api/ligneDevis/${ligneDevisData.id}`,
+    //                     ligneDevisData
+    //                 );
+    //             } else {
+    //                 // Sinon, il s'agit d'une nouvelle ligne de devis
+    //                 await axios.post(
+    //                     "http://localhost:8000/api/ligneDevis",
+    //                     ligneDevisData
+    //                 );
+    //             }
+    //         }
+    //
+    //         // Récupérer les données mises à jour
+    //         fetchDevis();
+    //
+    //         // Réinitialiser les données du formulaire
+    //         setFormData({
+    //             reference: "",
+    //             date: "",
+    //             validation_offer: "",
+    //             modePaiement: "",
+    //             status: "",
+    //             client_id: "",
+    //             user_id: "",
+    //             Code_produit: "",
+    //             designation: "",
+    //             prix_vente: "",
+    //             quantite: "",
+    //             id_devis: "",
+    //         });
+    //
+    //         // Fermer le formulaire si nécessaire
+    //         setShowForm(false);
+    //
+    //         // Afficher un message de succès à l'utilisateur
+    //         Swal.fire({
+    //             icon: "success",
+    //             title: "Succès !",
+    //             text: "Détails du devis et des lignes de devis ajoutés avec succès.",
+    //         });
+    //     } catch (error) {
+    //         console.error("Erreur lors de la soumission des données :", error);
+    //
+    //         // Afficher un message d'erreur à l'utilisateur
+    //         Swal.fire({
+    //             icon: "error",
+    //             title: "Erreur !",
+    //             text: "Impossible d'ajouter les détails du devis et des lignes de devis.",
+    //         });
+    //     }
+    //     closeForm();
+    // };
+    //
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            // Préparer les données du devis
-            const devisData = {
-                reference: formData.reference,
+            // const userResponse = await axios.get("http://localhost:8000/api/users", {
+            //   withCredentials: true,
+            //   headers: {
+            //     "X-CSRF-TOKEN": csrfToken,
+            //   },
+            // });
+
+            // const authenticatedUserId = userResponse.data[0].id;
+            // console.log("auth user", authenticatedUserId);
+            // Préparer les données du Devis
+            console.log("authId",authId)
+            console.log("selectedClient",selectedClient)
+            const DevisData = {
                 date: formData.date,
+                status: formData.status,
                 validation_offer: formData.validation_offer,
                 modePaiement: formData.modePaiement,
-                status: formData.status,
-                client_id: formData.client_id,
-                user_id: formData.user_id,
-                total_ttc: formData.total_ttc,
+                reference: formData.reference,
+                client_id: selectedClient.id,
+                user_id: authId,
             };
 
             let response;
             if (editingDevis) {
-                // Mettre à jour le devis existant
+                // Mettre à jour le Devis existant
                 response = await axios.put(
                     `http://localhost:8000/api/devises/${editingDevis.id}`,
-                    devisData
+                    {
+                        date: formData.date,
+                        status: formData.status,
+                        validation_offer: formData.validation_offer,
+                        modePaiement: formData.modePaiement,
+                        reference: formData.reference,
+                        client_id: selectedClient.id,
+                        user_id: authId,
+                    }
                 );
+                const existingLigneDevisResponse = await axios.get(
+                    `http://localhost:8000/api/ligneDevis/${editingDevis.id}`
+                );
+
+                const existingLigneDevis =
+                    existingLigneDevisResponse.data.ligneDevis;
+                console.log("existing LigneDevis", existingLigneDevis);
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectedProduct, index) => {
+                        // const existingLigneDevis = existingLigneDevis.find(
+                        //   (ligneDevis) =>
+                        //     ligneDevis.produit_id === selectedProduct.produit_id
+                        // );
+
+                        return {
+                            id: selectedProduct.id,
+                            id_devis: editingDevis.id,
+                            produit_id: selectedProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectedProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectedProduct.produit_id}`
+                            ),
+                            // Update other properties as needed
+                        };
+                    }
+                );
+                console.log("selectedPrdsData:", selectedPrdsData);
+                for (const ligneDevisData of selectedPrdsData) {
+                    // Check if ligneDevis already exists for this produit_id and update accordingly
+
+                    if (ligneDevisData.id) {
+                        // If exists, update the existing ligneDevis
+                        await axios.put(
+                            `http://localhost:8000/api/ligneDevis/${ligneDevisData.id}`,
+                            ligneDevisData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    } else {
+                        // If doesn't exist, create a new ligneDevis
+                        await axios.post(
+                            "http://localhost:8000/api/ligneDevis",
+                            ligneDevisData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+
+
+
             } else {
-                // Créer un nouveau devis
+                // Créer un nouveau Devis
                 response = await axios.post(
                     "http://localhost:8000/api/devises",
-                    devisData
+                    DevisData
                 );
-            }
-
-            if (formData.status === "Valider") {
-                // Afficher les boutons pour générer manuellement la facture et le bon de livraison
-                setFactureGenerated(false);
-                setBonLivraisonGenerated(false);
-            }
-
-            // Préparer les données des lignes de devis
-            const selectedPrdsData = selectedProductsData.map((selectProduct) => {
-                return {
-                    id: selectProduct.id, // Ajoutez l'ID de la ligne de devis
-                    Code_produit: selectProduct.Code_produit,
-                    designation: selectProduct.designation,
-                    id_devis: response.data.devis
-                        ? response.data.devis.id
-                        : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
-                    quantite: selectProduct.quantite,
-                    prix_vente: selectProduct.prix_vente,
-                };
-            });
-
-            // Envoyer une requête POST pour chaque produit sélectionné
-            for (const ligneDevisData of selectedPrdsData) {
-                if (ligneDevisData.id) {
-                    // Si l'ID existe, il s'agit d'une modification
-                    await axios.put(
-                        `http://localhost:8000/api/lignedevis/${ligneDevisData.id}`,
-                        ligneDevisData
-                    );
-                } else {
-                    // Sinon, il s'agit d'une nouvelle ligne de devis
+                //console.log(response.data.devi)
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectProduct, index) => {
+                        return {
+                            id_devis: response.data.devis.id,
+                            produit_id: selectProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectProduct.produit_id}`
+                            ),
+                        };
+                    }
+                );
+                console.log("selectedPrdsData", selectedPrdsData);
+                for (const ligneDevisData of selectedPrdsData) {
+                    // Sinon, il s'agit d'une nouvelle ligne de Devis
                     await axios.post(
-                        "http://localhost:8000/api/lignedevis",
+                        "http://localhost:8000/api/ligneDevis",
                         ligneDevisData
                     );
                 }
-            }
 
-            // Récupérer les données mises à jour
+            }
+            console.log("response of postDevis: ", response.data);
+
             fetchDevis();
 
-            // Réinitialiser les données du formulaire
-            setFormData({
-                reference: "",
-                date: "",
-                validation_offer: "",
-                modePaiement: "",
-                status: "",
-                client_id: "",
-                user_id: "",
-                Code_produit: "",
-                designation: "",
-                prix_vente: "",
-                quantite: "",
-                id_devis: "",
-            });
+            setSelectedClient([]);
 
-            // Fermer le formulaire si nécessaire
-            setShowForm(false);
+            setSelectedProductsData([]);
+            //fetchExistingLigneDevis();
+            closeForm();
 
             // Afficher un message de succès à l'utilisateur
             Swal.fire({
                 icon: "success",
-                title: "Succès !",
-                text: "Détails du devis et des lignes de devis ajoutés avec succès.",
+                title: "Devis ajoutée avec succès",
+                text: "La devise a été ajoutée avec succès.",
             });
         } catch (error) {
             console.error("Erreur lors de la soumission des données :", error);
@@ -379,14 +598,15 @@ const DevisList = () => {
             Swal.fire({
                 icon: "error",
                 title: "Erreur !",
-                text: "Impossible d'ajouter les détails du devis et des lignes de devis.",
+                text: "Erreur !",
             });
         }
         closeForm();
     };
 
-
     const handleEdit = (devis) => {
+        console.log("devis for edit", devis)
+
         setEditingDevis(devis);
         setFormData({
             reference: devis.reference,
@@ -398,16 +618,24 @@ const DevisList = () => {
             user_id: devis.user_id,
         });
 
-        const selectedProducts = devis.lignedevis.map((lignedevis) => ({
-            id: lignedevis.id, // Ajoutez l'ID de la ligne de devis
-            Code_produit: lignedevis.Code_produit,
-            designation: lignedevis.designation,
-            quantite: lignedevis.quantite,
-            prix_vente: lignedevis.prix_vente,
-            id_devis: lignedevis.id_devis,
-        }));
+        console.log("formData for edit",formData)
+        const selectedProducts = devis.lignedevis && devis.lignedevis.map((ligneDevis) => {
+            const product = produits.find(
+                (produit) => produit.id === ligneDevis.produit_id
+            );
+            console.log("product",product)
+            return {
+                id: ligneDevis.id,
+                Code_produit: product.Code_produit,
+                calibre_id: product.calibre_id,
+                designation: product.designation,
+                produit_id: ligneDevis.produit_id,
+                quantite: ligneDevis.quantite,
+                prix_vente: ligneDevis.prix_vente,
+            };
+        });
         setSelectedProductsData(selectedProducts);
-
+        console.log("selectedProducts for edit",selectedProducts)
         if (formContainerStyle.right === "-100%") {
             setFormContainerStyle({ right: "0" });
             setTableContainerStyle({ marginRight: "500px" });
@@ -431,28 +659,27 @@ const DevisList = () => {
             },
         }).then((result) => {
             if (result.isConfirmed) {
-                // Supprimer d'abord les factures associées
-                axios.delete(`http://localhost:8000/api/factures/${id}`)
+
+
+                // Ensuite, supprimer le devis
+                axios.delete(`http://localhost:8000/api/devises/${id}`)
                     .then(() => {
-                        // Ensuite, supprimer le devis
-                        axios.delete(`http://localhost:8000/api/devises/${id}`)
-                            .then(() => {
-                                fetchDevis();
-                                Swal.fire({
-                                    icon: "success",
-                                    title: "Succès!",
-                                    text: "Devis supprimé avec succès.",
-                                });
-                            })
-                            .catch((error) => {
-                                console.error("Erreur lors de la suppression du devis:", error);
-                                Swal.fire({
-                                    icon: "error",
-                                    title: "Erreur!",
-                                    text: "Échec de la suppression du devis.",
-                                });
-                            });
+                        fetchDevis();
+                        Swal.fire({
+                            icon: "success",
+                            title: "Succès!",
+                            text: "Devis supprimé avec succès.",
+                        });
                     })
+                    .catch((error) => {
+                        console.error("Erreur lors de la suppression du devis:", error);
+                        Swal.fire({
+                            icon: "error",
+                            title: "Erreur!",
+                            text: "Échec de la suppression du devis.",
+                        });
+                    })
+
                     .catch((error) => {
                         console.error("Erreur lors de la suppression de la facture:", error);
                         Swal.fire({
@@ -497,18 +724,16 @@ const DevisList = () => {
         setEditingDevis(null); // Clear editing client
     };
     //---------------------------Produit--------------------------
-    const handleProductCheckboxChange = (productId) => {
-        const updatedSelectedProducts = selectedProducts.includes(productId)
-            ? selectedProducts.filter((id) => id !== productId)
-            : [...selectedProducts, productId];
-        setSelectedProducts(updatedSelectedProducts);
+    // const handleProductCheckboxChange = (productId) => {
+    //     const updatedSelectedProducts = selectedProducts.includes(productId)
+    //         ? selectedProducts.filter((id) => id !== productId)
+    //         : [...selectedProducts, productId];
+    //     setSelectedProducts(updatedSelectedProducts);
+    //
+    //     console.log(updatedSelectedProducts);
+    // };
 
-        console.log(updatedSelectedProducts);
-    };
 
-    const handleModalShow = () => {
-        setShowModal(true); // Show the modal
-    };
     const handleProductSelection = (selectedProduct, index) => {
         console.log("selectedProduct", selectedProduct);
         const updatedSelectedProductsData = [...selectedProductsData];
@@ -516,43 +741,7 @@ const DevisList = () => {
         setSelectedProductsData(updatedSelectedProductsData);
         console.log("selectedProductsData", selectedProductsData);
     };
-    // const handleProductSelection = () => {
-    //     // Collect selected products with quantity and price
-    //     const selectedProductsData = produits
-    //         .map((produit) => {
-    //             const productId = produit.id;
-    //             const isChecked = document.getElementById(
-    //                 `produit_${productId}`
-    //             ).checked;
-    //             if (isChecked) {
-    //                 const quantite = document.getElementById(
-    //                     `quantite_${productId}`
-    //                 ).value;
-    //                 const prix_vente = document.getElementById(
-    //                     `prix_vente_${productId}`
-    //                 ).value;
-    //                 const Code_produit = produit.Code_produit;
-    //                 const designation = produit.designation;
-    //
-    //                 return {
-    //                     Code_produit,
-    //                     designation,
-    //                     productId,
-    //                     quantite,
-    //                     prix_vente,
-    //                 };
-    //             }
-    //             return null;
-    //         })
-    //         .filter((product) => product !== null);
-    //     console.log("selectedProductsData", selectedProductsData);
-    //
-    //     // Update selected products data state
-    //     setSelectedProductsData(selectedProductsData);
-    //
-    //     // Close the modal
-    //     setShowModal(false);
-    // };
+
 
     useEffect(() => {
         const filtered = devises.filter((devis) =>
@@ -582,7 +771,7 @@ const DevisList = () => {
         }
     };
 
-    const handlePrint = (devisId) => {
+    const handlePDF = (devisId) => {
         // Récupérer les informations spécifiques au devis sélectionné
         const selectedDevis = devises.find((devis) => devis.id === devisId);
 
@@ -591,6 +780,11 @@ const DevisList = () => {
 
         // Position de départ pour l'impression des données
         let startY = 20;
+
+        // Dessiner un cadre noir pour les informations du client
+        doc.setDrawColor(0); // Couleur noire
+        doc.setLineWidth(0.5); // Épaisseur de la ligne
+        doc.rect(10, startY, 80, 40); // Rectangle pour les informations du client
 
         // Dessiner les informations du client dans un tableau à gauche
         const clientInfo = [
@@ -601,52 +795,48 @@ const DevisList = () => {
             // Ajoutez d'autres informations client si nécessaire
         ];
 
-        // Dessiner le tableau d'informations client à gauche
+        // Décalage pour le texte dans le cadre
+        let textOffsetX = 15;
+        let textOffsetY = 30;
+
+        // Afficher les informations du client dans le cadre
         doc.setFontSize(10); // Police plus petite pour les informations du client
         clientInfo.forEach((info) => {
-            doc.text(`${info.label}`, 10, startY);
-            doc.text(`${info.value}`, 40, startY);
-            startY += 10; // Espacement entre les lignes du tableau
+            doc.text(info.label, textOffsetX, textOffsetY);
+            doc.text(info.value, textOffsetX + 40, textOffsetY);
+            textOffsetY += 10; // Espacement entre les lignes du tableau
         });
 
         // Dessiner le tableau des informations du devis à droite
         const devisInfo = [
             { label: "N° Devis:", value: selectedDevis.reference },
             { label: "Date:", value: selectedDevis.date },
-            {
-                label: "Validation de l'offre:",
-                value: selectedDevis.validation_offer,
-            },
+            { label: "Validation de l'offre:", value: selectedDevis.validation_offer },
             { label: "Mode de Paiement:", value: selectedDevis.modePaiement },
         ];
 
         // Dessiner le tableau des informations du devis à droite
         startY = 20; // Réinitialiser la position Y
         devisInfo.forEach((info) => {
-            doc.text(`${info.label}`, 120, startY);
-            doc.text(`${info.value}`, 160, startY);
+            doc.text(info.label, 120, startY);
+            doc.text(info.value, 160, startY);
             startY += 10; // Espacement entre les lignes du tableau
         });
 
         // Vérifier si les détails des lignes de devis sont définis
-        if (selectedDevis.lignedevis) {
+        if (selectedDevis.ligneDevis) {
             // Dessiner les en-têtes du tableau des lignes de devis
-            const headersLigneDevis = [
-                "Code produit",
-                "Désignation",
-                "Quantité",
-                "Prix",
-                "Total HT",
-            ];
+            const headersLigneDevis = ["Produit","Code produit", "Désignation", "Quantité", "Prix", "Total HT"];
 
             // Récupérer les données des lignes de devis
-            const rowsLigneDevis = selectedDevis.lignedevis.map((lignedevis) => [
-                lignedevis.Code_produit,
-                lignedevis.designation,
-                lignedevis.quantite,
-                lignedevis.prix_vente,
+            const rowsLigneDevis = selectedDevis.ligneDevis.map((ligneDevis) => [
+                ligneDevis.produit_id,
+                ligneDevis.produit_id,
+                ligneDevis.produit_id,
+                ligneDevis.quantite,
+                ligneDevis.prix_vente,
                 // Calculate the total for each product line
-                (lignedevis.quantite * lignedevis.prix_vente).toFixed(2), // Assuming the price is in currency format
+                (ligneDevis.quantite * ligneDevis.prix_vente).toFixed(2), // Assuming the price is in currency format
             ]);
 
             // Dessiner le tableau des lignes de devis
@@ -671,15 +861,9 @@ const DevisList = () => {
 
             // Dessiner le tableau des montants
             const montantTable = [
-                [
-                    "Montant Total Hors Taxes:",
-                    getTotalHT(selectedDevis.lignedevis).toFixed(2),
-                ],
-                [
-                    "TVA (20%):",
-                    calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2),
-                ],
-                ["TTC:", getTotalTTC(selectedDevis.lignedevis).toFixed(2)],
+                ["Montant Total Hors Taxes:", getTotalHT(selectedDevis.ligneDevis).toFixed(2)],
+                ["TVA (20%):", calculateTVA(getTotalHT(selectedDevis.ligneDevis)).toFixed(2)],
+                ["TTC:", getTotalTTC(selectedDevis.ligneDevis).toFixed(2)],
             ];
 
             doc.autoTable({
@@ -697,6 +881,7 @@ const DevisList = () => {
         // Enregistrer le fichier PDF avec le nom 'devis.pdf'
         doc.save("devis.pdf");
     };
+
     const print = (devisId) => {
         // Récupérer les informations spécifiques au devis sélectionné
         const selectedDevis = devises.find((devis) => devis.id === devisId);
@@ -715,87 +900,139 @@ const DevisList = () => {
 
             // Début du contenu HTML
             newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${title}</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 20px;
-                    }
-                    h1, h2 {
-                        text-align: center;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-bottom: 20px;
-                    }
-                    th, td {
-                        border: 1px solid #ddd;
-                        padding: 8px;
-                        text-align: left;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>${title}</h1>
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+            }
+            .client-info {
+                float: right;
+                width: 50%;
+                border: 2px solid #000;
+                padding: 10px;
+                margin-left: 20px;
+            }
+            h1, h2 {
+                text-align: center;
+                margin-top: 30px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            th, td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+            }
+            .montant-table {
+                border: 1px solid #000;
+                margin-top: 20px;
+            }
+            .montant-table td {
+                padding: 8px;
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+       <div>
+        <h1>${title}</h1>
+</div>
+        <div class="client-info">
+            <h2>Informations du Client :</h2>
+            <p>Raison sociale : ${selectedDevis.client.raison_sociale}</p>
+            <p>Adresse : ${selectedDevis.client.adresse}</p>
+            <p>Téléphone : ${selectedDevis.client.tele}</p>
+            <p>ICE : ${selectedDevis.client.ice}</p>
+        </div>
 
-                <h2>Informations du Client :</h2>
-                <p>Raison sociale : ${selectedDevis.client.raison_sociale}</p>
-                <p>Adresse : ${selectedDevis.client.adresse}</p>
-                <p>Téléphone : ${selectedDevis.client.tele}</p>
-                <p>ICE : ${selectedDevis.client.ice}</p>
+        <div style="clear:both;"></div>
 
-                <h2>Informations du Devis :</h2>
-                <p>N° Devis : ${selectedDevis.reference}</p>
-                <p>Date : ${selectedDevis.date}</p>
-                <p>Validation de l'offre : ${selectedDevis.validation_offer}</p>
-                <p>Mode de Paiement : ${selectedDevis.modePaiement}</p>
-                
-                <h2>Détails des lignes de Devis :</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Code produit</th>
-                            <th>Désignation</th>
-                            <th>Quantité</th>
-                            <th>Prix unitaire</th>
-                            <th>Total HT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${selectedDevis.lignedevis.map((lignedevis, index) => `
-                            <tr>
-                                <td>${lignedevis.Code_produit}</td>
-                                <td>${lignedevis.designation}</td>
-                                <td>${lignedevis.quantite}</td>
-                                <td>${lignedevis.prix_vente}</td>
-                                <td>${(lignedevis.quantite * lignedevis.prix_vente).toFixed(2)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                
-                <h2>Montants :</h2>
-                <p>Montant Total Hors Taxes : ${getTotalHT(selectedDevis.lignedevis).toFixed(2)}</p>
-                <p>TVA (20%) : ${calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)}</p>
-                <p>TTC : ${getTotalTTC(selectedDevis.lignedevis).toFixed(2)}</p>
-                
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        window.onafterprint = function () {
-                            window.close();
-                        };
-                    }, 1000);
-                </script>
-            </body>
-            </html>
-        `);
+        <h2></h2>
+        <table>
+            <tbody>
+                <tr>
+                    <td>N° Devis :</td>
+                    <td>${selectedDevis.reference}</td>
+                </tr>
+                <tr>
+                    <td>Date :</td>
+                    <td>${selectedDevis.date}</td>
+                </tr>
+                <tr>
+                    <td>Validation de l'offre :</td>
+                    <td>${selectedDevis.validation_offer}</td>
+                </tr>
+                <tr>
+                    <td>Mode de Paiement :</td>
+                    <td>${selectedDevis.modePaiement}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2></h2>
+        <table>
+            <thead>
+                <tr>
+                 <th style="border: 1px solid #000; padding: 8px;">Produit</th>
+                    <th style="border: 1px solid #000; padding: 8px;">Code produit</th>
+                    <th style="border: 1px solid #000; padding: 8px;">Désignation</th>
+                    <th style="border: 1px solid #000; padding: 8px;">Quantité</th>
+                    <th style="border: 1px solid #000; padding: 8px;">Prix unitaire</th>
+                    <th style="border: 1px solid #000; padding: 8px;">Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${selectedDevis.ligneDevis.map((ligneDevis, index) => `
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.produit_id}</td>
+                        <td style="border: 1px solid #000; padding: 8px;"></td>
+                           <td style="border: 1px solid #000; padding: 8px;"></td>
+                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.quantite}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.prix_vente}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${(ligneDevis.quantite * ligneDevis.prix_vente).toFixed(2)}</td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        
+        <h2>Montants :</h2>
+        <table class="montant-table">
+            <tbody>
+                <tr>
+                    <td>Montant Total Hors Taxes :</td>
+                    <td>${getTotalHT(selectedDevis.ligneDevis).toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>TVA (20%) :</td>
+                    <td>${calculateTVA(getTotalHT(selectedDevis.ligneDevis)).toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td>TTC :</td>
+                    <td>${getTotalTTC(selectedDevis.ligneDevis).toFixed(2)}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <script>
+            setTimeout(() => {
+                window.print();
+                window.onafterprint = function () {
+                    window.close();
+                };
+            }, 1000);
+        </script>
+    </body>
+    </html>
+`);
 
             newWindowDocument.close();
         } else {
@@ -804,12 +1041,21 @@ const DevisList = () => {
     };
 
     // Fonction pour calculer le montant total hors taxes
-    const getTotalHT = (lignedevis) => {
-        return lignedevis.reduce(
-            (total, item) => total + item.quantite * item.prix_vente,
-            0
-        );
+    const getTotalHT = (ligneDevis) => {
+        // // Check if ligneDevis is defined and is an array
+        // if (!Array.isArray(ligneDevis)) {
+        //     // Handle the case where ligneDevis is not an array
+        //     console.error("Invalid input: ligneDevis must be an array.");
+        //     return 0; // or any default value that makes sense for your application
+        // }
+        //
+        // // ligneDevis is an array, proceed with the calculation
+        // return ligneDevis.reduce(
+        //     (total, item) => total + item.quantite * item.prix_vente,
+        //     0
+        // );
     };
+
 
     // Fonction pour calculer la TVA
     const calculateTVA = (totalHT) => {
@@ -817,8 +1063,8 @@ const DevisList = () => {
     };
 
     // Fonction pour calculer le montant total toutes taxes comprises (TTC)
-    const getTotalTTC = (lignedevis) => {
-        return getTotalHT(lignedevis) + calculateTVA(getTotalHT(lignedevis));
+    const getTotalTTC = (ligneDevis) => {
+        return getTotalHT(ligneDevis) + calculateTVA(getTotalHT(ligneDevis));
     };
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -916,134 +1162,85 @@ const DevisList = () => {
                                         <option value="Non Valider">Non Valide</option>
                                     </Form.Select>
                                 </Form.Group>
-                                <Form.Group className="m-2 col-4" controlId="client_id">
-                                    <Form.Select
-                                        id="client_id"
-                                        className="form-select col-2"
-                                        value={formData.client_id}
-                                        onChange={handleChange}
-                                        name="client_id"
-                                    >
-                                        <option>Client</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>
-                                                {client.raison_sociale}
-                                            </option>
-                                        ))}
-                                    </Form.Select>
-                                </Form.Group>
-                                <Form.Group className="m-2 col-4" controlId="user_id">
-                                    <Form.Label>Utilisateur:</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.user_id}
-                                        onChange={handleChange}
-                                        name="user_id"
-                                    />
-                                </Form.Group>
-                                {/*<Form.Group className="mt-5 col-4" controlId="">*/}
-                                {/*    <Button variant="primary" onClick={handleModalShow}>*/}
-                                {/*        produits*/}
-                                {/*    </Button>*/}
-                                {/*</Form.Group>*/}
-                                {/*<Form.Group className="m-2 col" controlId="product_list">*/}
-                                {/*    <table className="table table-bordered">*/}
-                                {/*        <thead>*/}
-                                {/*        <tr>*/}
-                                {/*            <th>Code</th>*/}
-                                {/*            <th>Désignation</th>*/}
-                                {/*            <th>Quantité</th>*/}
-                                {/*            <th>Prix vente</th>*/}
-                                {/*        </tr>*/}
-                                {/*        </thead>*/}
-                                {/*        <tbody>*/}
-                                {/*        {selectedProductsData.map((productData) => (*/}
-                                {/*            <tr key={productData.productId}>*/}
-                                {/*                <td>*/}
-                                {/*                    {*/}
-                                {/*                        produits.find(*/}
-                                {/*                            (produit) =>*/}
-                                {/*                                produit.id === productData.productId*/}
-                                {/*                        )?.Code_produit*/}
-                                {/*                    }*/}
-                                {/*                </td>*/}
-                                {/*                <td>*/}
-                                {/*                    {*/}
-                                {/*                        produits.find(*/}
-                                {/*                            (produit) =>*/}
-                                {/*                                produit.id === productData.productId*/}
-                                {/*                        )?.designation*/}
-                                {/*                    }*/}
-                                {/*                </td>*/}
-                                {/*                <td>{productData.quantite}</td>*/}
-                                {/*                <td>{productData.prix_vente}</td>*/}
-                                {/*            </tr>*/}
+                                {/*<Form.Group className="m-2 col-4" controlId="client_id">*/}
+                                {/*    <Form.Select*/}
+                                {/*        id="client_id"*/}
+                                {/*        className="form-select col-2"*/}
+                                {/*        value={formData.client_id}*/}
+                                {/*        onChange={handleChange}*/}
+                                {/*        name="client_id"*/}
+                                {/*    >*/}
+                                {/*        <option>Client</option>*/}
+                                {/*        {clients.map((client) => (*/}
+                                {/*            <option key={client.id} value={client.id}>*/}
+                                {/*                {client.raison_sociale}*/}
+                                {/*            </option>*/}
                                 {/*        ))}*/}
-                                {/*        </tbody>*/}
-                                {/*    </table>*/}
+                                {/*    </Form.Select>*/}
                                 {/*</Form.Group>*/}
-                                {/*<Modal show={showModal} onHide={handleModalClose}>*/}
-                                {/*    <Toolbar />*/}
-                                {/*    <Modal.Header closeButton>*/}
-                                {/*        <Modal.Title>Sélectionner les produits</Modal.Title>*/}
-                                {/*    </Modal.Header>*/}
-                                {/*    <Modal.Body>*/}
-                                {/*        <div className="mt-3">*/}
-                                {/*            <table className="table table-hover">*/}
-                                {/*                <thead>*/}
-                                {/*                <tr>*/}
-                                {/*                    <th>Sélectionner</th>*/}
-                                {/*                    <th>Code</th>*/}
-                                {/*                    <th>Désignation</th>*/}
-                                {/*                    <th>Quantité</th>*/}
-                                {/*                    <th>Prix vente</th>*/}
-                                {/*                </tr>*/}
-                                {/*                </thead>*/}
-                                {/*                <tbody>*/}
-                                {/*                {produits.map((produit) => (*/}
-                                {/*                    <tr key={produit.id}>*/}
-                                {/*                        <td>*/}
-                                {/*                            <input*/}
-                                {/*                                type="checkbox"*/}
-                                {/*                                id={`produit_${produit.id}`}*/}
-                                {/*                                name="selectedProducts"*/}
-                                {/*                                value={produit.id}*/}
-                                {/*                                onChange={() =>*/}
-                                {/*                                    handleProductCheckboxChange(produit.id)*/}
-                                {/*                                }*/}
-                                {/*                            />*/}
-                                {/*                        </td>*/}
-                                {/*                        <td>{produit.Code_produit}</td>*/}
-                                {/*                        <td>{produit.designation}</td>*/}
-                                {/*                        <td>*/}
-                                {/*                            <input*/}
-                                {/*                                className="col-8"*/}
-                                {/*                                type="text"*/}
-                                {/*                                id={`quantite_${produit.id}`}*/}
-                                {/*                            />*/}
-                                {/*                        </td>*/}
-                                {/*                        <td>*/}
-                                {/*                            <input*/}
-                                {/*                                type="text"*/}
-                                {/*                                className="col-10"*/}
-                                {/*                                id={`prix_vente_${produit.id}`}*/}
-                                {/*                            />*/}
-                                {/*                        </td>*/}
-                                {/*                    </tr>*/}
-                                {/*                ))}*/}
-                                {/*                </tbody>*/}
-                                {/*            </table>*/}
-                                {/*        </div>*/}
-                                {/*    </Modal.Body>*/}
-                                {/*    <Modal.Footer>*/}
-                                {/*        <Button variant="secondary" onClick={handleModalClose}>*/}
-                                {/*            Annuler*/}
-                                {/*        </Button>*/}
-                                {/*        <Button variant="primary" onClick={handleProductSelection}>*/}
-                                {/*            Valider la sélection*/}
-                                {/*        </Button>*/}
-                                {/*    </Modal.Footer>*/}
-                                {/*</Modal>*/}
+                                <div className="col-md-12">
+                                    <div className="row mb-3">
+                                        <div className="col-sm-6">
+                                            <label htmlFor="client_id" className="col-form-label">
+                                                Client:
+                                            </label>
+                                        </div>
+                                        <div className="col-sm-6">
+                                            {console.log("selected client  :", selectedClient)}
+                                            <Select
+                                                options={clients.map((client) => ({
+                                                    value: client.id,
+                                                    label: client.raison_sociale,
+                                                }))}
+                                                onChange={(selected) => {
+                                                    if (selected && selected.length > 0) {
+                                                        const client = clients.find(
+                                                            (client) => client.id === selected[0].value
+                                                        );
+                                                        handleClientSelection({
+                                                            id: selected[0].value,
+                                                            raison_sociale: client.raison_sociale,
+                                                            adresse: client.adresse,
+                                                            tele: client.tele,
+                                                            abreviation: client.abreviation,
+                                                            code_postal: client.code_postal,
+                                                            ice: client.ice,
+                                                            zone: client.zone,
+                                                            siteclients: client.siteclients,
+                                                        });
+                                                    } else {
+                                                        handleClientSelection(null); // Handle deselection
+                                                    }
+                                                }}
+                                                values={
+                                                    formData.client_id
+                                                        ? [
+                                                            {
+                                                                value: formData.client_id,
+                                                                label: getClientValue(
+                                                                    formData.client_id,
+                                                                    "raison_sociale"
+                                                                ),
+                                                            },
+                                                        ]
+                                                        : []
+                                                }
+                                                placeholder="Client ..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/*<Form.Group className="m-2 col-4" controlId="user_id">*/}
+                                {/*    <Form.Label>Utilisateur:</Form.Label>*/}
+                                {/*    <Form.Control*/}
+                                {/*        type="text"*/}
+                                {/*        value={formData.user_id}*/}
+                                {/*        onChange={handleChange}*/}
+                                {/*        name="user_id"*/}
+                                {/*    />*/}
+                                {/*</Form.Group>*/}
+
                                 <div>
                                     <Button
                                         className="btn btn-sm mb-2 "
@@ -1146,13 +1343,13 @@ const DevisList = () => {
                                                                                 ] ||
                                                                             populateProductInputs(
                                                                                 productData.id,
-                                                                                "prix_unitaire"
+                                                                                "prix_vente"
                                                                             )
                                                                         }
                                                                         onChange={(event) =>
                                                                             handleInputChange(
                                                                                 index,
-                                                                                "prix_unitaire",
+                                                                                "prix_vente",
                                                                                 event
                                                                             )
                                                                         }
@@ -1164,13 +1361,21 @@ const DevisList = () => {
                                                                         onClick={() =>
                                                                             handleDeleteProduct(
                                                                                 index,
-                                                                                productData.produit_id
+                                                                                productData.id
                                                                             )
                                                                         }
                                                                     >
                                                                         <FontAwesomeIcon icon={faTrash} />
                                                                     </Button>
                                                                 </td>
+                                                                {/*<Modal.Footer>*/}
+                                                                {/*            <Button variant="secondary" onClick={handleModalClose}>*/}
+                                                                {/*                Annuler*/}
+                                                                {/*            </Button>*/}
+                                                                {/*            <Button variant="primary" onClick={handleProduct}>*/}
+                                                                {/*                Valider la sélection*/}
+                                                                {/*            </Button>*/}
+                                                                {/*        </Modal.Footer>*/}
                                                             </tr>
                                                         ))}
                                                         </tbody>
@@ -1180,6 +1385,16 @@ const DevisList = () => {
                                         </div>
                                     </div>
                                 </div>
+                                {formData.status === "Valider" && (
+                                    <div className="col-4">
+                                        <Button className="btn btn-sm m-2" variant="success" onClick={handleGenerateFacture}>
+                                            <LiaFileInvoiceSolid />
+                                        </Button>
+                                        <Button className="btn btn-sm m-2" variant="dark" onClick={handleGenerateBonLivraison}>
+                                            <CiDeliveryTruck />
+                                        </Button>
+                                    </div>
+                                )}
                                 <Form.Group className="col-4">
                                     <Button variant="primary" type="submit">
                                         Enregistrer le devis
@@ -1240,13 +1455,13 @@ const DevisList = () => {
                                                 </div>
                                             </td>
                                             <td>
-                            {/*               <input*/}
-                            {/*  type="checkbox"*/}
-                            {/*  checked={selectedItems.some(*/}
-                            {/*    (item) => item.id === devis.id*/}
-                            {/*  )}*/}
-                            {/*  onChange={() => handleSelectItem(devis)}*/}
-                            {/*/>*/}
+                                                {/*               <input*/}
+                                                {/*  type="checkbox"*/}
+                                                {/*  checked={selectedItems.some(*/}
+                                                {/*    (item) => item.id === devis.id*/}
+                                                {/*  )}*/}
+                                                {/*  onChange={() => handleSelectItem(devis)}*/}
+                                                {/*/>*/}
                                                 <input
                                                     type="checkbox"
                                                     onChange={() => handleCheckboxChange(devis.id)}
@@ -1256,63 +1471,55 @@ const DevisList = () => {
                                             <td>{devis.reference}</td>
                                             <td>{devis.date}</td>
                                             <td>{devis.client.raison_sociale}</td>
-                                            <td>{getTotalHT(devis.lignedevis)} DH</td> {/* Display Total HT */}
-                                            <td>{calculateTVA(getTotalHT(devis.lignedevis))} DH</td> {/* Display TVA */}
-                                            <td>{getTotalTTC(devis.lignedevis)} DH</td> {/* Display Total TTC */}
+                                            <td>{getTotalHT(devis.ligneDevis)} DH</td> {/* Display Total HT */}
+                                            <td>{calculateTVA(getTotalHT(devis.ligneDevis))} DH</td> {/* Display TVA */}
+                                            <td>{getTotalTTC(devis.ligneDevis)} DH</td> {/* Display Total TTC */}
                                             <td>{devis.status}</td>
                                             <td>{devis.validation_offer}</td>
                                             <td>{devis.modePaiement}</td>
                                             <td>
                                                 <div className="d-inline-flex text-center">
-                                                    <Button
-                                                        className="col-3 btn btn-sm btn-info m-2"
-                                                        onClick={() => handleEdit(devis)}
-                                                    >
-                                                        <i className="fas fa-edit"></i>
-                                                    </Button>
-                                                    <Button
-                                                        className="col-3 btn btn-danger btn-sm m-2"
-                                                        onClick={() => handleDelete(devis.id)}
-                                                    >
-                                                        <FontAwesomeIcon icon={faTrash} />
-                                                    </Button>
-                                                    <Button
-                                                        className="col-3 btn btn-sm m-2"
-                                                        onClick={() => handlePrint(devis.id)}
-                                                    >
-                                                        <FontAwesomeIcon icon={faFilePdf} />
-                                                    </Button>
-                                                    <Button
-                                                        className="col-3 btn btn-sm m-2"
-                                                        onClick={() => print(devis.id)}
-                                                    >
-                                                        <FontAwesomeIcon icon={faPrint} />
-                                                    </Button>
-                                                    {devis.status === "Valider" && (
-                                                        <>
-                                                            <Button variant="success" onClick={handleGenerateFacture}>
-                                                                <LiaFileInvoiceSolid />
 
+
+                                                        <Button className="btn btn-info btn-sm m-2" onClick={() => handleEdit(devis)}>
+                                                            <i className="fas fa-edit"></i>
+                                                        </Button>
+                                                        <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(devis.id)}>
+                                                            <FontAwesomeIcon icon={faTrash} />
+                                                        </Button>
+
+                                                        <Button className="btn btn-sm m-2" onClick={() => handlePDF(devis.id)}>
+                                                            <FontAwesomeIcon icon={faFilePdf} />
+                                                        </Button>
+                                                        <Button className="btn btn-sm m-2" onClick={() => print(devis.id)}>
+                                                            <FontAwesomeIcon icon={faPrint} />
+                                                        </Button>
+
+                                                    {devis.status === "Valider" && (
+                                                        <div>
+                                                            <Button className="btn btn-sm m-2" variant="success" onClick={() => handleGenerateFacture(devis)}>
+                                                                <LiaFileInvoiceSolid />
                                                             </Button>
-                                                            <Button variant="info" onClick={handleGenerateBonLivraison}>
+                                                            <Button className="btn btn-sm m-2" variant="dark" onClick={() =>handleGenerateBonLivraison(devis)}>
                                                                 <CiDeliveryTruck />
                                                             </Button>
-                                                        </>
+                                                        </div>
                                                     )}
-
                                                 </div>
                                             </td>
+
                                         </tr>
-                                        {expandedRows.includes(devis.id) && devis.lignedevis && (
+                                        {expandedRows.includes(devis.id) && devis.ligneDevis && (
                                             <tr>
                                                 <td colSpan="12">
-                                                    <div id="lignesDevis">
+                                                    <div>
                                                         <table
                                                             className="table table-responsive table-bordered"
                                                             style={{ backgroundColor: "#adb5bd" }}
                                                         >
                                                             <thead>
                                                             <tr>
+                                                                <th>Produit</th>
                                                                 <th>Code Produit</th>
                                                                 <th>Description</th>
                                                                 <th>Quantite</th>
@@ -1322,34 +1529,34 @@ const DevisList = () => {
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {devis.lignedevis.map((ligneDevis) => (
-                                                                <tr key={ligneDevis.id}>
-                                                                    <td>{ligneDevis.Code_produit}</td>
-                                                                    <td>{ligneDevis.designation}</td>
-                                                                    <td>{ligneDevis.quantite}</td>
-                                                                    <td>{ligneDevis.prix_vente} DH</td>
-                                                                    <td>
-                                                                        {(
-                                                                            ligneDevis.quantite *
-                                                                            ligneDevis.prix_vente
-                                                                        ).toFixed(2)}{" "}
-                                                                        DH
-                                                                    </td>
-                                                                    {/* <td className="no-print">
-                                              <button
-                                                className="btn btn-sm btn-info m-1"
-                                                onClick={() => {
-                                                  handleEditSC(siteClient);
-                                                }}>
-                                                <i className="fas fa-edit"></i>
-                                              </button>
-                                              <button className="btn btn-sm btn-danger m-1"
-                                                onClick={() => handleDeleteSiteClient(siteClient.id)}>
-                                                <FontAwesomeIcon icon={faTrash} />
-                                              </button>
-                                            </td> */}
-                                                                </tr>
-                                                            ))}
+                                                            {devis.ligneDevis.map((ligneDevis) => {
+                                                                    const produit = produits.find(
+                                                                        (prod) =>
+                                                                            prod.id === ligneDevis.produit_id
+                                                                    );
+                                                                    console.log("prod",produit)
+                                                                    console.log("id",ligneDevis.produit_id)
+
+                                                                    return (
+                                                                        <tr key={ligneDevis.id}>
+                                                                            <td>{produit.Code_produit}</td>
+                                                                            <td>{produit.designation}</td>
+                                                                            <td>{produit.calibre.calibre}</td>
+                                                                            <td>{produit.quantite}</td>
+                                                                            <td>{ligneDevis.prix_vente} DH</td>
+                                                                            <td>
+                                                                                {(
+                                                                                    ligneDevis.quantite *
+                                                                                    ligneDevis.prix_vente
+                                                                                ).toFixed(2)}{" "}
+                                                                                DH
+                                                                            </td>
+
+
+                                                                        </tr>
+                                                                    );
+                                                                }
+                                                            )}
                                                             </tbody>
                                                         </table>
                                                     </div>

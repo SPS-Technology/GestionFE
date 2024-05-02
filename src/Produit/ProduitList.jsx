@@ -30,6 +30,7 @@ const ProduitList = () => {
     const [produits, setProduits] = useState([]);
     const [user, setUser] = useState({});
     const [categories, setCategories] = useState([]);
+    const [calibres, setCalibres] = useState([]);
     let isEdit = false;
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredProduits, setFilteredProduits] = useState([]);
@@ -55,7 +56,7 @@ const ProduitList = () => {
         Code_produit: "",
         designation: "",
         type_quantite: "",
-        calibre: "",
+        calibre_id: "",
         user_id: "",
         prix_vente: "",
         categorie_id: "",
@@ -79,6 +80,10 @@ const ProduitList = () => {
                 "http://localhost:8000/api/categories"
             );
             setCategories(responseCategories.data);
+            const responseCalibres = await axios.get(
+                "http://localhost:8000/api/calibres"
+            );
+            setCalibres(responseCalibres.data);
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -224,7 +229,7 @@ const ProduitList = () => {
             designation: "",
             Code_produit: "",
             type_quantite: "",
-            calibre: "",
+            calibre_id: "",
             categorie_id: "",
             user_id: "",
         });
@@ -237,7 +242,7 @@ const ProduitList = () => {
             Code_produit: produit.Code_produit,
             designation: produit.designation,
             type_quantite: produit.type_quantite,
-            calibre: produit.calibre,
+            calibre_id: produit.calibre_id,
             categorie_id: produit.categorie_id,
             prix_vente: produit. prix_vente,
             user_id: user.id,
@@ -292,7 +297,7 @@ const ProduitList = () => {
                     Code_produit: "",
                     designation: "",
                     type_quantite: "",
-                    calibre: "",
+                    calibre_id: "",
                     prix_vente: "",
                     categorie_id: "",
                     user_id: "",
@@ -360,6 +365,27 @@ const ProduitList = () => {
                 icon: "error",
                 title: "Erreur!",
                 text: "Échec de la suppression de la categorie.",
+            });
+        }
+    };
+    const handleDeletecalibre = async (calibreId) => {
+        try {
+            const response = await axios.delete(
+                `http://localhost:8000/api/calibres/${calibreId}`
+            );
+            console.log(response.data);
+            Swal.fire({
+                icon: "success",
+                title: "Succès!",
+                text: "Calibre supprimé avec succès.",
+            });
+            fetchProduits();
+        } catch (error) {
+            console.error("Error deleting calibre:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression du calibre.",
             });
         }
     };
@@ -437,84 +463,150 @@ const ProduitList = () => {
             }
         }
     };
+    const handleAddCalibre = async () => {
+        const { value: calibreData } = await Swal.fire({
+            title: "Ajouter un calibre",
+            html: `
+          <form id="addCategoryForm">
+              <input id="swal-input1" class="swal2-input" placeholder="Calibre" name="calibre">
+            
+              <div class="form-group mt-3">
+                  <table class="table table-hover">
+                      <thead>
+                          <tr>
+                              <th>Id</th>
+                              <th>Calibre</th>
+                           
+                          </tr>
+                      </thead>
+                      <tbody>
+                          ${calibres
+                .map(
+                    (calibre) => `
+                              <tr key=${calibre.id}>
+                                  <td>${calibre.id}</td>
+                                  <td>${calibre.calibre}</td>
+                                 
+                                  <td>
+                                      <select id="actionDropdown_${calibre.id}" class="form-control">
+                                          <option value="">Select Action</option>
+                                          <option value="modify_${calibre.id}">Modifier</option>
+                                          <option value="delete_${calibre.id}">Supprimer</option>
+                                      </select>
+                                  </td>
+                              </tr>
+                          `
+                )
+                .join("")}
+                      </tbody>
+                  </table>
+              </div>
+          </form>
+      `,
+            showCancelButton: true,
+            confirmButtonText: "Ajouter",
+            cancelButtonText: "Annuler",
+            preConfirm: () => {
+                const calibre = Swal.getPopup().querySelector("#swal-input1").value;
 
+                return { calibre};
+            },
+        });
+
+        if (calibreData) {
+            try {
+                const response = await axios.post(
+                    "http://localhost:8000/api/calibres",
+                    calibreData
+                );
+                console.log(response.data);
+                Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: "Calibre ajoutée avec succès.",
+                });
+                fetchProduits();
+            } catch (error) {
+                console.error("Error adding calibre:", error);
+                Swal.fire({
+                    icon: "error",
+                    title: "Erreur!",
+                    text: "Échec de l'ajout du calibre.",
+                });
+            }
+        }
+    };
     document.addEventListener("change", async function (event) {
         if (event.target && event.target.id.startsWith("actionDropdown_")) {
-            const [action, categoryId] = event.target.value.split("_");
+            const [action, calibreId] = event.target.value.split("_");
             if (action === "delete") {
                 // Delete action
-                handleDeletecatgeorie(categoryId);
+                handleDeletecalibre(calibreId);
             } else if (action === "modify") {
                 // Modify action
                 try {
                     const response = await axios.get(
-                        `http://localhost:8000/api/categories/${categoryId}`
+                        `http://localhost:8000/api/calibres/${calibreId}`
                     );
-                    const categoryToModify = response.data;
+                    const calibreToModify = response.data;
 
-                    if (!categoryToModify) {
+                    if (!calibreToModify) {
                         console.error("Category not found or data is missing");
                         return;
                     }
 
-                    const categorieValue =
-                        categoryToModify && categoryToModify.categorie
-                            ? categoryToModify.categorie
+                    const calibreValue =
+                        calibreToModify && calibreToModify.calibre
+                            ? calibreToModify.calibre
                             : "";
 
-                    const descriptionValue =
-                        categoryToModify && categoryToModify.descriptionart
-                            ? categoryToModify.description
-                            : "";
+
 
                     const { value: modifiedData } = await Swal.fire({
-                        title: "Modifier une catégorie",
+                        title: "Modifier un calibre",
                         html: `
-                    <form id="modifyCategoryForm">
-                        <input id="swal-modify-input1" class="swal2-input" placeholder="Catégorie" name="categorie" value="${categorieValue}">
-                        <input id="swal-modify-input2" class="swal2-input" placeholder="Description" name="description" value="${descriptionValue}">
+                    <form id="modifyCalibreForm">
+                        <input id="swal-modify-input1" class="swal2-input" placeholder="Calibre" name="calibre" value="${calibreValue}">
                     </form>
                 `,
                         showCancelButton: true,
                         confirmButtonText: "Modifier",
                         cancelButtonText: "Annuler",
                         preConfirm: () => {
-                            const modifiedCategorie = Swal.getPopup().querySelector(
+                            const modifiedCalibre = Swal.getPopup().querySelector(
                                 "#swal-modify-input1"
                             ).value;
-                            const modifiedDescription = Swal.getPopup().querySelector(
-                                "#swal-modify-input2"
-                            ).value;
+
 
                             return {
-                                categorie: modifiedCategorie,
-                                description: modifiedDescription,
+                                calibre: modifiedCalibre,
+
                             };
                         },
                     });
 
                     if (modifiedData) {
                         const modifyResponse = await axios.put(
-                            `http://localhost:8000/api/categories/${categoryId}`,
+                            `http://localhost:8000/api/calibres/${calibreId}`,
                             modifiedData
                         );
                         console.log(modifyResponse.data);
                         Swal.fire({
                             icon: "success",
                             title: "Succès!",
-                            text: "Catégorie modifiée avec succès.",
+                            text: "Calibre modifiée avec succès.",
                         });
                         fetchProduits();
                     }
                 } catch (error) {
                     console.error(
-                        "Erreur lors de la modification de la catégorie:",
+                        "Erreur lors de la modification du Calibre:",
                         error
                     );
                     Swal.fire({
                         icon: "error",
                         title: "Erreur!",
-                        text: "Échec de la modification de la catégorie.",
+                        text: "Échec de la modification du Calibre.",
                     });
                 }
             }
@@ -626,17 +718,28 @@ const ProduitList = () => {
                                         />
                                     </div>
                                 </Form.Group>
-                                <Form.Group className="col-sm-5 m-2 " controlId="calibre">
-                                    <Form.Label>Calibre</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        name="calibre"
-                                        value={formData.calibre}
-                                        onChange={handleChange}
-                                        placeholder="Calibre"
-                                        className="form-control-sm"
-                                        required
+                                <Form.Group className="col-sm-5 m-2" controlId="calibre-id">
+                                    <FontAwesomeIcon
+                                        icon={faPlus}
+                                        className="ml-2 text-primary"
+                                        style={{ cursor: "pointer" }}
+                                        onClick={handleAddCalibre}
                                     />
+                                    <Form.Label>Calibre</Form.Label>
+
+                                    <Form.Select
+                                        name="calibre_id"
+                                        value={formData.calibre_id}
+                                        onChange={handleChange}
+                                        className="form-select form-select-sm"
+                                    >
+                                        <option value="">Sélectionner un calibre</option>
+                                        {calibres.map((calibre) => (
+                                            <option key={calibre.id} value={calibre.id}>
+                                                {calibre.calibre}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
                                 </Form.Group>
                                 <Form.Group className="col-sm-5 m-2 " controlId="prix_vente">
                                     <Form.Label>Prix Vente</Form.Label>
@@ -757,7 +860,7 @@ const ProduitList = () => {
                                                 <td style={tableCellStyle}>
                                                     {produit.type_quantite}
                                                 </td>
-                                                <td style={tableCellStyle}>{produit.calibre}</td>
+                                                <td style={tableCellStyle}>{produit.calibre_id}</td>
                                                 <td style={tableCellStyle}>{produit.prix_vente}</td>
                                                 <td style={tableCellStyle}>
                                                     {produit.categorie
