@@ -13,17 +13,38 @@ import "jspdf-autotable";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {faTrash, faFilePdf, faPrint, faPlus,faMinus,} from "@fortawesome/free-solid-svg-icons";
 import TablePagination from "@mui/material/TablePagination";
+import Select from "react-dropdown-select";
 
 
 const FactureList = () => {
     const [factures, setFactures] = useState([]);
+    const [LigneFacture, setLigneFacture] = useState([]);
     const [clients, setClients] = useState([]);
     const [devises, setDevises] = useState([]);
-    const [formData, setFormData] = useState({ reference: "", date: "", ref_BL: "", ref_BC: "", modePaiement: "",total_ttc:"",client_id:"", user_id: "", });
+    const [authId, setAuthId] = useState([]);
+
+    const [selectedClient, setSelectedClient] = useState([]);
+
+    const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
+    const [editingFacture, setEditingFacture] = useState(null); // State to hold the devis being edited
+
+    const [formData, setFormData] = useState({ reference: "", date: "", ref_BL: "", ref_BC: "", modePaiement: "",total_ttc:"",client_id:"", user_id: "",
+        Code_produit: "",
+        designation: "",
+        prix_vente: "",
+        quantite: "",
+        id_facture: "",
+    });
     const [formContainerStyle, setFormContainerStyle] = useState({ right: '-100%' });
     const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: '0px' });
     const [showForm, setShowForm] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
+    const [produits, setProduits] = useState([]);
+    const [selectedProductsData, setSelectedProductsData] = useState([]);
+    const [modifiedQuantiteValues, setModifiedQuantiteValues] = useState({});
+    const [modifiedPrixValues, setModifiedPrixValues] = useState({});
+
     const [filteredfactures, setFilteredfactures] = useState([]);
 
     // Pagination calculations
@@ -33,6 +54,82 @@ const FactureList = () => {
     const indexOfFirstFacture = indexOfLastFacture - rowsPerPage;
     const currentFactures = factures.slice(indexOfFirstFacture, indexOfLastFacture);
 
+    const handleAddEmptyRow = () => {
+        setSelectedProductsData([...selectedProductsData, {}]);
+        console.log("selectedProductData", selectedProductsData);
+    };
+    const handleProductSelection = (selectedProduct, index) => {
+        console.log("selectedProduct", selectedProduct);
+        const updatedSelectedProductsData = [...selectedProductsData];
+        updatedSelectedProductsData[index] = selectedProduct;
+        setSelectedProductsData(updatedSelectedProductsData);
+        console.log("selectedProductsData", selectedProductsData);
+    };
+    const populateProductInputs = (lignefacturesId, inputType) => {
+        console.log("lignefacturesId", lignefacturesId);
+        const existingLigneFactures = selectedProductsData.find(
+            (LigneFacture) => LigneFacture.id === lignefacturesId
+        );
+        console.log("existingLigneFactures", existingLigneFactures);
+
+        if (existingLigneFactures) {
+            return existingLigneFactures[inputType];
+        }
+        return "";
+    };
+    const getClientValue = (clientId, field) => {
+        // Find the product in the produits array based on produitId
+        const client = clients.find((c) => c.id === clientId);
+
+        // If the product is found, return the value of the specified field
+        if (client) {
+            return client[field];
+        }
+
+        // If the product is not found, return an empty string or any default value
+        return "";
+    };
+    const handleInputChange = (index, inputType, event) => {
+        const newValue = event.target.value;
+        console.log("selectedProductsData", selectedProductsData);
+        console.log("index", index);
+        if (selectedProductsData[index]) {
+            const productId = selectedProductsData[index].produit_id;
+
+            if (inputType === "prix_vente") {
+                setModifiedPrixValues((prev) => {
+                    const updatedValues = {
+                        ...prev,
+                        [`${index}_${productId}`]: newValue,
+                    };
+                    console.log("Modified prix values:", updatedValues);
+                    return updatedValues;
+                });
+            } else if (inputType === "quantite") {
+                setModifiedQuantiteValues((prev) => {
+                    const updatedValues = {
+                        ...prev,
+                        [`${index}_${productId}`]: newValue,
+                    };
+                    console.log("Modified quantite values:", updatedValues);
+                    return updatedValues;
+                });
+            }
+        }
+    };
+    const handleDeleteProduct = (index, id) => {
+        const updatedSelectedProductsData = [...selectedProductsData];
+        updatedSelectedProductsData.splice(index, 1);
+        setSelectedProductsData(updatedSelectedProductsData);
+        if (id) {
+            axios
+                .delete(`http://localhost:8000/api/lignefactures/${id}`)
+                .then(() => {
+                    fetchFactures();
+                });
+        }
+    };
+
     const handleChangeRowsPerPage = (event) => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
@@ -40,12 +137,23 @@ const FactureList = () => {
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
+    const getElementValueById = (id) => {
+        return document.getElementById(id)?.value || "";
+    };
 
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleClientSelection = (selected) => {
+        if (selected) {
+            setSelectedClient(selected);
+            console.log("selectedClient", selectedClient);
+        } else {
+            setSelectedClient(null);
+        }
+    };
 
     const fetchFactures = async () => {
         try {
@@ -58,10 +166,29 @@ const FactureList = () => {
             // console.log("API Response:", response.data);
             setClients(ClientResponse.data.client);
 
+            const LigneFactureResponse = await axios.get(
+                "http://localhost:8000/api/lignefactures"
+            );
+            setLigneFacture(LigneFactureResponse.data);
+
+            console.log("lignefactures",LigneFactureResponse.data);
+
+            const produitResponse = await axios.get(
+                "http://localhost:8000/api/produits"
+            );
+            setProduits(produitResponse.data.produit);
+
+
             const DeviesResponse = await axios.get(
                 "http://localhost:8000/api/devises"
             );
             setDevises(DeviesResponse.data.devis);
+
+            const userResponse = await axios.get(
+                "http://localhost:8000/api/user"
+            );
+            console.log("user authentifie ",userResponse)
+            setAuthId(userResponse.data.id);
         } catch (error) {
             console.error("Error fetching factures:", error);
         }
@@ -88,30 +215,168 @@ const FactureList = () => {
         e.preventDefault();
 
         try {
-            if (formData.id) {
-                // Editing an existing entry
-                await axios.put(
-                    `http://localhost:8000/api/factures/${formData.id}`,
-                    formData
+            // const userResponse = await axios.get("http://localhost:8000/api/users", {
+            //   withCredentials: true,
+            //   headers: {
+            //     "X-CSRF-TOKEN": csrfToken,
+            //   },
+            // });
+
+            // const authenticatedUserId = userResponse.data[0].id;
+            // console.log("auth user", authenticatedUserId);
+            // Préparer les données du Devis
+            console.log("authId",authId)
+            console.log("selectedClient",selectedClient)
+            const FactureData = {
+                date: formData.date,
+                ref_BL: formData.ref_BL,
+                ref_BC: formData.ref_BC,
+                modePaiement:formData.modePaiement,
+                total_ttc:formData.total_ttc,
+                reference: formData.reference,
+                client_id: selectedClient.id,
+                user_id: authId,
+
+            };
+
+
+            let response;
+            if (editingFacture) {
+                // Mettre à jour le Devis existant
+                response = await axios.put(
+                    `http://localhost:8000/api/factures/${editingFacture.id}`,
+                    {
+                        date: formData.date,
+                        ref_BL: formData.ref_BL,
+                        ref_BC: formData.ref_BC,
+                        modePaiement:formData.modePaiement,
+                        total_ttc:formData.total_ttc,
+                        reference: formData.reference,
+                        client_id: selectedClient.id,
+                        user_id: authId,
+
+                    }
                 );
+                const existingLigneFacturesResponse = await axios.get(
+                    `http://localhost:8000/api/lignefactures/${editingFacture.id}`
+                );
+
+                const existingLigneFacture =
+                    existingLigneFacturesResponse.data.lignefactures;
+                console.log("existing lignefactures", existingLigneFacture);
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectedProduct, index) => {
+                        // const existingLigneDevis = existingLigneDevis.find(
+                        //   (ligneDevis) =>
+                        //     ligneDevis.produit_id === selectedProduct.produit_id
+                        // );
+
+                        return {
+                            id: selectedProduct.id,
+                            id_facture: editingFacture.id,
+                            produit_id: selectedProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectedProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectedProduct.produit_id}`
+                            ),
+                            // Update other properties as needed
+                        };
+                    }
+                );
+                console.log("selectedPrdsData:", selectedPrdsData);
+                for (const lignefactureData of selectedPrdsData) {
+                    // Check if ligneDevis already exists for this produit_id and update accordingly
+
+                    if (lignefactureData.id) {
+                        // If exists, update the existing ligneDevis
+                        await axios.put(
+                            `http://localhost:8000/api/lignefactures/${lignefactureData.id}`,
+                            lignefactureData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    } else {
+                        await axios.post(
+                            "http://localhost:8000/api/lignefactures",
+                            lignefactureData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+
+
+
             } else {
-                // Adding a new entry
-                await axios.post("http://localhost:8000/api/factures", formData);
+                // Créer un nouveau Devis
+                response = await axios.post(
+                    "http://localhost:8000/api/factures",
+                    FactureData
+                );
+                //console.log(response.data.devi)
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectProduct, index) => {
+                        return {
+                            id_facture: response.data.facture.id,
+                            produit_id: selectProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectProduct.produit_id}`
+                            ),
+                        };
+                    }
+                );
+                console.log("selectedPrdsData", selectedPrdsData);
+                for (const lignefactureData of selectedPrdsData) {
+                    // Sinon, il s'agit d'une nouvelle ligne de Devis
+                    await axios.post(
+                        "http://localhost:8000/api/lignefactures",
+                        lignefactureData
+                    );
+                }
+
             }
+            console.log("response of postFACTURE: ", response.data);
+
             fetchFactures();
-            // Show success message using SweetAlert
+
+            setSelectedClient([]);
+
+            setSelectedProductsData([]);
+            //fetchExistingLigneDevis();
+            closeForm();
+
+            // Afficher un message de succès à l'utilisateur
             Swal.fire({
                 icon: "success",
-                title: "Success!",
-                text: "Form submitted successfully!",
+                title: "FACTURE ajoutée avec succès",
+                text: "La FACTURE a été ajoutée avec succès.",
             });
-
-            clearFormData();
-            closeForm();
         } catch (error) {
-            console.error("Error:", error);
-            // Handle error as needed
+            console.error("Erreur lors de la soumission des données :", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: "error",
+                title: "Erreur !",
+                text: "Erreur !",
+            });
         }
+        closeForm();
     };
 
 
@@ -172,6 +437,8 @@ const FactureList = () => {
 
     const handleEdit = (facture) => {
         // Populate the form data with the details of the selected facture
+        setEditingFacture(facture);
+
         setFormData({
             id: facture.id,
             reference: facture.reference,
@@ -184,9 +451,26 @@ const FactureList = () => {
             id_devis: facture.id_devis,
             user_id: facture.user_id,
         });
-        if (formContainerStyle.right === '-100%') {
-            setFormContainerStyle({ right: '0' });
-            setTableContainerStyle({ marginRight: '500px' });
+        const selectedProducts = facture.ligneFacture && facture.ligneFacture.map((ligneFacture) => {
+            const product = produits.find(
+                (produit) => produit.id === ligneFacture.produit_id
+            );
+            console.log("product",product)
+            return {
+                id: ligneFacture.id,
+                Code_produit: product.Code_produit,
+                calibre_id: product.calibre_id,
+                designation: product.designation,
+                produit_id: ligneFacture.produit_id,
+                quantite: ligneFacture.quantite,
+                prix_vente: ligneFacture.prix_vente,
+            };
+        });
+        setSelectedProductsData(selectedProducts);
+        console.log("selectedProducts for edit",selectedProducts)
+        if (formContainerStyle.right === "-100%") {
+            setFormContainerStyle({ right: "0" });
+            setTableContainerStyle({ marginRight: "500px" });
         } else {
             closeForm();
         }
@@ -208,7 +492,13 @@ const FactureList = () => {
             client_id: '',
             ice: '',
             code_postal: '',
+            Code_produit: "",
+            designation: "",
+            prix_vente: "",
+            quantite: "",
+            id_facture: "",
         });
+        setEditingFacture(null); // Clear editing client
 
     };
 
@@ -470,31 +760,69 @@ const FactureList = () => {
                                         onChange={handleChange}
                                         name="ref_BL"
                                     />
-                                    <Form.Group className="m-2 col-4" controlId="user_id">
-                                        <Form.Label>User_id</Form.Label>
-                                        <Form.Control
-                                            type="text"
-                                            value={formData.user_id}
-                                            onChange={handleChange}
-                                            name="user_id"
-                                        />
-                                    </Form.Group>
-                                    <Form.Group className="m-2 col-4" controlId="client_id">
-                                        <Form.Label>Client</Form.Label>
-                                        <Form.Select
-                                            value={formData.client_id}
-                                            onChange={handleChange}
-                                            name="client_id"
-                                        >
-                                            <option value="">Sélectionner un client</option>
-                                            {clients.map((client) => (
-                                                <option key={client.id} value={client.id}>
-                                                    {client.raison_sociale}
-                                                </option>
-                                            ))}
-                                        </Form.Select>
-                                    </Form.Group>
+                                    {/*<Form.Group className="m-2 col-4" controlId="user_id">*/}
+                                    {/*    <Form.Label>User_id</Form.Label>*/}
+                                    {/*    <Form.Control*/}
+                                    {/*        type="text"*/}
+                                    {/*        value={formData.user_id}*/}
+                                    {/*        onChange={handleChange}*/}
+                                    {/*        name="user_id"*/}
+                                    {/*    />*/}
+                                    {/*</Form.Group>*/}
+
                                 </Form.Group>
+                                <div className="col-md-12">
+                                    <div className="row mb-3">
+                                        <div className="col-sm-6">
+                                            <label htmlFor="client_id" className="col-form-label">
+                                                Client:
+                                            </label>
+                                        </div>
+                                        <div className="col-sm-6">
+                                            {console.log("selected client  :", selectedClient)}
+                                            <Select
+                                                options={clients.map((client) => ({
+                                                    value: client.id,
+                                                    label: client.raison_sociale,
+                                                }))}
+                                                onChange={(selected) => {
+                                                    if (selected && selected.length > 0) {
+                                                        const client = clients.find(
+                                                            (client) => client.id === selected[0].value
+                                                        );
+                                                        handleClientSelection({
+                                                            id: selected[0].value,
+                                                            raison_sociale: client.raison_sociale,
+                                                            adresse: client.adresse,
+                                                            tele: client.tele,
+                                                            abreviation: client.abreviation,
+                                                            code_postal: client.code_postal,
+                                                            ice: client.ice,
+                                                            zone: client.zone,
+                                                            siteclients: client.siteclients,
+                                                        });
+                                                    } else {
+                                                        handleClientSelection(null); // Handle deselection
+                                                    }
+                                                }}
+                                                values={
+                                                    formData.client_id
+                                                        ? [
+                                                            {
+                                                                value: formData.client_id,
+                                                                label: getClientValue(
+                                                                    formData.client_id,
+                                                                    "raison_sociale"
+                                                                ),
+                                                            },
+                                                        ]
+                                                        : []
+                                                }
+                                                placeholder="Client ..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                                 <Form.Group className="m-2 col-4" controlId="ref_BC">
                                     <Form.Label>ref_BC</Form.Label>
                                     <Form.Control
@@ -522,6 +850,176 @@ const FactureList = () => {
                                         name="modePaiement"
                                     />
                                 </Form.Group>
+                                <div>
+                                    <Button
+                                        className="btn btn-sm mb-2 "
+                                        variant="primary"
+                                        onClick={handleAddEmptyRow}
+                                    >
+                                        <FontAwesomeIcon icon={faPlus} />
+                                    </Button>
+                                    <strong>Ajouter Produit</strong>
+                                </div>
+
+                                <div className="col-md-12">
+                                    <div className="row mb-3">
+                                        <div className="col-sm-12">
+                                            <Form.Group controlId="selectedProduitTable">
+                                                <div className="table-responsive">
+                                                    <table className="table table-bordered ">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Code Produit</th>
+                                                            <th>Designation</th>
+                                                            <th>Calibre</th>
+                                                            <th>Quantité</th>
+                                                            <th>Prix vente</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        {selectedProductsData.map((productData, index) => (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    <Select
+                                                                        options={produits.map((produit) => ({
+                                                                            value: produit.id,
+                                                                            label: produit.Code_produit,
+                                                                        }))}
+                                                                        onChange={(selected) => {
+                                                                            const produit = produits.find(
+                                                                                (prod) => prod.id === selected[0].value
+                                                                            );
+                                                                            handleProductSelection(
+                                                                                {
+                                                                                    produit_id: selected[0].value,
+                                                                                    Code_produit: produit.Code_produit,
+                                                                                    designation: produit.designation,
+                                                                                    calibre_id: produit.calibre_id,
+                                                                                    calibre: produit.calibre,
+                                                                                },
+                                                                                index
+                                                                            );
+                                                                        }}
+                                                                        values={
+                                                                            productData.produit_id
+                                                                                ? [
+                                                                                    {
+                                                                                        value: productData.produit_id,
+                                                                                        label: productData.Code_produit,
+                                                                                    },
+                                                                                ]
+                                                                                : []
+                                                                        }
+                                                                        placeholder="Code ..."
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <Select
+                                                                        options={produits.map((produit) => ({
+                                                                            value: produit.designation,
+                                                                            label: produit.designation,
+                                                                        }))}
+                                                                        onChange={(selected) => {
+                                                                            const produit = produits.find(
+                                                                                (prod) => prod.designation === selected.value
+                                                                            );
+                                                                            if (produit) {
+                                                                                handleProductSelection({
+                                                                                    produit_id: produit.id,
+                                                                                    Code_produit: produit.Code_produit,
+                                                                                    designation: selected.value,
+                                                                                    calibre_id: produit.calibre_id,
+                                                                                    calibre: produit.calibre,
+                                                                                }, index);
+                                                                            }
+                                                                        }}
+                                                                        value={{
+                                                                            value: productData.designation,
+                                                                            label: productData.designation,
+                                                                        }}
+                                                                        placeholder="Designation ..."
+                                                                    />
+                                                                </td>
+                                                                <td>{productData.calibre_id}</td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        id={`quantite_${index}_${productData.produit_id}`}
+                                                                        className="quantiteInput"
+                                                                        placeholder="Quantite"
+                                                                        value={
+                                                                            modifiedQuantiteValues[
+                                                                                `${index}_${productData.produit_id}`
+                                                                                ] ||
+                                                                            populateProductInputs(
+                                                                                productData.id,
+                                                                                "quantite"
+                                                                            )
+                                                                        }
+                                                                        onChange={(event) =>
+                                                                            handleInputChange(
+                                                                                index,
+                                                                                "quantite",
+                                                                                event
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        id={`prix_unitaire_${index}_${productData.produit_id}`}
+                                                                        className="prixInput"
+                                                                        placeholder="Prix"
+                                                                        value={
+                                                                            modifiedPrixValues[
+                                                                                `${index}_${productData.produit_id}`
+                                                                                ] ||
+                                                                            populateProductInputs(
+                                                                                productData.id,
+                                                                                "prix_vente"
+                                                                            )
+                                                                        }
+                                                                        onChange={(event) =>
+                                                                            handleInputChange(
+                                                                                index,
+                                                                                "prix_vente",
+                                                                                event
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <Button
+                                                                        className=" btn btn-danger btn-sm m-1"
+                                                                        onClick={() =>
+                                                                            handleDeleteProduct(
+                                                                                index,
+                                                                                productData.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <FontAwesomeIcon icon={faTrash} />
+                                                                    </Button>
+                                                                </td>
+                                                                {/*<Modal.Footer>*/}
+                                                                {/*            <Button variant="secondary" onClick={handleModalClose}>*/}
+                                                                {/*                Annuler*/}
+                                                                {/*            </Button>*/}
+                                                                {/*            <Button variant="primary" onClick={handleProduct}>*/}
+                                                                {/*                Valider la sélection*/}
+                                                                {/*            </Button>*/}
+                                                                {/*        </Modal.Footer>*/}
+                                                            </tr>
+                                                        ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </Form.Group>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="col-3 mt-5">
                                     <Button
                                         className="btn btn-sm"

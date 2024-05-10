@@ -19,19 +19,41 @@ import {
     faMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import TablePagination from "@mui/material/TablePagination";
+import Select from "react-dropdown-select";
 
 const LivraisonList = () => {
     const [livraisons, setLivraisons] = useState([]);
     const [clients, setClients] = useState([]);
+    const [authId, setAuthId] = useState([]);
+    const [selectedClient, setSelectedClient] = useState([]);
+    const [editinglivraison, setEditinglivraison] = useState(null); // State to hold the devis being edited
+    const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
+
+
     const [siteclients, setSiteclients] = useState([]);
     const [commandes, setCommandes] = useState([]);
     const [devises, setDevises] = useState([]);
+    const [produits, setProduits] = useState([]);
+    const [selectedProductsData, setSelectedProductsData] = useState([]);
+    const [modifiedQuantiteValues, setModifiedQuantiteValues] = useState({});
+    const [modifiedPrixValues, setModifiedPrixValues] = useState({});
+    const [Lignelivraisons, setLignelivraisons] = useState([]);
+
+
+    const [expandedRows, setExpandedRows] = useState([]);
+
     const [formData, setFormData] = useState({
         reference: "",
         date: "",
         commande_id: "",
         client_id: "",
         user_id: "",
+        Code_produit: "",
+        designation: "",
+        prix_vente: "",
+        quantite: "",
+        id_bon__livraisons: "",
     });
     const [errors, setErrors] = useState({
         reference: "",
@@ -64,15 +86,131 @@ const LivraisonList = () => {
         setRowsPerPage(parseInt(event.target.value, 10));
         setPage(0);
     };
+
+
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
     };
-
-    const handlecommandeSelection = (commande) => {
-        const commandeId = commande.value;
-        setFormData({...formData, [commande.name]: commandeId});
-        console.log("responsecommande ", commande);
+    const handleClientSelection = (selected) => {
+        if (selected) {
+            setSelectedClient(selected);
+            console.log("selectedClient", selectedClient);
+        } else {
+            setSelectedClient(null);
+        }
     };
+    const getClientValue = (clientId, field) => {
+        // Find the product in the produits array based on produitId
+        const client = clients.find((c) => c.id === clientId);
+
+        // If the product is found, return the value of the specified field
+        if (client) {
+            return client[field];
+        }
+
+        // If the product is not found, return an empty string or any default value
+        return "";
+    };
+
+    const getElementValueById = (id) => {
+        return document.getElementById(id)?.value || "";
+    };
+    const toggleRow = async (commandeId) => {
+        if (!expandedRows.includes(commandeId)) {
+            try {
+                // Récupérer les lignes de devis associées à ce devis
+                const commande = await fetchLivraisons(commandeId);
+
+                // Mettre à jour l'état pour inclure les lignes de devis récupérées
+                setCommandes((pervcommande) => {
+                    return pervcommande.map((commandeId) => {
+                        if (commandeId.id === commandeId) {
+                            return { ...commande, commande };
+                        }
+                        return commande;
+                        console.log("comande",commande)
+                    });
+                });
+
+                // Ajouter l'ID du devis aux lignes étendues
+                setExpandedRows([...expandedRows, commandeId]);
+                console.log("expandsRows",expandedRows);
+            } catch (error) {
+                console.error(
+                    "Erreur lors de la récupération des lignes de commande :",
+                    error
+                );
+            }
+        }
+    };
+
+    const handleProductSelection = (selectedProduct, index) => {
+        console.log("selectedProduct", selectedProduct);
+        const updatedSelectedProductsData = [...selectedProductsData];
+        updatedSelectedProductsData[index] = selectedProduct;
+        setSelectedProductsData(updatedSelectedProductsData);
+        console.log("selectedProductsData", selectedProductsData);
+    };
+
+
+    const handleAddEmptyRow = () => {
+        setSelectedProductsData([...selectedProductsData, {}]);
+        console.log("selectedProductData", selectedProductsData);
+    };
+    const populateProductInputs = (ligneLivraisonsId, inputType) => {
+        console.log("ligneLivraisonsId", ligneLivraisonsId);
+        const existingligneLivraisons = selectedProductsData.find(
+            (ligneLivraisons) => ligneLivraisons.id === ligneLivraisonsId
+        );
+        console.log("existing ligneLivraisons", existingligneLivraisons);
+
+        if (existingligneLivraisons) {
+            return existingligneLivraisons[inputType];
+        }
+        return "";
+    };
+    const handleInputChange = (index, inputType, event) => {
+        const newValue = event.target.value;
+        console.log("selectedProductsData", selectedProductsData);
+        console.log("index", index);
+        if (selectedProductsData[index]) {
+            const productId = selectedProductsData[index].produit_id;
+
+            if (inputType === "prix_vente") {
+                setModifiedPrixValues((prev) => {
+                    const updatedValues = {
+                        ...prev,
+                        [`${index}_${productId}`]: newValue,
+                    };
+                    console.log("Modified prix values:", updatedValues);
+                    return updatedValues;
+                });
+            } else if (inputType === "quantite") {
+                setModifiedQuantiteValues((prev) => {
+                    const updatedValues = {
+                        ...prev,
+                        [`${index}_${productId}`]: newValue,
+                    };
+                    console.log("Modified quantite values:", updatedValues);
+                    return updatedValues;
+                });
+            }
+        }
+    };
+
+    const handleDeleteProduct = (index, id) => {
+        const updatedSelectedProductsData = [...selectedProductsData];
+        updatedSelectedProductsData.splice(index, 1);
+        setSelectedProductsData(updatedSelectedProductsData);
+        if (id) {
+            axios
+                .delete(`http://localhost:8000/api/lignelivraisons/${id}`)
+                .then(() => {
+                    fetchLivraisons();
+                });
+        }
+    };
+
 
     const fetchLivraisons = async () => {
         try {
@@ -97,6 +235,24 @@ const LivraisonList = () => {
             setCommandes(CommandeResponse.data.commandes);
             console.log("commande Response:", response.data);
 
+            const lignelivraisonResponse = await axios.get(
+                "http://localhost:8000/api/lignelivraisons"
+            );
+            setLignelivraisons(lignelivraisonResponse.data.ligneLivraisons);
+
+
+
+            const produitResponse = await axios.get(
+                "http://localhost:8000/api/produits"
+            );
+            setProduits(produitResponse.data.produit);
+
+            const userResponse = await axios.get(
+                "http://localhost:8000/api/user"
+            );
+            console.log("user authentifie ",userResponse)
+            setAuthId(userResponse.data.id);
+
         } catch (error) {
             console.error("Error fetching factures:", error);
         }
@@ -117,52 +273,213 @@ const LivraisonList = () => {
     };
 
 
+    // const handleSubmit = async (e) => {
+    //     e.preventDefault();
+    //
+    //     try {
+    //         if (formData.id) {
+    //             // Editing an existing entry
+    //             await axios.put(
+    //                 `http://localhost:8000/api/livraisons/${formData.id}`,
+    //                 formData
+    //             );
+    //         } else {
+    //             // Adding a new entry
+    //             await axios.post("http://localhost:8000/api/livraisons", formData);
+    //         }
+    //         fetchLivraisons();
+    //         // Show success message using SweetAlert
+    //         Swal.fire({
+    //             icon: "success",
+    //             title: "Success!",
+    //             text: "Form submitted successfully!",
+    //         });
+    //         setErrors({
+    //             reference: "",
+    //             date: "",
+    //             commande_id: "",
+    //             client_id: "",
+    //             user_id: "",
+    //         });
+    //         clearFormData();
+    //         closeForm();
+    //     } catch (error) {
+    //         if (error.response) {
+    //             const serverErrors = error.response.data.error;
+    //             console.log(serverErrors);
+    //             setErrors({
+    //                 reference: serverErrors.reference ? serverErrors.reference[0] : "",
+    //                 date: serverErrors.date ? serverErrors.date[0] : "",
+    //                 commande_id: serverErrors.commande_id
+    //                     ? serverErrors.commande_id[0]
+    //                     : "",
+    //                 // periode: serverErrors.periode ? serverErrors.periode[0] : "",
+    //             });
+    //         }
+    //         // Handle error as needed
+    //     }
+    // };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            if (formData.id) {
-                // Editing an existing entry
-                await axios.put(
-                    `http://localhost:8000/api/livraisons/${formData.id}`,
-                    formData
+            // const userResponse = await axios.get("http://localhost:8000/api/users", {
+            //   withCredentials: true,
+            //   headers: {
+            //     "X-CSRF-TOKEN": csrfToken,
+            //   },
+            // });
+
+            // const authenticatedUserId = userResponse.data[0].id;
+            // console.log("auth user", authenticatedUserId);
+            // Préparer les données du Devis
+            console.log("authId",authId)
+            console.log("selectedClient",selectedClient)
+            const LivraisonData = {
+                reference: formData.reference,
+                date: formData.date,
+                commande_id: formData.commande_id,
+                client_id: selectedClient.id,
+                user_id: authId,
+            };
+
+            let response;
+            if (editinglivraison) {
+                // Mettre à jour le Devis existant
+                response = await axios.put(
+                    `http://localhost:8000/api/livraisons/${editinglivraison.id}`,
+                    {
+                        reference: formData.reference,
+                        date: formData.date,
+                        commande_id: formData.commande_id,
+                        client_id: selectedClient.id,
+                        user_id: authId,
+                    }
                 );
+                const existingLigneDevisResponse = await axios.get(
+                    `http://localhost:8000/api/lignelivraisons/${editinglivraison.id}`
+                );
+
+                const existingLigneLivraison =
+                    existingLigneDevisResponse.data.ligneLivraisons;
+                console.log("existing ligneLivraisons", existingLigneLivraison);
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectedProduct, index) => {
+                        // const existingLigneDevis = existingLigneDevis.find(
+                        //   (ligneDevis) =>
+                        //     ligneDevis.produit_id === selectedProduct.produit_id
+                        // );
+
+                        return {
+                            id: selectedProduct.id,
+                            id_bon__livraisons:editinglivraison.id,
+                            produit_id: selectedProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectedProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectedProduct.produit_id}`
+                            ),
+                            // Update other properties as needed
+                        };
+                    }
+                );
+                console.log("selectedPrdsData:", selectedPrdsData);
+                for (const lignelivraisonData of selectedPrdsData) {
+                    // Check if ligneDevis already exists for this produit_id and update accordingly
+
+                    if (lignelivraisonData.id) {
+                        // If exists, update the existing ligneDevis
+                        await axios.put(
+                            `http://localhost:8000/api/lignelivraisons/${lignelivraisonData.id}`,
+                            lignelivraisonData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    } else {
+                        // If doesn't exist, create a new ligneDevis
+                        await axios.post(
+                            "http://localhost:8000/api/ligneDevis",
+                            lignelivraisonData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+
+
+
             } else {
-                // Adding a new entry
-                await axios.post("http://localhost:8000/api/livraisons", formData);
+                // Créer un nouveau Devis
+                response = await axios.post(
+                    "http://localhost:8000/api/lignelivraisons",
+                    LivraisonData
+                );
+                //console.log(response.data.devi)
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectProduct, index) => {
+                        return {
+                            id_bon__livraisons: response.data.livraison.id,
+                            produit_id: selectProduct.produit_id,
+                            quantite: getElementValueById(
+                                `quantite_${index}_${selectProduct.produit_id}`
+                            ),
+                            prix_vente: getElementValueById(
+                                `prix_unitaire_${index}_${selectProduct.produit_id}`
+                            ),
+                        };
+                    }
+                );
+                console.log("selectedPrdsData", selectedPrdsData);
+                for (const lignelivraisonData of selectedPrdsData) {
+                    // Sinon, il s'agit d'une nouvelle ligne de Devis
+                    await axios.post(
+                        "http://localhost:8000/api/lignelivraisons",
+                        lignelivraisonData
+                    );
+                }
+
             }
+            console.log("response of postDevis: ", response.data);
+
             fetchLivraisons();
-            // Show success message using SweetAlert
+
+            setSelectedClient([]);
+
+            setSelectedProductsData([]);
+            //fetchExistingLigneDevis();
+            closeForm();
+
+            // Afficher un message de succès à l'utilisateur
             Swal.fire({
                 icon: "success",
-                title: "Success!",
-                text: "Form submitted successfully!",
+                title: "Devis ajoutée avec succès",
+                text: "La devise a été ajoutée avec succès.",
             });
-            setErrors({
-                reference: "",
-                date: "",
-                commande_id: "",
-                client_id: "",
-                user_id: "",
-            });
-            clearFormData();
-            closeForm();
         } catch (error) {
-            if (error.response) {
-                const serverErrors = error.response.data.error;
-                console.log(serverErrors);
-                setErrors({
-                    reference: serverErrors.reference ? serverErrors.reference[0] : "",
-                    date: serverErrors.date ? serverErrors.date[0] : "",
-                    commande_id: serverErrors.commande_id
-                        ? serverErrors.commande_id[0]
-                        : "",
-                    // periode: serverErrors.periode ? serverErrors.periode[0] : "",
-                });
-            }
-            // Handle error as needed
+            console.error("Erreur lors de la soumission des données :", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: "error",
+                title: "Erreur !",
+                text: "Erreur !",
+            });
         }
+        closeForm();
     };
+
     const clearFormData = () => {
         // Reset the form data to empty values
         setFormData({
@@ -218,6 +535,11 @@ const LivraisonList = () => {
             commande_id: "",
             client_id: "",
             user_id: "",
+            // Code_produit: "",
+            // designation: "",
+            // prix_vente: "",
+            // quantite: "",
+            // id_bon__livraisons: "",
         });
     };
     const handleChange = (e) => {
@@ -322,6 +644,176 @@ const LivraisonList = () => {
                                         name="user_id"
                                     />
                                 </Form.Group>
+                                <div>
+                                    <Button
+                                        className="btn btn-sm mb-2 "
+                                        variant="primary"
+                                        onClick={handleAddEmptyRow}
+                                    >
+                                        <FontAwesomeIcon icon={faPlus} />
+                                    </Button>
+                                    <strong>Ajouter Produit</strong>
+                                </div>
+
+                                <div className="col-md-12">
+                                    <div className="row mb-3">
+                                        <div className="col-sm-12">
+                                            <Form.Group controlId="selectedProduitTable">
+                                                <div className="table-responsive">
+                                                    <table className="table table-bordered ">
+                                                        <thead>
+                                                        <tr>
+                                                            <th>Code Produit</th>
+                                                            <th>Designation</th>
+                                                            <th>Calibre</th>
+                                                            <th>Quantité</th>
+                                                            <th>Prix vente</th>
+                                                            <th>Action</th>
+                                                        </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                        {selectedProductsData.map((productData, index) => (
+                                                            <tr key={index}>
+                                                                <td>
+                                                                    <Select
+                                                                        options={produits.map((produit) => ({
+                                                                            value: produit.id,
+                                                                            label: produit.Code_produit,
+                                                                        }))}
+                                                                        onChange={(selected) => {
+                                                                            const produit = produits.find(
+                                                                                (prod) => prod.id === selected[0].value
+                                                                            );
+                                                                            handleProductSelection(
+                                                                                {
+                                                                                    produit_id: selected[0].value,
+                                                                                    Code_produit: produit.Code_produit,
+                                                                                    designation: produit.designation,
+                                                                                    calibre_id: produit.calibre_id,
+                                                                                    calibre: produit.calibre,
+                                                                                },
+                                                                                index
+                                                                            );
+                                                                        }}
+                                                                        values={
+                                                                            productData.produit_id
+                                                                                ? [
+                                                                                    {
+                                                                                        value: productData.produit_id,
+                                                                                        label: productData.Code_produit,
+                                                                                    },
+                                                                                ]
+                                                                                : []
+                                                                        }
+                                                                        placeholder="Code ..."
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <Select
+                                                                        options={produits.map((produit) => ({
+                                                                            value: produit.designation,
+                                                                            label: produit.designation,
+                                                                        }))}
+                                                                        onChange={(selected) => {
+                                                                            const produit = produits.find(
+                                                                                (prod) => prod.designation === selected.value
+                                                                            );
+                                                                            if (produit) {
+                                                                                handleProductSelection({
+                                                                                    produit_id: produit.id,
+                                                                                    Code_produit: produit.Code_produit,
+                                                                                    designation: selected.value,
+                                                                                    calibre_id: produit.calibre_id,
+                                                                                    calibre: produit.calibre,
+                                                                                }, index);
+                                                                            }
+                                                                        }}
+                                                                        value={{
+                                                                            value: productData.designation,
+                                                                            label: productData.designation,
+                                                                        }}
+                                                                        placeholder="Designation ..."
+                                                                    />
+                                                                </td>
+                                                                <td>{productData.calibre_id}</td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        id={`quantite_${index}_${productData.produit_id}`}
+                                                                        className="quantiteInput"
+                                                                        placeholder="Quantite"
+                                                                        value={
+                                                                            modifiedQuantiteValues[
+                                                                                `${index}_${productData.produit_id}`
+                                                                                ] ||
+                                                                            populateProductInputs(
+                                                                                productData.id,
+                                                                                "quantite"
+                                                                            )
+                                                                        }
+                                                                        onChange={(event) =>
+                                                                            handleInputChange(
+                                                                                index,
+                                                                                "quantite",
+                                                                                event
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <input
+                                                                        type="text"
+                                                                        id={`prix_unitaire_${index}_${productData.produit_id}`}
+                                                                        className="prixInput"
+                                                                        placeholder="Prix"
+                                                                        value={
+                                                                            modifiedPrixValues[
+                                                                                `${index}_${productData.produit_id}`
+                                                                                ] ||
+                                                                            populateProductInputs(
+                                                                                productData.id,
+                                                                                "prix_vente"
+                                                                            )
+                                                                        }
+                                                                        onChange={(event) =>
+                                                                            handleInputChange(
+                                                                                index,
+                                                                                "prix_vente",
+                                                                                event
+                                                                            )
+                                                                        }
+                                                                    />
+                                                                </td>
+                                                                <td>
+                                                                    <Button
+                                                                        className=" btn btn-danger btn-sm m-1"
+                                                                        onClick={() =>
+                                                                            handleDeleteProduct(
+                                                                                index,
+                                                                                productData.id
+                                                                            )
+                                                                        }
+                                                                    >
+                                                                        <FontAwesomeIcon icon={faTrash} />
+                                                                    </Button>
+                                                                </td>
+                                                                {/*<Modal.Footer>*/}
+                                                                {/*            <Button variant="secondary" onClick={handleModalClose}>*/}
+                                                                {/*                Annuler*/}
+                                                                {/*            </Button>*/}
+                                                                {/*            <Button variant="primary" onClick={handleProduct}>*/}
+                                                                {/*                Valider la sélection*/}
+                                                                {/*            </Button>*/}
+                                                                {/*        </Modal.Footer>*/}
+                                                            </tr>
+                                                        ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </Form.Group>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div className="col-3 mt-5">
                                     <Button
                                         className="btn btn-sm"
@@ -339,11 +831,9 @@ const LivraisonList = () => {
                             style={tableContainerStyle}
                         >
                             <table className="table table-bordered">
-                                <thead
-                                    className="text-center"
-                                    style={{ backgroundColor: "#adb5bd" }}
-                                >
+                                <thead className="text-center" style={{ backgroundColor: "#adb5bd" }}>
                                 <tr>
+                                    <th>détails</th>
                                     <th>N° BL</th>
                                     <th>Date</th>
                                     <th>Ref Commande</th>
@@ -356,42 +846,91 @@ const LivraisonList = () => {
                                 {filteredlivraisons
                                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                     .map((livraison) => {
-                                        // Récupérer les informations du site client
-                                        // const siteClient = getSiteClientInfo(
-                                        //     livraison.commande.site_id
-                                        // );
                                         return (
-                                            <tr key={livraison.id}>
-                                                <td>{livraison.reference}</td>
-                                                <td>{livraison.date}</td>
-
-                                                <td>{livraison.commande?livraison.commande.reference:"" }</td>
-                                                <td>{livraison.client.raison_sociale}</td>
-                                                {/*<td>*/}
-                                                {/*    {siteClient*/}
-                                                {/*        ? siteClient.raison_sociale*/}
-                                                {/*        : "aucun site"}*/}
-                                                {/*</td>*/}
-                                                <td>
-                                                    <button
-                                                        className="btn btn-sm btn-info m-1"
-                                                        onClick={() => handleEdit(livraison)}
-                                                    >
-                                                        <i className="fas fa-edit"></i>
-                                                    </button>
-                                                    {/* <Button
-                className="btn btn-sm m-2"
-                onClick={() => handleLivraisonExport(livraison.id)}
-              >
-                <FontAwesomeIcon icon={faFilePdf} />
-          </Button> */}
-                                                </td>
-                                            </tr>
+                                            <React.Fragment key={livraison.id}>
+                                                <tr key={livraison.id}>
+                                                    <td>
+                                                        {/*<button*/}
+                                                        {/*    className="btn btn-sm btn-light"*/}
+                                                        {/*    onClick={() => toggleRow(livraison.commande.id)}*/}
+                                                        {/*>*/}
+                                                        {/*    <FontAwesomeIcon*/}
+                                                        {/*        icon={*/}
+                                                        {/*            expandedRows.includes(livraison.commande.id)*/}
+                                                        {/*                ? faMinus*/}
+                                                        {/*                : faPlus*/}
+                                                        {/*        }*/}
+                                                        {/*    />*/}
+                                                        {/*</button>*/}
+                                                    </td>
+                                                    <td>{livraison.reference}</td>
+                                                    <td>{livraison.date}</td>
+                                                    <td>{livraison.commande ? livraison.commande.reference : ""}</td>
+                                                    <td>{livraison.client.raison_sociale}</td>
+                                                    {/*<td>*/}
+                                                    {/*    {siteClient*/}
+                                                    {/*        ? siteClient.raison_sociale*/}
+                                                    {/*        : "aucun site"}*/}
+                                                    {/*</td>*/}
+                                                    <td>
+                                                        <button
+                                                            className="btn btn-sm btn-info m-1"
+                                                            onClick={() => handleEdit(livraison)}
+                                                        >
+                                                            <i className="fas fa-edit"></i>
+                                                        </button>
+                                                        {/* Uncomment if handleLivraisonExport function is defined */}
+                                                        {/* <Button */}
+                                                        {/*    className="btn btn-sm m-2" */}
+                                                        {/*    onClick={() => handleLivraisonExport(livraison.id)} */}
+                                                        {/* > */}
+                                                        {/*    <FontAwesomeIcon icon={faFilePdf} /> */}
+                                                        {/* </Button> */}
+                                                    </td>
+                                                </tr>
+                                                {livraison.commande && expandedRows.includes(livraison.commande.id) && livraison.commande.ligneCommandes && (
+                                                    <tr>
+                                                        <td colSpan="6">
+                                                            <div>
+                                                                <table className="table table-responsive table-bordered" style={{ backgroundColor: "#adb5bd" }}>
+                                                                    <thead>
+                                                                    <tr>
+                                                                        <th>Code Produit</th>
+                                                                        <th>designation</th>
+                                                                        <th>calibre</th>
+                                                                        <th>Quantite</th>
+                                                                        <th>Prix Vente</th>
+                                                                        <th>Total HT </th>
+                                                                        {/* <th className="text-center">Action</th> */}
+                                                                    </tr>
+                                                                    </thead>
+                                                                    <tbody>
+                                                                    {livraison.commande.ligneCommandes.map((ligneCommandes) => {
+                                                                        const produit = produits.find(prod => prod.id === ligneCommandes.produit_id);
+                                                                        return (
+                                                                            <tr key={ligneCommandes.id}>
+                                                                                <td>{produit.Code_produit}</td>
+                                                                                <td>{produit.designation}</td>
+                                                                                <td>{produit.calibre.calibre}</td>
+                                                                                <td>{ligneCommandes.quantite}</td>
+                                                                                <td>{ligneCommandes.prix_vente} DH</td>
+                                                                                <td>{(ligneCommandes.quantite * ligneCommandes.prix_vente).toFixed(2)} DH</td>
+                                                                            </tr>
+                                                                        );
+                                                                    })}
+                                                                    </tbody>
+                                                                </table>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </React.Fragment>
                                         );
                                     })}
                                 </tbody>
                             </table>
-                            <TablePagination
+
+                        <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"
                                 count={filteredlivraisons.length}

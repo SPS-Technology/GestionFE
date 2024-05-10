@@ -200,26 +200,28 @@ const DevisList = () => {
     };
 
 
-    const toggleRow = async (devisId) => {
-        if (expandedRows.includes(devisId)) {
-            setExpandedRows(expandedRows.filter((id) => id !== devisId));
-        } else {
-            try {
-                // Récupérer les lignes de devis associées à ce devis
-                const ligneDevis = await fetchLigneDevis(devisId);
+// Définir le toggleRow pour basculer l'état des lignes de devis
+    // Définir le toggleRow pour basculer l'état des lignes de devis
+        const toggleRow = async (devisId) => {
+            if (!expandedRows.includes(devisId)) {
+                try {
+                    // Récupérer les lignes de devis associées à ce devis
+                    const ligneDevis = await fetchLigneDevis(devisId);
 
-                // Mettre à jour l'état pour inclure les lignes de devis récupérées
-                setDevises((prevDevises) => {
-                    return prevDevises.map((devis) => {
-                        if (devis.id === devisId) {
-                            return { ...devis, ligneDevis };
-                        }
-                        return devis;
+                    // Mettre à jour l'état pour inclure les lignes de devis récupérées
+                    setDevises((prevDevises) => {
+                        return prevDevises.map((devis) => {
+                            if (devis.id === devisId) {
+                                return { ...devis, ligneDevis };
+                            }
+                            return devis;
+                            console.log("devis",devis)
+                        });
                     });
-                });
 
-                // Ajouter l'ID du devis aux lignes étendues
+                    // Ajouter l'ID du devis aux lignes étendues
                 setExpandedRows([...expandedRows, devisId]);
+                console.log("expandsRows",expandedRows);
             } catch (error) {
                 console.error(
                     "Erreur lors de la récupération des lignes de devis :",
@@ -228,6 +230,10 @@ const DevisList = () => {
             }
         }
     };
+
+
+
+
 
     const handleShowLigneEntreeCompte = async (devisId) => {
         setExpandedRows((prevRows) =>
@@ -243,7 +249,8 @@ const DevisList = () => {
             const response = await axios.get(
                 `http://localhost:8000/api/devises/${devisId}/ligneDevis`
             );
-            return response.data.ligneDevis;
+            console.log("fetch lign devis ", response.data.lignedevis);
+            return response.data.lignedevis;
         } catch (error) {
             console.error(
                 "Erreur lors de la récupération des lignes de devis :",
@@ -252,6 +259,7 @@ const DevisList = () => {
             return [];
         }
     };
+
 
     useEffect(() => {
         // Préchargement des lingedevises pour chaque devis
@@ -824,19 +832,19 @@ const DevisList = () => {
         });
 
         // Vérifier si les détails des lignes de devis sont définis
-        if (selectedDevis.ligneDevis) {
+        if (selectedDevis.lignedevis) {
             // Dessiner les en-têtes du tableau des lignes de devis
             const headersLigneDevis = ["Produit","Code produit", "Désignation", "Quantité", "Prix", "Total HT"];
 
             // Récupérer les données des lignes de devis
-            const rowsLigneDevis = selectedDevis.ligneDevis.map((ligneDevis) => [
-                ligneDevis.produit_id,
-                ligneDevis.produit_id,
-                ligneDevis.produit_id,
-                ligneDevis.quantite,
-                ligneDevis.prix_vente,
+            const rowsLigneDevis = selectedDevis.lignedevis.map((lignedevis) => [
+                lignedevis.produit_id,
+                lignedevis.produit_id,
+                lignedevis.produit_id,
+                lignedevis.quantite,
+                lignedevis.prix_vente,
                 // Calculate the total for each product line
-                (ligneDevis.quantite * ligneDevis.prix_vente).toFixed(2), // Assuming the price is in currency format
+                (lignedevis.quantite * lignedevis.prix_vente).toFixed(2), // Assuming the price is in currency format
             ]);
 
             // Dessiner le tableau des lignes de devis
@@ -861,9 +869,9 @@ const DevisList = () => {
 
             // Dessiner le tableau des montants
             const montantTable = [
-                ["Montant Total Hors Taxes:", getTotalHT(selectedDevis.ligneDevis).toFixed(2)],
-                ["TVA (20%):", calculateTVA(getTotalHT(selectedDevis.ligneDevis)).toFixed(2)],
-                ["TTC:", getTotalTTC(selectedDevis.ligneDevis).toFixed(2)],
+                ["Montant Total Hors Taxes:", getTotalHT(selectedDevis.lignedevis).toFixed(2)],
+                ["TVA (20%):", calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)],
+                ["TTC:", getTotalTTC(selectedDevis.lignedevis).toFixed(2)],
             ];
 
             doc.autoTable({
@@ -881,6 +889,49 @@ const DevisList = () => {
         // Enregistrer le fichier PDF avec le nom 'devis.pdf'
         doc.save("devis.pdf");
     };
+    function convertirEnLettres(montant) {
+        // Tableau des chiffres en lettres
+        const chiffresEnLettres = ["zéro", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+
+        // Tableau des dizaines en lettres
+        const dizainesEnLettres = ["", "", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante", "quatre-vingt", "quatre-vingt"];
+
+        // Tableau des exceptions pour les nombres entre 10 et 19
+        const exceptions = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+
+        // Fonction pour convertir un nombre en lettre
+        function convertirNombre(n) {
+            if (n < 10) {
+                return chiffresEnLettres[n];
+            } else if (n >= 10 && n < 20) {
+                return exceptions[n - 10];
+            } else {
+                const dizaine = Math.floor(n / 10);
+                const unite = n % 10;
+
+                // Traitement spécial pour les nombres entre 70 et 79 et entre 90 et 99
+                if (dizaine === 7 || dizaine === 9) {
+                    return dizainesEnLettres[dizaine] + "-" + (unite === 1 ? "et-" : "") + chiffresEnLettres[unite];
+                } else {
+                    return dizainesEnLettres[dizaine] + (unite === 0 ? "" : ("-" + chiffresEnLettres[unite]));
+                }
+            }
+        }
+
+        // Séparation de la partie entière et de la partie décimale
+        const [partieEntiere, partieDecimale] = montant.toFixed(2).split(".");
+
+        // Conversion de la partie entière en lettres
+        let montantEnLettres = convertirNombre(parseInt(partieEntiere));
+
+        // Ajout de la partie décimale si elle est différente de zéro
+        if (parseInt(partieDecimale) !== 0) {
+            montantEnLettres += " virgule " + convertirNombre(parseInt(partieDecimale));
+        }
+
+        return montantEnLettres;
+    }
+
 
     const print = (devisId) => {
         // Récupérer les informations spécifiques au devis sélectionné
@@ -900,139 +951,151 @@ const DevisList = () => {
 
             // Début du contenu HTML
             newWindowDocument.write(`
-    <!DOCTYPE html>
-    <html lang="fr">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${title}</title>
-        <style>
-            body {
-                font-family: Arial, sans-serif;
-                margin: 20px;
-            }
-            .client-info {
-                float: right;
-                width: 50%;
-                border: 2px solid #000;
-                padding: 10px;
-                margin-left: 20px;
-            }
-            h1, h2 {
-                text-align: center;
-                margin-top: 30px;
-            }
-            table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-top: 20px;
-            }
-            th, td {
-                border: 1px solid #000;
-                padding: 8px;
-                text-align: left;
-            }
-            .montant-table {
-                border: 1px solid #000;
-                margin-top: 20px;
-            }
-            .montant-table td {
-                padding: 8px;
-                text-align: left;
-            }
-        </style>
-    </head>
-    <body>
-       <div>
-        <h1>${title}</h1>
+            <!DOCTYPE html>
+            <html lang="fr">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${title}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                    }
+                    .client-info {
+                        float: right;
+                        width: 50%;
+                        border: 2px solid #000;
+                        padding: 10px;
+                        margin-left: 20px;
+                    }
+                    h1, h2 {
+                        text-align: center;
+                        margin-top: 30px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                    }
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    .montant-table {
+                        border: 1px solid #000;
+                        margin-top: 20px;
+                    }
+                    .montant-table td {
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    .montant-total {
+                        font-weight: bold;
+                        font-style: italic;
+                        font-size: 24px; /* Ajuster la taille de la police selon vos préférences */
+                        color: black; /* Changer la couleur des lettres */
+                    }
+                </style>
+            </head>
+            <body>
+               <div>
+    <h1 style="margin-left: 0;">${title}</h1>
 </div>
-        <div class="client-info">
-            <h2>Informations du Client :</h2>
-            <p>Raison sociale : ${selectedDevis.client.raison_sociale}</p>
-            <p>Adresse : ${selectedDevis.client.adresse}</p>
-            <p>Téléphone : ${selectedDevis.client.tele}</p>
-            <p>ICE : ${selectedDevis.client.ice}</p>
-        </div>
 
-        <div style="clear:both;"></div>
+                <div class="client-info">
+                    <h2>Informations du Client :</h2>
+                    <p>${selectedDevis.client.raison_sociale}</p>
+                    <p>${selectedDevis.client.adresse}</p>
+                    <p>${selectedDevis.client.tele}</p>
+                    <p>${selectedDevis.client.ice}</p>
+                </div>
 
-        <h2></h2>
-        <table>
-            <tbody>
-                <tr>
-                    <td>N° Devis :</td>
-                    <td>${selectedDevis.reference}</td>
-                </tr>
-                <tr>
-                    <td>Date :</td>
-                    <td>${selectedDevis.date}</td>
-                </tr>
-                <tr>
-                    <td>Validation de l'offre :</td>
-                    <td>${selectedDevis.validation_offer}</td>
-                </tr>
-                <tr>
-                    <td>Mode de Paiement :</td>
-                    <td>${selectedDevis.modePaiement}</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <h2></h2>
-        <table>
-            <thead>
-                <tr>
-                 <th style="border: 1px solid #000; padding: 8px;">Produit</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Code produit</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Désignation</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Quantité</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Prix unitaire</th>
-                    <th style="border: 1px solid #000; padding: 8px;">Total HT</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${selectedDevis.ligneDevis.map((ligneDevis, index) => `
-                    <tr>
-                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.produit_id}</td>
-                        <td style="border: 1px solid #000; padding: 8px;"></td>
-                           <td style="border: 1px solid #000; padding: 8px;"></td>
-                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.quantite}</td>
-                        <td style="border: 1px solid #000; padding: 8px;">${ligneDevis.prix_vente}</td>
-                        <td style="border: 1px solid #000; padding: 8px;">${(ligneDevis.quantite * ligneDevis.prix_vente).toFixed(2)}</td>
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-        
-        <h2>Montants :</h2>
-        <table class="montant-table">
-            <tbody>
-                <tr>
-                    <td>Montant Total Hors Taxes :</td>
-                    <td>${getTotalHT(selectedDevis.ligneDevis).toFixed(2)}</td>
-                </tr>
-                <tr>
-                    <td>TVA (20%) :</td>
-                    <td>${calculateTVA(getTotalHT(selectedDevis.ligneDevis)).toFixed(2)}</td>
-                </tr>
-                <tr>
-                    <td>TTC :</td>
-                    <td>${getTotalTTC(selectedDevis.ligneDevis).toFixed(2)}</td>
-                </tr>
-            </tbody>
-        </table>
-        
-        <script>
-            setTimeout(() => {
-                window.print();
-                window.onafterprint = function () {
-                    window.close();
-                };
-            }, 1000);
-        </script>
-    </body>
-    </html>
-`);
+                <div style="clear:both;"></div>
+
+               
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #000; padding: 8px;">N° Devis</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Date</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Validation de l'offre</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Mode de Paiement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.reference}</td>
+                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.date}</td>
+                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.validation_offer}</td>
+                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.modePaiement}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+              
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="border: 1px solid #000; padding: 8px;">Produit</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Code produit</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Désignation</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Quantité</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Prix unitaire</th>
+                            <th style="border: 1px solid #000; padding: 8px;">Total HT</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${selectedDevis.lignedevis.map((lignedevis, index) => {
+                const produit = produits.find(prod => prod.id === lignedevis.produit_id);
+                return `
+                                <tr>
+                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.produit_id}</td>
+                                    <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.Code_produit : ''}</td>
+                                    <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.designation : ''}</td>
+                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.quantite}</td>
+                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.prix_vente}</td>
+                                    <td style="border: 1px solid #000; padding: 8px;">${(lignedevis.quantite * lignedevis.prix_vente).toFixed(2)}</td>
+                                </tr>
+                            `;
+            }).join('')}
+                    </tbody>
+                </table>
+
+               
+                <table class="montant-table">
+                    <tbody>
+                        <tr>
+                            <td>Montant Total Hors Taxes :</td>
+                            <td>${getTotalHT(selectedDevis.lignedevis).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>TVA (20%) :</td>
+                            <td>${calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td>TTC :</td>
+                            <td>${getTotalTTC(selectedDevis.lignedevis).toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div>
+                    <p class="montant-total">Arrêtée le présent devis à la somme de : ${convertirEnLettres(getTotalTTC(selectedDevis.lignedevis))}</p>
+                </div>
+                
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                        window.onafterprint = function () {
+                            window.close();
+                        };
+                    }, 1000);
+                </script>
+            </body>
+            </html>
+        `);
 
             newWindowDocument.close();
         } else {
@@ -1041,19 +1104,19 @@ const DevisList = () => {
     };
 
     // Fonction pour calculer le montant total hors taxes
-    const getTotalHT = (ligneDevis) => {
-        // // Check if ligneDevis is defined and is an array
-        // if (!Array.isArray(ligneDevis)) {
-        //     // Handle the case where ligneDevis is not an array
-        //     console.error("Invalid input: ligneDevis must be an array.");
-        //     return 0; // or any default value that makes sense for your application
-        // }
-        //
-        // // ligneDevis is an array, proceed with the calculation
-        // return ligneDevis.reduce(
-        //     (total, item) => total + item.quantite * item.prix_vente,
-        //     0
-        // );
+    const getTotalHT = (lignedevis) => {
+        // Check if ligneDevis is defined and is an array
+        if (!Array.isArray(lignedevis)) {
+            // Handle the case where ligneDevis is not an array
+            console.error("Invalid input: lignedevis must be an array.");
+            return 0; // or any default value that makes sense for your application
+        }
+
+        // ligneDevis is an array, proceed with the calculation
+        return lignedevis.reduce(
+            (total, item) => total + item.quantite * item.prix_vente,
+            0
+        );
     };
 
 
@@ -1063,8 +1126,8 @@ const DevisList = () => {
     };
 
     // Fonction pour calculer le montant total toutes taxes comprises (TTC)
-    const getTotalTTC = (ligneDevis) => {
-        return getTotalHT(ligneDevis) + calculateTVA(getTotalHT(ligneDevis));
+    const getTotalTTC = (lignedevis) => {
+        return getTotalHT(lignedevis) + calculateTVA(getTotalHT(lignedevis));
     };
 
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -1110,57 +1173,88 @@ const DevisList = () => {
                         >
                             <Form className="row" onSubmit={handleSubmit}>
                                 <Form.Group className="m-2 col-4" controlId="reference">
-                                    <Form.Label>Reference:</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.reference}
-                                        onChange={handleChange}
-                                        name="reference"
-                                    />
+                                    <div className="row">
+                                        <div className="col-sm-12">
+                                            <Form.Label htmlFor="reference">Reference:</Form.Label>
+                                        </div>
+                                        <div className="col-sm-12">
+                                            <Form.Control
+                                                type="text"
+                                                value={formData.reference}
+                                                onChange={handleChange}
+                                                name="reference"
+                                            />
+                                        </div>
+                                    </div>
                                 </Form.Group>
                                 <Form.Group className="m-2 col-4" controlId="date">
-                                    <Form.Label>Date:</Form.Label>
-                                    <Form.Control
-                                        type="date"
-                                        value={formData.date}
-                                        onChange={handleChange}
-                                        name="date"
-                                    />
+                                    <div className="row">
+                                        <div className="col-sm-12">
+                                            <Form.Label htmlFor="date">Date:</Form.Label>
+                                        </div>
+                                        <div className="col-sm-12">
+                                            <Form.Control
+                                                type="date"
+                                                value={formData.date}
+                                                onChange={handleChange}
+                                                name="date"
+                                            />
+                                        </div>
+                                    </div>
                                 </Form.Group>
                                 <Form.Group className="m-2 col-4" controlId="validation_offer">
-                                    <Form.Label>Validation de l'offre:</Form.Label>
-                                    <Form.Select
-                                        value={formData.validation_offer}
-                                        onChange={handleChange}
-                                        name="validation_offer"
-                                    >
-                                        <option value="">select</option>
-                                        <option value="30 jours">30 jours</option>
-                                        <option value="60 jours">60 jours</option>
-                                        <option value="90 jours">90 jours</option>
-                                    </Form.Select>
+                                    <div className="row">
+                                        <div className="col-sm-12">
+                                            <Form.Label htmlFor="validation_offer">Validation de l'offre:</Form.Label>
+                                        </div>
+                                        <div className="col-sm-12">
+                                            <Form.Select
+                                                value={formData.validation_offer}
+                                                onChange={handleChange}
+                                                name="validation_offer"
+                                            >
+                                                <option value="">select</option>
+                                                <option value="30 jours">30 jours</option>
+                                                <option value="60 jours">60 jours</option>
+                                                <option value="90 jours">90 jours</option>
+                                            </Form.Select>
+                                        </div>
+                                    </div>
                                 </Form.Group>
                                 <Form.Group className="m-2 col-4" controlId="modePaiement">
-                                    <Form.Label>Mode de Paiement:</Form.Label>
-                                    <Form.Control
-                                        type="text"
-                                        value={formData.modePaiement}
-                                        onChange={handleChange}
-                                        name="modePaiement"
-                                    />
+                                    <div className="row">
+                                        <div className="col-sm-12">
+                                            <Form.Label htmlFor="modePaiement">Mode de Paiement:</Form.Label>
+                                        </div>
+                                        <div className="col-sm-12">
+                                            <Form.Control
+                                                type="text"
+                                                value={formData.modePaiement}
+                                                onChange={handleChange}
+                                                name="modePaiement"
+                                            />
+                                        </div>
+                                    </div>
                                 </Form.Group>
                                 <Form.Group className="m-2 col-4" controlId="status">
-                                    <Form.Select
-                                        value={formData.status}
-                                        onChange={handleChange}
-                                        name="status"
-                                        id="status"
-                                    >
-                                        <option value="">Status</option>
-                                        <option value="Envoye">Envoye</option>
-                                        <option value="Valider">Valider</option>
-                                        <option value="Non Valider">Non Valide</option>
-                                    </Form.Select>
+                                    <div className="row">
+                                        <div className="col-sm-12">
+                                            <Form.Label htmlFor="status">Status:</Form.Label>
+                                        </div>
+                                        <div className="col-sm-12">
+                                            <Form.Select
+                                                value={formData.status}
+                                                onChange={handleChange}
+                                                name="status"
+                                                id="status"
+                                            >
+                                                <option value="">Status</option>
+                                                <option value="Envoye">Envoye</option>
+                                                <option value="Valider">Valider</option>
+                                                <option value="Non Valider">Non Valide</option>
+                                            </Form.Select>
+                                        </div>
+                                    </div>
                                 </Form.Group>
                                 {/*<Form.Group className="m-2 col-4" controlId="client_id">*/}
                                 {/*    <Form.Select*/}
@@ -1305,7 +1399,33 @@ const DevisList = () => {
                                                                         placeholder="Code ..."
                                                                     />
                                                                 </td>
-                                                                <td>{productData.designation}</td>
+                                                                <td>
+                                                                    <Select
+                                                                        options={produits.map((produit) => ({
+                                                                            value: produit.designation,
+                                                                            label: produit.designation,
+                                                                        }))}
+                                                                        onChange={(selected) => {
+                                                                            const produit = produits.find(
+                                                                                (prod) => prod.designation === selected.value
+                                                                            );
+                                                                            if (produit) {
+                                                                                handleProductSelection({
+                                                                                    produit_id: produit.id,
+                                                                                    Code_produit: produit.Code_produit,
+                                                                                    designation: selected.value,
+                                                                                    calibre_id: produit.calibre_id,
+                                                                                    calibre: produit.calibre,
+                                                                                }, index);
+                                                                            }
+                                                                        }}
+                                                                        value={{
+                                                                            value: productData.designation,
+                                                                            label: productData.designation,
+                                                                        }}
+                                                                        placeholder="Designation ..."
+                                                                    />
+                                                                </td>
                                                                 <td>{productData.calibre_id}</td>
                                                                 <td>
                                                                     <input
@@ -1471,7 +1591,7 @@ const DevisList = () => {
                                             <td>{devis.reference}</td>
                                             <td>{devis.date}</td>
                                             <td>{devis.client.raison_sociale}</td>
-                                            <td>{getTotalHT(devis.ligneDevis)} DH</td> {/* Display Total HT */}
+                                            <td>{getTotalHT(devis.lignedevis)} DH</td> {/* Display Total HT */}
                                             <td>{calculateTVA(getTotalHT(devis.ligneDevis))} DH</td> {/* Display TVA */}
                                             <td>{getTotalTTC(devis.ligneDevis)} DH</td> {/* Display Total TTC */}
                                             <td>{devis.status}</td>
@@ -1519,9 +1639,9 @@ const DevisList = () => {
                                                         >
                                                             <thead>
                                                             <tr>
-                                                                <th>Produit</th>
                                                                 <th>Code Produit</th>
-                                                                <th>Description</th>
+                                                                <th>designation</th>
+                                                                <th>calibre</th>
                                                                 <th>Quantite</th>
                                                                 <th>Prix Vente</th>
                                                                 <th>Total HT </th>
@@ -1542,7 +1662,7 @@ const DevisList = () => {
                                                                             <td>{produit.Code_produit}</td>
                                                                             <td>{produit.designation}</td>
                                                                             <td>{produit.calibre.calibre}</td>
-                                                                            <td>{produit.quantite}</td>
+                                                                            <td>{ligneDevis.quantite}</td>
                                                                             <td>{ligneDevis.prix_vente} DH</td>
                                                                             <td>
                                                                                 {(
