@@ -24,12 +24,13 @@ const EncaissementList = () => {
     const [Banque, setBanque] = useState([]);
     const  [clients,setClients]=useState([]);
     const  [factures,setFactures]=useState([]);
-
-
+    const [selectedProductsData, setSelectedProductsData] = useState([]);
+    const [authId, setAuthId] = useState([]);
     const [encaissements, setEncaissements] = useState([]);
     const [ligneEncaissements,setLigneEncaissements]=useState([]);
     const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
-
+    const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
 
     const [banques, setBanques] = useState([]);
 
@@ -69,7 +70,9 @@ const EncaissementList = () => {
         borderBottom: "1px solid #ddd",
     };
 
-
+    const getElementValueById = (id) => {
+        return document.getElementById(id)?.value || "";
+    };
     const fetchEncaissements = async () => {
         try {
             const response = await axios.get(
@@ -355,7 +358,7 @@ const EncaissementList = () => {
 
         // Define the columns and rows for the table
         const columns = [
-            "Client",
+
             "Sujet",
             "Date de Réclamation",
             "Status de Réclamation",
@@ -537,49 +540,199 @@ const EncaissementList = () => {
         fetchEncaissements();
     }, []);
 
-    const handleSubmit =  (e) => {
+    // const handleSubmit =  (e) => {
+    //     e.preventDefault();
+    //
+    //     const url = editingEncaissement ? `http://localhost:8000/api/encaissements/${editingEncaissement.id}` : 'http://localhost:8000/api/encaissements';
+    //     const method = editingEncaissement ? 'put' : 'post';
+    //     axios({
+    //         method: method,
+    //         url: url,
+    //         data: formData,
+    //     }).then(() => {
+    //         fetchEncaissements();
+    //         Swal.fire({
+    //             icon: 'success',
+    //             title: 'Succès!',
+    //             text: `encaissement ${editingEncaissement ? 'modifié' : 'ajouté'} avec succès.`,
+    //         });
+    //         setFormData({
+    //             referencee: '',
+    //             date_encaissement: '',
+    //             montant_total: '',
+    //             comptes_id: '',
+    //             type_encaissement: '',
+    //
+    //         });
+    //         setEditingEncaissement(null); // Clear editing encaissement
+    //         // closeForm();
+    //     })
+    //         .catch((error) => {
+    //             console.error(`Erreur lors de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement:`, error);
+    //             Swal.fire({
+    //                 icon: 'error',
+    //                 title: 'Erreur!',
+    //                 text: `Échec de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement.`,
+    //             });
+    //         });
+    //     if (formContainerStyle.right === "-500px") {
+    //         setFormContainerStyle({ right: "0" });
+    //         setTableContainerStyle({ marginRight: "500px" });
+    //     } else {
+    //         closeForm();
+    //     }
+    // };
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const url = editingEncaissement ? `http://localhost:8000/api/encaissements/${editingEncaissement.id}` : 'http://localhost:8000/api/encaissements';
-        const method = editingEncaissement ? 'put' : 'post';
-        axios({
-            method: method,
-            url: url,
-            data: formData,
-        }).then(() => {
+        try {
+            // const userResponse = await axios.get("http://localhost:8000/api/users", {
+            //   withCredentials: true,
+            //   headers: {
+            //     "X-CSRF-TOKEN": csrfToken,
+            //   },
+            // });
+
+            // const authenticatedUserId = userResponse.data[0].id;
+            // console.log("auth user", authenticatedUserId);
+            // Préparer les données du Encaissement
+            console.log("authId",authId)
+
+            const EncaissementData = {
+                referencee: formData.referencee,
+                date_encaissement: formData.date_encaissement,
+                montant_total: formData.montant_total,
+                comptes_id: formData.comptes_id,
+                type_encaissement: formData.type_encaissement,
+
+                // user_id: authId,
+            };
+
+            let response;
+            if (editingEncaissement) {
+                // Mettre à jour le Encaissement existant
+                response = await axios.put(
+                    `http://localhost:8000/api/encaissements/${editingEncaissement.id}`,
+                    {
+                        referencee: formData.referencee,
+                        date_encaissement: formData.date_encaissement,
+                        montant_total: formData.montant_total,
+                        comptes_id: formData.comptes_id,
+                        type_encaissement: formData.type_encaissement,
+
+                       // user_id: authId,
+                    }
+                );
+                const existingligneencaissementResponse = await axios.get(
+                    `http://localhost:8000/api/ligneencaissement/${editingEncaissement.id}`
+                );
+
+                const existingligneencaissement =
+                    existingligneencaissementResponse.data.ligneencaissement;
+                console.log("existing ligneencaissement", existingligneencaissement);
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectedProduct, index) => {
+                        // const existingligneencaissement = existingligneencaissement.find(
+                        //   (ligneencaissement) =>
+                        //     ligneencaissement.produit_id === selectedProduct.produit_id
+                        // );
+
+                        return {
+                            id: selectedProduct.id,
+                            id_Encaissement: editingEncaissement.id,
+
+                        };
+                    }
+                );
+                console.log("selectedPrdsData:", selectedPrdsData);
+                for (const ligneencaissementData of selectedPrdsData) {
+                    // Check if ligneencaissement already exists for this produit_id and update accordingly
+
+                    if (ligneencaissementData.id) {
+                        // If exists, update the existing ligneencaissement
+                        await axios.put(
+                            `http://localhost:8000/api/ligneencaissement/${ligneencaissementData.id}`,
+                            ligneencaissementData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    } else {
+                        // If doesn't exist, create a new ligneencaissement
+                        await axios.post(
+                            "http://localhost:8000/api/ligneencaissement",
+                            ligneencaissementData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+
+
+
+            } else {
+                // Créer un nouveau Encaissement
+                response = await axios.post(
+                    "http://localhost:8000/api/encaissements",
+                    EncaissementData
+                );
+                //console.log(response.data.devi)
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectProduct, index) => {
+                        return {
+                            encaissements_id: response.data.encaissement.id,
+                            entrer_comptes_id: selectProduct.produit_id,
+
+                        };
+                    }
+                );
+                console.log("selectedPrdsData", selectedPrdsData);
+                for (const ligneencaissementData of selectedPrdsData) {
+                    // Sinon, il s'agit d'une nouvelle ligne de Encaissement
+                    await axios.post(
+                        "http://localhost:8000/api/ligneencaissement",
+                        ligneencaissementData
+                    );
+                }
+
+            }
+            console.log("response of postEncaissement: ", response.data);
+
             fetchEncaissements();
-            Swal.fire({
-                icon: 'success',
-                title: 'Succès!',
-                text: `encaissement ${editingEncaissement ? 'modifié' : 'ajouté'} avec succès.`,
-            });
-            setFormData({
-                referencee: '',
-                date_encaissement: '',
-                montant_total: '',
-                comptes_id: '',
-                type_encaissement: '',
 
-            });
-            setEditingEncaissement(null); // Clear editing encaissement
-            // closeForm();
-        })
-            .catch((error) => {
-                console.error(`Erreur lors de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement:`, error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Erreur!',
-                    text: `Échec de ${editingEncaissement ? 'la modification' : "l'ajout"} du encaissement.`,
-                });
-            });
-        if (formContainerStyle.right === "-500px") {
-            setFormContainerStyle({ right: "0" });
-            setTableContainerStyle({ marginRight: "500px" });
-        } else {
+
+
+            setSelectedProductsData([]);
+            //fetchExistingligneencaissement();
             closeForm();
-        }
-    };
 
+            // Afficher un message de succès à l'utilisateur
+            Swal.fire({
+                icon: "success",
+                title: "Encaissement ajoutée avec succès",
+                text: "Encaissement a été ajoutée avec succès.",
+            });
+        } catch (error) {
+            console.error("Erreur lors de la soumission des données :", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: "error",
+                title: "Erreur !",
+                text: "Erreur !",
+            });
+        }
+        closeForm();
+    };
     //------------------------- encaissement FORM---------------------//
 
     const handleShowFormButtonClick = () => {
@@ -646,7 +799,7 @@ const EncaissementList = () => {
                         <div id="formContainer" className="mt-2" style={formContainerStyle}>
                             <Form className="col row" onSubmit={handleSubmit}>
                                 <Form.Label className="text-center m-2"><h5>{editingEncaissement ? 'Modifier encaissement' : 'Ajouter un encaissement'}</h5></Form.Label>
-                                <Form.Group className="col-sm-5 m-2" controlId="client_id">
+                                <Form.Group className="col-sm-5 m-2" controlId="comptes_id">
 
                                     <Form.Label>Compte</Form.Label>
 
@@ -682,12 +835,12 @@ const EncaissementList = () => {
                                 {/*        <option value="Espèce">Espèce</option>*/}
                                 {/*    </Form.Control>*/}
                                 {/*</Form.Group>*/}
-                                <Form.Group className="col-sm-5 m-2" controlId="banque_id">
+                                <Form.Group className="col-sm-5 m-2" controlId="type_encaissement">
 
                                     <Form.Label>Type d'encaissement</Form.Label>
                                     <Form.Select
-                                        name="banque_id"
-                                        value={formData.banque_id}
+                                        name="type_encaissement"
+                                        value={formData.type_encaissement}
                                         onChange={(e) => handleClientSelection(e.target)}
                                         className="form-select form-select-sm"
                                     >

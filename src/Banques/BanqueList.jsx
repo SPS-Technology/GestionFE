@@ -202,26 +202,40 @@ console.log("ligne Entree",ligneEntree)
             return []; // or handle accordingly if client not found
         }
     };
-    const gettotalByIdBanque = (banqueId) => {
+    const gettotalByIdBanque = (index,clientId,factureId) => {
         // Assuming you have a `clients` array containing client objects
-        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.id_facture === factureId && l.client_id === clientId);
 
         console.log("ligne Entree",ligneEntree)
         // Check if the client is found
         if (ligneEntree) {
             const total = [];
-
+            let isFirstIndex = true;
             // Parcourir chaque entrée filtrée
-            ligneEntree.forEach((entry) => {
+            ligneEntree.forEach((entry, index) => {
                 // Trouver les factures correspondant à l'entrée actuelle
                 const invoice = factures.find((f) => f.id === entry.id_facture);
-                console.log("invoice", invoice);
-                total.push(invoice.total_ttc);
+                if (isFirstIndex && invoice) {
+                    total.push(invoice.total_ttc);
+                    total.push(entry.restee);
+                    isFirstIndex = false; // Update to mark that the first index is processed
+                }
+                else {
+                    // console.log("invoice", invoice);
+
+                    total.push(entry.restee);
+                    console.log("total_ttc",total)
+                }
                 // Ajouter les références des factures trouvées au tableau de références
                 // invoices.forEach((invoice) => {
                 //     references.push(invoice.reference);
                 // });
+
+                // Add index to each entry
+                entry.index = index;
+                console.log(total);
             });
+
 
             // Retourner le tableau de références des factures
             return total;
@@ -229,6 +243,8 @@ console.log("ligne Entree",ligneEntree)
             return []; // or handle accordingly if client not found
         }
     };
+
+
 
 
     const getavanceByIdBanque = (banqueId) => {
@@ -254,6 +270,33 @@ console.log("ligne Entree",ligneEntree)
 
             // Retourner le tableau de références des factures
             return avance;
+        } else {
+            return []; // or handle accordingly if client not found
+        }
+    };
+    const getResteByIdBanque = (banqueId) => {
+        // Assuming you have a `clients` array containing client objects
+        const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
+
+        console.log("ligne Entree",ligneEntree)
+        // Check if the client is found
+        if (ligneEntree) {
+            const reste = [];
+
+            // Parcourir chaque entrée filtrée
+            ligneEntree.forEach((entry) => {
+                // Trouver les factures correspondant à l'entrée actuelle
+                // const invoice = factures.find((f) => f.id === entry.id_facture);
+                // console.log("invoice", invoice);
+                reste.push(entry.restee);
+                // Ajouter les références des factures trouvées au tableau de références
+                // invoices.forEach((invoice) => {
+                //     references.push(invoice.reference);
+                // });
+            });
+
+            // Retourner le tableau de références des factures
+            return reste;
         } else {
             return []; // or handle accordingly if client not found
         }
@@ -804,9 +847,21 @@ try{
 
             );
             console.log(banqueResponse)
+            let isFirstTime = true;
             const selectedFacturesData = editingBanque.ligne_entrer_compte.map((selectedligneEntree) => {
-                const avance = getElementValueById(`avance_${selectedligneEntree.id_facture}`);
-                const restee = gettotalttcByIdFacture(selectedligneEntree.id_facture) - avance;
+                let restee; // Variable to hold the remaining amount
+                const avance = getElementValueById(`avance_${selectedligneEntree.id_facture}`)
+                if (isFirstTime) {
+                    // For the first time, take the total TTC as restee
+                    restee = gettotalttcByIdFacture(selectedligneEntree.id_facture);
+                    isFirstTime = false; // Set the flag to false for subsequent iterations
+                } else {
+                    // For subsequent times, subtract avance from the previous restee
+                    restee = restee - getElementValueById(`avance_${selectedligneEntree.id_facture}`);
+                }
+
+
+
                 return {
                     id:selectedligneEntree.id,
                     client_id:formData.client_id,
@@ -1141,13 +1196,14 @@ try{
                                     <th style={tableHeaderStyle}>Mode de Paiement</th>
                                     <th style={tableHeaderStyle}>date</th>
                                     <th style={tableHeaderStyle}>Avance</th>
+                                    <th style={tableHeaderStyle}>Reste</th>
                                     <th style={tableHeaderStyle}>Status</th>
                                     <th style={tableHeaderStyle}>Remarque</th>
                                     <th style={tableHeaderStyle}>Action</th>
                                 </tr>
                                 </thead>
                                <tbody>
-                               {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques) => (
+                               {filteredBanques && filteredBanques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banques,index) => (
 
 
                                    <React.Fragment key={banques.id}>
@@ -1182,12 +1238,26 @@ try{
                                                    getReferenceByIdFacture(banques.ligne_entrer_compte[0].id_facture)
                                                    : ""}
                                            </td>
-                                           <td>{gettotalByIdBanque(banques.id)[0]}</td>
+                                           <td>
+                                           {/*    {gettotalByIdBanque*/}
+                                           {/*(banques.id,banques.ligne_entrer_compte[index].id_facture,banques.ligne_entrer_compte[index].client_id)[0]}*/}
+                                               {banques.ligne_entrer_compte.map((ligneEntreCompte) => (
+                                                   // Assuming gettotalByIdBanque is dependent on the ligne_entrer_compte index
+                                                   gettotalByIdBanque(
+                                                       banques.id,
+                                                       ligneEntreCompte.id_facture,
+                                                       ligneEntreCompte.client_id
+                                                   )[index]
+                                               ))}
+                                           </td>
                                            <td>{getDateByIdBanque(banques.id)[0]}</td>
                                            <td>{banques.numero_cheque}</td>
                                            <td>{banques.mode_de_paiement}</td>
                                            <td>{banques.datee}</td>
                                            <td>{getavanceByIdBanque(banques.id)[0]}</td>
+                                           <td>
+                                               {getResteByIdBanque(banques.id)[index]}
+                                              </td>
                                            <td>{banques.Status}</td>
                                            <td>{banques.remarque}</td>
                                            <td className="d-inline-flex">

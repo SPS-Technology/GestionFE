@@ -421,12 +421,12 @@ const LivraisonList = () => {
 
 
             } else {
-                // Créer un nouveau Devis
+                // Créer un nouveau Bon Livraison
                 response = await axios.post(
-                    "http://localhost:8000/api/lignelivraisons",
+                    "http://localhost:8000/api/livraisons",
                     LivraisonData
                 );
-                //console.log(response.data.devi)
+                console.log(response.data)
                 const selectedPrdsData = selectedProductsData.map(
                     (selectProduct, index) => {
                         return {
@@ -604,21 +604,58 @@ const LivraisonList = () => {
                     name="ref_BC"
                   />
                 </Form.Group> */}
-                                <Form.Group className="m-2 col-4" controlId="client_id">
-                                  <Form.Label>Client</Form.Label>
-                                  <Form.Select
-                                    value={formData.client_id}
-                                    onChange={handleChange}
-                                    name="client_id"
-                                  >
-                                    <option value="">Sélectionner un client</option>
-                                    {clients.map((client) => (
-                                      <option key={client.id} value={client.id}>
-                                        {client.raison_sociale}
-                                      </option>
-                                    ))}
-                                  </Form.Select>
-                                </Form.Group>
+                                <div className="col-md-12">
+                                    <div className="row mb-3">
+                                        <div className="col-sm-6">
+                                            <label htmlFor="client_id" className="col-form-label">
+                                                Client:
+                                            </label>
+                                        </div>
+                                        <div className="col-sm-6">
+                                            {console.log("selected client  :", selectedClient)}
+                                            <Select
+                                                options={clients.map((client) => ({
+                                                    value: client.id,
+                                                    label: client.raison_sociale,
+                                                }))}
+                                                onChange={(selected) => {
+                                                    if (selected && selected.length > 0) {
+                                                        const client = clients.find(
+                                                            (client) => client.id === selected[0].value
+                                                        );
+                                                        handleClientSelection({
+                                                            id: selected[0].value,
+                                                            raison_sociale: client.raison_sociale,
+                                                            adresse: client.adresse,
+                                                            tele: client.tele,
+                                                            abreviation: client.abreviation,
+                                                            code_postal: client.code_postal,
+                                                            ice: client.ice,
+                                                            zone: client.zone,
+                                                            siteclients: client.siteclients,
+                                                        });
+                                                    } else {
+                                                        handleClientSelection(null); // Handle deselection
+                                                    }
+                                                }}
+                                                values={
+                                                    formData.client_id
+                                                        ? [
+                                                            {
+                                                                value: formData.client_id,
+                                                                label: getClientValue(
+                                                                    formData.client_id,
+                                                                    "raison_sociale"
+                                                                ),
+                                                            },
+                                                        ]
+                                                        : []
+                                                }
+                                                placeholder="Client ..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                                 <Form.Group className="m-2 col-4" controlId="commande_id">
                                     <Form.Label>Commande</Form.Label>
                                     <Form.Select
