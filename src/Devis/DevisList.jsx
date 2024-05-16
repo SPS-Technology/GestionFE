@@ -290,25 +290,82 @@ const DevisList = () => {
         return document.getElementById(id)?.value || "";
     };
 
+    // const handleGenerateFacture = async (devis) => {
+    //
+    //     try {
+    //         // Préparer les données de la facture
+    //         const factureData = {
+    //             client_id: devis.client_id,
+    //             user_id: authId,
+    //             id_devis: devis.id,
+    //             // total// Utiliser l'ID du devis actuel
+    //         };
+    //
+    //         // Envoyer une requête POST pour créer la facture
+    //         const factureResponse = await axios.post(
+    //             "http://localhost:8000/api/factures",
+    //             factureData
+    //         );
+    //
+    //         console.log("Facture créée:", factureResponse.data);
+    //         setFactureGenerated(true);
+    //     } catch (error) {
+    //         console.error("Erreur lors de la génération de la facture :", error);
+    //     }
+    // };
     const handleGenerateFacture = async (devis) => {
-
         try {
-            // Préparer les données de la facture
+            // 1. Préparer les données de la facture
             const factureData = {
                 client_id: devis.client_id,
+                total_ttc: devis.total_ttc,
                 user_id: authId,
                 id_devis: devis.id,
-                // total// Utiliser l'ID du devis actuel
+                // Autres données de la facture...
             };
 
-            // Envoyer une requête POST pour créer la facture
+            // 2. Envoyer une requête POST pour créer la facture
             const factureResponse = await axios.post(
                 "http://localhost:8000/api/factures",
                 factureData
             );
 
-            console.log("Facture créée:", factureResponse.data);
-            setFactureGenerated(true);
+            const facture = factureResponse.data;
+
+            console.log("Facture créée:", facture);
+
+            // 3. Récupérer les lignes de devis associées au devis
+            const lignesDevisResponse = await axios.get(
+                `http://localhost:8000/api/ligneDevis/${devis.id}`
+            );
+
+            // Vérification si les données sont présentes et sous forme de tableau
+            if (Array.isArray(lignesDevisResponse.data)) {
+                const lignesDevis = lignesDevisResponse.data;
+
+                // 4. Créer les lignes de facture en utilisant l'ID de la facture créée
+                for (const ligneDevis of lignesDevis) {
+                    const ligneFactureData = {
+                        facture_id: facture.id,
+                        produit_id: ligneDevis.produit_id,
+                        quantite: ligneDevis.quantite,
+                        prix_unitaire: ligneDevis.prix_unitaire,
+                        // Autres données de la ligne de facture...
+                    };
+
+                    // 5. Envoyer une requête POST pour créer la ligne de facture
+                    const ligneFactureResponse = await axios.post(
+                        "http://localhost:8000/api/ligneFacture",
+                        ligneFactureData
+                    );
+
+                    console.log("Ligne de facture créée:", ligneFactureResponse.data);
+                }
+
+                setFactureGenerated(true);
+            } else {
+                console.error("Aucune donnée de lignes de devis trouvée ou les données ne sont pas sous forme de tableau.");
+            }
         } catch (error) {
             console.error("Erreur lors de la génération de la facture :", error);
         }
@@ -962,13 +1019,27 @@ const DevisList = () => {
                         font-family: Arial, sans-serif;
                         margin: 20px;
                     }
+                    /*.client-info {*/
+                    /*    float: right;*/
+                    /*    width: 40%;*/
+                    /*     height: 180px;*/
+                    /*    border: 2px solid #000;*/
+                    /*    padding: 10px;*/
+                    /*    margin-left: 20px;*/
+                    /*}*/
                     .client-info {
-                        float: right;
-                        width: 50%;
-                        border: 2px solid #000;
-                        padding: 10px;
-                        margin-left: 20px;
-                    }
+                         position: relative;
+                         top: 10px; /* Ajuste cette valeur selon l'espace que tu veux entre l'en-tête et l'élément */
+                         width: 250px; /* Largeur du rectangle */
+                         height: 150px; /* Hauteur du rectangle */
+                         padding: 10px;
+                         border: 2px solid #000;
+                         margin-left: 20px;
+                         float: right;
+   
+    /*margin-top: 3px; !* Espace entre l'en-tête et l'élément *!*/
+}
+                    
                     h1, h2 {
                         text-align: center;
                         margin-top: 30px;
@@ -1001,12 +1072,11 @@ const DevisList = () => {
             </head>
             <body>
                <div>
-    <h1 style="margin-left: 0;">${title}</h1>
+    <h1>${title}</h1>
 </div>
 
                 <div class="client-info">
-                    <h2>Informations du Client :</h2>
-                    <p>${selectedDevis.client.raison_sociale}</p>
+                    <h2><p>${selectedDevis.client.raison_sociale}</p></h2>
                     <p>${selectedDevis.client.adresse}</p>
                     <p>${selectedDevis.client.tele}</p>
                     <p>${selectedDevis.client.ice}</p>
@@ -1016,17 +1086,16 @@ const DevisList = () => {
 
                
                 <table>
-                    <thead>
+                    <thead>     
                         <tr>
-                            <th style="border: 1px solid #000; padding: 8px;">N° Devis</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Date</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Validation de l'offre</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Mode de Paiement</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Date</th>
+<th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Validation de l'offre</th>
+<th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Mode de Paiement</th>
+
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.reference}</td>
                             <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.date}</td>
                             <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.validation_offer}</td>
                             <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.modePaiement}</td>
@@ -1038,12 +1107,12 @@ const DevisList = () => {
                 <table>
                     <thead>
                         <tr>
-                            <th style="border: 1px solid #000; padding: 8px;">Produit</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Code produit</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Désignation</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Quantité</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Prix unitaire</th>
-                            <th style="border: 1px solid #000; padding: 8px;">Total HT</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Produit</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Code produit</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Désignation</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Quantité</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Prix unitaire</th>
+                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Total HT</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1608,9 +1677,9 @@ const DevisList = () => {
                                                             <FontAwesomeIcon icon={faTrash} />
                                                         </Button>
 
-                                                        <Button className="btn btn-sm m-2" onClick={() => handlePDF(devis.id)}>
-                                                            <FontAwesomeIcon icon={faFilePdf} />
-                                                        </Button>
+                                                        {/*<Button className="btn btn-sm m-2" onClick={() => handlePDF(devis.id)}>*/}
+                                                        {/*    <FontAwesomeIcon icon={faFilePdf} />*/}
+                                                        {/*</Button>*/}
                                                         <Button className="btn btn-sm m-2" onClick={() => print(devis.id)}>
                                                             <FontAwesomeIcon icon={faPrint} />
                                                         </Button>
@@ -1635,16 +1704,16 @@ const DevisList = () => {
                                                     <div>
                                                         <table
                                                             className="table table-responsive table-bordered"
-                                                            style={{ backgroundColor: "#adb5bd" }}
+
                                                         >
                                                             <thead>
                                                             <tr>
-                                                                <th>Code Produit</th>
-                                                                <th>designation</th>
-                                                                <th>calibre</th>
-                                                                <th>Quantite</th>
-                                                                <th>Prix Vente</th>
-                                                                <th>Total HT </th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>Code Produit</th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>designation</th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>calibre</th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>Quantite</th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>Prix Vente</th>
+                                                                <th    style={{ backgroundColor: "#adb5bd" }}>Total HT </th>
                                                                 {/* <th className="text-center">Action</th> */}
                                                             </tr>
                                                             </thead>

@@ -115,34 +115,34 @@ const LivraisonList = () => {
     const getElementValueById = (id) => {
         return document.getElementById(id)?.value || "";
     };
-    const toggleRow = async (commandeId) => {
-        if (!expandedRows.includes(commandeId)) {
-            try {
-                // Récupérer les lignes de devis associées à ce devis
-                const commande = await fetchLivraisons(commandeId);
-
-                // Mettre à jour l'état pour inclure les lignes de devis récupérées
-                setCommandes((pervcommande) => {
-                    return pervcommande.map((commandeId) => {
-                        if (commandeId.id === commandeId) {
-                            return { ...commande, commande };
-                        }
-                        return commande;
-                        console.log("comande",commande)
-                    });
-                });
-
-                // Ajouter l'ID du devis aux lignes étendues
-                setExpandedRows([...expandedRows, commandeId]);
-                console.log("expandsRows",expandedRows);
-            } catch (error) {
-                console.error(
-                    "Erreur lors de la récupération des lignes de commande :",
-                    error
-                );
-            }
-        }
-    };
+    // const toggleRow = async (livraisonId) => {
+    //     if (!expandedRows.includes(commandeId)) {
+    //         try {
+    //             // Récupérer les lignes de devis associées à ce devis
+    //             const commande = await fetchLivraisons(commandeId);
+    //
+    //             // Mettre à jour l'état pour inclure les lignes de devis récupérées
+    //             setCommandes((pervcommande) => {
+    //                 return pervcommande.map((commandeId) => {
+    //                     if (commandeId.id === commandeId) {
+    //                         return { ...commande, commande };
+    //                     }
+    //                     return commande;
+    //                     console.log("comande",commande)
+    //                 });
+    //             });
+    //
+    //             // Ajouter l'ID du devis aux lignes étendues
+    //             setExpandedRows([...expandedRows, commandeId]);
+    //             console.log("expandsRows",expandedRows);
+    //         } catch (error) {
+    //             console.error(
+    //                 "Erreur lors de la récupération des lignes de commande :",
+    //                 error
+    //             );
+    //         }
+    //     }
+    // };
 
     const handleProductSelection = (selectedProduct, index) => {
         console.log("selectedProduct", selectedProduct);
@@ -925,7 +925,7 @@ const LivraisonList = () => {
                                                         {/* </Button> */}
                                                     </td>
                                                 </tr>
-                                                {livraison.commande && expandedRows.includes(livraison.commande.id) && livraison.commande.ligneCommandes && (
+                                                {expandedRows.includes(livraison.id) && livraison.ligneLivraisons && (
                                                     <tr>
                                                         <td colSpan="6">
                                                             <div>
@@ -942,16 +942,18 @@ const LivraisonList = () => {
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                    {livraison.commande.ligneCommandes.map((ligneCommandes) => {
-                                                                        const produit = produits.find(prod => prod.id === ligneCommandes.produit_id);
+                                                                    {livraison.ligneLivraisons.map((ligneLivraisons) => {
+                                                                        const produit = produits.find(prod => prod.id === ligneLivraisons.produit_id);
+                                                                        console.log("prod",produit)
+                                                                        console.log("id",ligneLivraisons.produit_id)
                                                                         return (
-                                                                            <tr key={ligneCommandes.id}>
+                                                                            <tr key={ligneLivraisons.id}>
                                                                                 <td>{produit.Code_produit}</td>
                                                                                 <td>{produit.designation}</td>
                                                                                 <td>{produit.calibre.calibre}</td>
-                                                                                <td>{ligneCommandes.quantite}</td>
-                                                                                <td>{ligneCommandes.prix_vente} DH</td>
-                                                                                <td>{(ligneCommandes.quantite * ligneCommandes.prix_vente).toFixed(2)} DH</td>
+                                                                                <td>{ligneLivraisons.quantite}</td>
+                                                                                <td>{ligneLivraisons.prix_vente} DH</td>
+                                                                                <td>{(ligneLivraisons.quantite * ligneLivraisons.prix_vente).toFixed(2)} DH</td>
                                                                             </tr>
                                                                         );
                                                                     })}

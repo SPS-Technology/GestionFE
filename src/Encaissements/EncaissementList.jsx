@@ -138,20 +138,30 @@ const EncaissementList = () => {
 
     };
 
-    const handleClientSelection = (target) => {
-        const banque_id = parseInt(target.value);
-        console.log('banque Id :',banque_id)
-        const banque = banques.filter((b) => b.id === banque_id);
-        console.log(banque)
-        // setFormData({ ...formData, [target.name]: clientId });
-        // console.log("formData",formData);
-        // Filtrer les factures en fonction de l'ID du client sélectionné
-        console.log(banques)
-        setBanque(banque);
-        // console.log(banque.ligneEntrerCompte)
-         const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
-        setFilteredBanques(facturesFormodePaimenent);
-        console.log("filtered Factures",filteredBanques);
+    // const handlemodepaiementSelection = (target) => {
+    //     const banque_id = parseInt(target.value);
+    //     console.log('banque Id :',banque_id)
+    //     const banque = banques.filter((b) => b.id === banque_id);
+    //     console.log(banque)
+    //
+    //
+    //     console.log(banques)
+    //     setBanque(banque);
+    //
+    //      const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
+    //     setFilteredBanques(facturesFormodePaimenent);
+    //     console.log("filtered Factures",filteredBanques);
+    // };
+    const handlemodepaiementSelection = (target) => {
+        const selectedModePaiement = target.value;
+        console.log('Mode de paiement sélectionné :', selectedModePaiement);
+
+        // Filtrer les lignes de banque par mode de paiement sélectionné
+        const banquesFilteredByModePaiement = banques.filter(b => b.mode_de_paiement === selectedModePaiement);
+        console.log(banquesFilteredByModePaiement);
+
+        // Mettre à jour l'état avec les lignes de banque filtrées
+        setFilteredBanques(banquesFilteredByModePaiement);
     };
 
     const handleSearch = (term) => {
@@ -841,7 +851,7 @@ const EncaissementList = () => {
                                     <Form.Select
                                         name="type_encaissement"
                                         value={formData.type_encaissement}
-                                        onChange={(e) => handleClientSelection(e.target)}
+                                        onChange={(e) => handlemodepaiementSelection(e.target)}
                                         className="form-select form-select-sm"
                                     >
                                         <option value="">Sélectionner un encaissement</option>

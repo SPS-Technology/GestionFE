@@ -22,6 +22,7 @@ const FactureList = () => {
     const [clients, setClients] = useState([]);
     const [devises, setDevises] = useState([]);
     const [authId, setAuthId] = useState([]);
+    const [expandedRows, setExpandedRows] = useState([]);
 
     const [selectedClient, setSelectedClient] = useState([]);
 
@@ -58,6 +59,94 @@ const FactureList = () => {
         setSelectedProductsData([...selectedProductsData, {}]);
         console.log("selectedProductData", selectedProductsData);
     };
+    const toggleRow = async (factureId) => {
+        if (!expandedRows.includes(factureId)) {
+            try {
+                // Récupérer les lignes de facture associées à cette facture
+                const lignefactures = await fetchLignefacture(factureId);
+
+                // Mettre à jour l'état pour inclure les lignes de facture récupérées
+                setFactures((prevFactures) => {
+                    return prevFactures.map((facture) => {
+                        if (facture.id === factureId) {
+                            return { ...facture, lignefactures }; // Renommer ici pour correspondre à la clé
+                        }
+                        return facture;
+                    });
+                });
+
+                // Ajouter l'ID de la facture aux lignes étendues
+                setExpandedRows([...expandedRows, factureId]);
+                console.log("expandedRows", expandedRows);
+            } catch (error) {
+                console.error('Erreur lors de la récupération des lignes de facture:', error);
+            }
+        }
+    };
+    const handleShowLigneFactures = async (factureId) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(factureId)
+                ? prevRows.filter((row) => row !== factureId)
+                : [...prevRows, factureId]
+        );
+    };
+    useEffect(() => {
+        // Préchargement des lignes de facture pour chaque facture
+        factures.forEach(async (facture) => {
+            if (!facture.lignefactures) {
+                try {
+                    const lignefactures = await fetchLignefacture(facture.id);
+                    setFactures((prevFactures) => {
+                        return prevFactures.map((prevFacture) => {
+                            if (prevFacture.id === facture.id) {
+                                return { ...prevFacture, lignefactures };
+                            }
+                            return prevFacture;
+                        });
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du préchargement des lignes de facture:', error);
+                }
+            }
+        });
+    }, []); // Le tableau de dépendances vide signifie que ce useEffect ne sera exécuté qu'une seule fois après le montage du composant
+
+
+    const fetchLignefacture = async (factureId) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:8000/api/factures/${factureId}/ligneFacture`
+            );
+            console.log("fetch lign facture ", response.data.lignefactures);
+            return response.data.lignefactures;
+        } catch (error) {
+            console.error(
+                "Erreur lors de la récupération des lignes de facture :",
+                error
+            );
+            return [];
+        }
+    };
+    // useEffect(() => {
+    //     // Préchargement des lingedevises pour chaque devis
+    //     factures.forEach(async (facture) => {
+    //         if (!facture.lignefacture) {
+    //             const lignefactures = await fetchLignefacture(factures.id);
+    //             setClients((prevFactures) => {
+    //                 return prevFactures.map((prevFactures) => {
+    //                     if (prevFactures.id === facture.id) {
+    //                         return { ...prevFactures, lignefactures };
+    //                     }
+    //                     return prevFactures;
+    //                 });
+    //             });
+    //         }
+    //     });
+    // }, [factures]);
+    //
+    // useEffect(() => {
+    //     fetchFactures();
+    // }, []);
     const handleProductSelection = (selectedProduct, index) => {
         console.log("selectedProduct", selectedProduct);
         const updatedSelectedProductsData = [...selectedProductsData];
@@ -123,7 +212,7 @@ const FactureList = () => {
         setSelectedProductsData(updatedSelectedProductsData);
         if (id) {
             axios
-                .delete(`http://localhost:8000/api/lignefactures/${id}`)
+                .delete(`http://localhost:8000/api/ligneFacture/${id}`)
                 .then(() => {
                     fetchFactures();
                 });
@@ -167,7 +256,7 @@ const FactureList = () => {
             setClients(ClientResponse.data.client);
 
             const LigneFactureResponse = await axios.get(
-                "http://localhost:8000/api/lignefactures"
+                "http://localhost:8000/api/ligneFacture"
             );
             setLigneFacture(LigneFactureResponse.data);
 
@@ -258,7 +347,7 @@ const FactureList = () => {
                     }
                 );
                 const existingLigneFacturesResponse = await axios.get(
-                    `http://localhost:8000/api/lignefactures/${editingFacture.id}`
+                    `http://localhost:8000/api/ligneFacture/${editingFacture.id}`
                 );
 
                 const existingLigneFacture =
@@ -292,7 +381,7 @@ const FactureList = () => {
                     if (lignefactureData.id) {
                         // If exists, update the existing ligneDevis
                         await axios.put(
-                            `http://localhost:8000/api/lignefactures/${lignefactureData.id}`,
+                            `http://localhost:8000/api/ligneFacture/${lignefactureData.id}`,
                             lignefactureData,
                             {
                                 withCredentials: true,
@@ -303,7 +392,7 @@ const FactureList = () => {
                         );
                     } else {
                         await axios.post(
-                            "http://localhost:8000/api/lignefactures",
+                            "http://localhost:8000/api/ligneFacture",
                             lignefactureData,
                             {
                                 withCredentials: true,
@@ -344,7 +433,7 @@ const FactureList = () => {
                 for (const lignefactureData of selectedPrdsData) {
                     // Sinon, il s'agit d'une nouvelle ligne de Devis
                     await axios.post(
-                        "http://localhost:8000/api/lignefactures",
+                        "http://localhost:8000/api/ligneFacture",
                         lignefactureData
                     );
                 }
@@ -440,7 +529,6 @@ const FactureList = () => {
         setEditingFacture(facture);
 
         setFormData({
-            id: facture.id,
             reference: facture.reference,
             date: facture.date,
             ref_BL: facture.ref_BL,
@@ -448,26 +536,29 @@ const FactureList = () => {
             modePaiement: facture.modePaiement,
             total_ttc: facture.total_ttc,
             client_id: facture.client_id,
-            id_devis: facture.id_devis,
-            user_id: facture.user_id,
+            // user_id: facture.user_id,
         });
-        const selectedProducts = facture.ligneFacture && facture.ligneFacture.map((ligneFacture) => {
-            const product = produits.find(
-                (produit) => produit.id === ligneFacture.produit_id
-            );
-            console.log("product",product)
-            return {
-                id: ligneFacture.id,
-                Code_produit: product.Code_produit,
-                calibre_id: product.calibre_id,
-                designation: product.designation,
-                produit_id: ligneFacture.produit_id,
-                quantite: ligneFacture.quantite,
-                prix_vente: ligneFacture.prix_vente,
-            };
-        });
-        setSelectedProductsData(selectedProducts);
-        console.log("selectedProducts for edit",selectedProducts)
+
+        if (facture.ligne_facture && facture.ligne_facture.length > 0) {
+            const selectedProducts = facture.ligne_facture.map((lignefacture) => {
+                const product = produits.find(
+                    (produit) => produit.id === lignefacture.produit_id
+                );
+                console.log("product",product)
+                return {
+                    id: lignefacture.id,
+                    Code_produit: product.Code_produit,
+                    calibre_id: product.calibre_id,
+                    designation: product.designation,
+                    produit_id: lignefacture.produit_id,
+                    quantite: lignefacture.quantite,
+                    prix_vente: lignefacture.prix_vente,
+                };
+            });
+            setSelectedProductsData(selectedProducts);
+            console.log("selectedProducts for edit",selectedProducts)
+        }
+
         if (formContainerStyle.right === "-100%") {
             setFormContainerStyle({ right: "0" });
             setTableContainerStyle({ marginRight: "500px" });
@@ -1020,14 +1111,18 @@ const FactureList = () => {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="col-3 mt-5">
-                                    <Button
-                                        className="btn btn-sm"
-                                        variant="primary"
-                                        type="submit"
-                                    >
-                                        Submit
-                                    </Button>
+                                <div className="col-md-12">
+                                    <div className="text-center">
+                                        <Button type="submit" className=" btn-sm col-4">
+                                            {editingFacture ? "Modifier" : "Valider"}
+                                        </Button>
+                                        <Button
+                                            className=" btn-sm btn-secondary col-4 offset-1 "
+                                            onClick={closeForm}
+                                        >
+                                            Annuler
+                                        </Button>
+                                    </div>
                                 </div>
                             </Form>
                         </div>
@@ -1035,6 +1130,7 @@ const FactureList = () => {
                             <table className="table table-bordered">
                                 <thead className="text-center"  style={{ backgroundColor: "#adb5bd" }}>
                                 <tr>
+                                    <th>Détails</th>
                                     <th>N° Facture</th>
                                     <th>Date</th>
                                     <th>Client</th>
@@ -1048,11 +1144,30 @@ const FactureList = () => {
                                     <th>Action</th>
                                 </tr>
                                 </thead>
+                                {/*<tbody className="text-center">*/}
+                                {/*{filteredfactures*/}
+                                {/*    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)*/}
+                                {/*    .map((facture) => (*/}
                                 <tbody className="text-center">
-                                {filteredfactures
-                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                    .map((facture) => (
-                                        <tr key={facture.id}>
+                                {filteredfactures.map((facture) => (
+                                    <React.Fragment key={facture.id}>
+                                        <tr>
+                                            <td>
+                                                <div className="no-print ">
+                                                    <button
+                                                        className="btn btn-sm btn-light"
+                                                        onClick={() => handleShowLigneFactures(facture.id)}
+                                                    >
+                                                        <FontAwesomeIcon
+                                                            icon={
+                                                                expandedRows.includes(facture.id)
+                                                                    ? faMinus
+                                                                    : faPlus
+                                                            }
+                                                        />
+                                                    </button>
+                                                </div>
+                                            </td>
                                             <td>{facture.reference}</td>
                                             <td>{facture.date}</td>
                                             <td>{facture.client.raison_sociale}</td>
@@ -1065,7 +1180,6 @@ const FactureList = () => {
                                                     className="btn btn-sm btn-info m-1"
                                                     onClick={() => handleEdit(facture)}
                                                 >
-
                                                     <i className="fas fa-edit"></i>
                                                 </button>
                                                 <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(facture)}>
@@ -1079,10 +1193,53 @@ const FactureList = () => {
                                                 </Button>
                                             </td>
                                         </tr>
-                                    ))}
+                                        {expandedRows.includes(facture.id) && facture.ligne_facture && (
+                                            <tr>
+                                                <td colSpan="8">
+                                                    <div>
+                                                        <table className="table table-responsive table-bordered" style={{ backgroundColor: "#adb5bd" }}>
+                                                            <thead>
+                                                            <tr>
+                                                                <th>Code Produit</th>
+                                                                <th>designation</th>
+
+                                                                <th>Quantite</th>
+                                                                {/*<th>Prix Vente</th>*/}
+                                                                {/*<th>Total HT </th>*/}
+                                                            </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            {facture.ligne_facture.map((lignefacture) => (
+
+                                                                    <tr key={lignefacture.id}>
+                                                                        <td>{lignefacture.produit_id}</td>
+                                                                        <td>{lignefacture.prix_vente}</td>
+
+                                                                        <td>{lignefacture.quantite}</td>
+                                                                        {/*<td>{lignefactures.prix_vente} DH</td>*/}
+                                                                        {/*<td>*/}
+                                                                        {/*    {(*/}
+                                                                        {/*        lignefactures.quantite **/}
+                                                                        {/*        lignefactures.prix_vente*/}
+                                                                        {/*    ).toFixed(2)}{" "}*/}
+                                                                        {/*    DH*/}
+                                                                        {/*</td>*/}
+                                                                    </tr>
+                                                                    )
+                                                            )}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
+                                ))}
                                 </tbody>
                             </table>
-                            <TablePagination
+
+
+                                <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}
                                 component="div"
                                 count={filteredfactures.length}
