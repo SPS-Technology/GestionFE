@@ -7,7 +7,7 @@ import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
 import TablePagination from '@mui/material/TablePagination';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus,} from "@fortawesome/free-solid-svg-icons";
+import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus, faMinus,} from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -18,7 +18,7 @@ import {IoIosPersonAdd} from "react-icons/io";
 // import ExportPdfButton from "./ExportPdfButton";
 // import PrintList from "./PrintList";
 const EncaissementList = () => {
-
+    const [expandedRows, setExpandedRows] = useState([]);
     const [comptes, setComptes] = useState([]);
     const [filteredBanques, setFilteredBanques] = useState([]);
     const [Banque, setBanque] = useState([]);
@@ -75,6 +75,23 @@ const EncaissementList = () => {
     };
     const fetchEncaissements = async () => {
         try {
+
+            const factureResponse = await axios.get(
+            "http://localhost:8000/api/factures"
+        );
+            console.log("API Response for facture:", factureResponse.data.facture);
+            setFactures(factureResponse.data.facture);
+
+            const clientResponse = await axios.get(
+                "http://localhost:8000/api/clients"
+            );
+            console.log("API Response for clients:", clientResponse.data.client);
+            setClients(clientResponse.data.client);
+            const compteResponse = await axios.get(
+                "http://localhost:8000/api/comptes"
+            );
+            console.log("API Response for Comptes:", compteResponse.data.comptes);
+            setComptes(compteResponse.data.comptes);
             const response = await axios.get(
                 "http://localhost:8000/api/encaissements");
             setEncaissements(response.data.encaissements);
@@ -94,24 +111,12 @@ const EncaissementList = () => {
             console.log("API Response for ligneencaissement:", ligneEncaissementResponse.data.ligneencaissements);
 
 
-            const compteResponse = await axios.get(
-                "http://localhost:8000/api/comptes"
-            );
-            console.log("API Response for Comptes:", compteResponse.data.comptes);
-            setComptes(compteResponse.data.comptes);
 
 
-            const clientResponse = await axios.get(
-                "http://localhost:8000/api/clients"
-            );
-            console.log("API Response for clients:", clientResponse.data.client);
-            setClients(clientResponse.data.client);
 
-            const factureResponse = await axios.get(
-                "http://localhost:8000/api/factures"
-            );
-            console.log("API Response for facture:", factureResponse.data.facture);
-            setFactures(factureResponse.data.facture);
+
+
+
         } catch (error) {
             console.error("Error fetching data:", error);
         }
@@ -138,31 +143,31 @@ const EncaissementList = () => {
 
     };
 
-    // const handlemodepaiementSelection = (target) => {
-    //     const banque_id = parseInt(target.value);
-    //     console.log('banque Id :',banque_id)
-    //     const banque = banques.filter((b) => b.id === banque_id);
-    //     console.log(banque)
-    //
-    //
-    //     console.log(banques)
-    //     setBanque(banque);
-    //
-    //      const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
-    //     setFilteredBanques(facturesFormodePaimenent);
-    //     console.log("filtered Factures",filteredBanques);
-    // };
     const handlemodepaiementSelection = (target) => {
-        const selectedModePaiement = target.value;
-        console.log('Mode de paiement sélectionné :', selectedModePaiement);
+        const mode_de_paiement = target.value;
+        console.log('target:',target)
+        const banque = banques.filter((b) => b.mode_de_paiement === mode_de_paiement);
+        console.log('banque : ',banque)
+        setFormData({ ...formData, [target.name]: target.value });
 
-        // Filtrer les lignes de banque par mode de paiement sélectionné
-        const banquesFilteredByModePaiement = banques.filter(b => b.mode_de_paiement === selectedModePaiement);
-        console.log(banquesFilteredByModePaiement);
 
-        // Mettre à jour l'état avec les lignes de banque filtrées
-        setFilteredBanques(banquesFilteredByModePaiement);
+        setBanque(banque);
+        const banque_id = banque.id
+         const facturesFormodePaimenent = banques.filter(facture => facture.banque_id === parseInt(banque_id) && facture.status != "reglee"  );
+        setFilteredBanques(facturesFormodePaimenent);
+        console.log("filtered Factures",filteredBanques);
     };
+    // const handlemodepaiementSelection = (target) => {
+    //     const selectedModePaiement = target.value;
+    //     console.log('Mode de paiement sélectionné :', selectedModePaiement);
+    //
+    //     // Filtrer les lignes de banque par mode de paiement sélectionné
+    //     const banquesFilteredByModePaiement = banques.filter(b => b.mode_de_paiement === selectedModePaiement);
+    //     console.log(banquesFilteredByModePaiement);
+    //
+    //     // Mettre à jour l'état avec les lignes de banque filtrées
+    //     setFilteredBanques(banquesFilteredByModePaiement);
+    // };
 
     const handleSearch = (term) => {
         setSearchTerm(term);
@@ -242,123 +247,151 @@ const EncaissementList = () => {
     };
     //------------------------- fournisseur print ---------------------//
 
-    const printList = (tableId, title, encaissementList) => {
-        const printWindow = window.open(" ", "_blank", " ");
-
+    const printEncaissements = (encaissements, Banque = [], ligneEntrerComptes = [], factures = [], page = 0, rowsPerPage = 10) => {
+        const printWindow = window.open("", "_blank", "");
         if (printWindow) {
-            const tableToPrint = document.getElementById(tableId);
+            const newWindowDocument = printWindow.document;
+            const title = "Reçu de Remise à l'Encaissement";
 
-            if (tableToPrint) {
-                const newWindowDocument = printWindow.document;
-                newWindowDocument.write(`
+            newWindowDocument.write(`
             <!DOCTYPE html>
             <html lang="fr">
             <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <h1 class="h1"> Gestion Commandes </h1>
-              <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
-              <style>
-  
-                body {
-                  font-family: 'Arial', sans-serif;
-                  margin-bottom: 60px;
-                }
-  
-                .page-header {
-                  text-align: center;
-                  font-size: 24px;
-                  margin-bottom: 20px;
-                }
-  
-                .h1 {
-                  text-align: center;
-                }
-  
-                .list-title {
-                  font-size: 18px;
-                  margin-bottom: 10px;
-                }
-  
-                .header {
-                  font-size: 16px;
-                  margin-bottom: 10px;
-                }
-  
-                table {
-                  width: 100%;
-                  border-collapse: collapse;
-                  margin-bottom: 20px;
-                }
-  
-                th, td {
-                  border: 1px solid #ddd;
-                  padding: 8px;
-                  text-align: left;
-                }
-  
-                .footer {
-                  position: fixed;
-                  bottom: 0;
-                  width: 100%;
-                  text-align: center;
-                  font-size: 14px;
-                  margin-top: 30px;
-                  background-color: #fff;
-                }
-  
-                @media print {
-                  .footer {
-                    position: fixed;
-                    bottom: 0;
-                  }
-  
-                  body {
-                    margin-bottom: 0;
-                  }
-                  .no-print {
-                    display: none;
-                  }
-                }
-  
-                .content-wrapper {
-                  margin-bottom: 100px;
-                }
-  
-                .extra-space {
-                  margin-bottom: 30px;
-                }
-              </style>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${title}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                    }
+                    h1 {
+                        text-align: center;
+                        margin-top: 30px;
+                    }
+                    table {
+                        width: 100%;
+                        border-collapse: collapse;
+                        margin-top: 20px;
+                    }
+                    th, td {
+                        border: 1px solid #000;
+                        padding: 8px;
+                        text-align: left;
+                    }
+                    .cheque-img {
+                        width: 100%;
+                        height: auto;
+                    }
+                    .signature {
+                        margin-top: 30px;
+                        display: flex;
+                        justify-content: space-between;
+                    }
+                    .signature div {
+                        width: 45%;
+                        text-align: center;
+                        border-top: 1px solid #000;
+                    }
+                    .signature div:last-child {
+                        text-align: left;
+                    }
+                </style>
             </head>
             <body>
-              <div class="page-header print-no-date">${title}</div>
-              <ul>
-                ${Array.isArray(encaissementList)
-                    ? encaissementList.map((item) => `<li>${item}</li>`).join("")
-                    : ""
-                }
-              </ul>
-              <div class="content-wrapper">
-                ${tableToPrint.outerHTML}
-              </div>
-              <script>
-                setTimeout(() => {
-                  window.print();
-                  window.onafterprint = function () {
-                    window.close();
-                  };
-                }, 1000);
-              </script>
+                <h1>${title} : CHEQUE</h1>
+                <p>Numéro de remise : ${encaissements.referencee}</p>
+                <table>
+                    <tr>
+                        Code agence du compte :                       Nom agence du compte
+                        
+                    </tr>
+                    <tr>
+                        <td>Code agence de remise</td>
+                       
+                        <td>Nom agence de remise</td>
+                       
+                    </tr>
+                    <tr>
+                        <td>N° de compte</td>
+                       
+                        <td>Client Remettant</td>
+                   
+                    </tr>
+                    <tr>
+                        <td>Nombre de Valeurs</td>
+                       
+                        <td>Montant total (DH)</td>
+                   
+                    </tr>
+                    <tr>
+                        <td>Date et heure</td>
+                    </tr>
+                </table>
+
+                <h3>Détail Remise</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Raison Sociale</th>
+                            <th>Référence</th>
+                            <th>Total TTC</th>
+                            <th>Date</th>
+                            <th>Numéro de Chèque</th>
+                            <th>Mode de Paiement</th>
+                            <th>Date</th>
+                            <th>Avance</th>
+                            <th>Status</th>
+                            <th>Remarque</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(banque => {
+                const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+                const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+
+                return `
+                                <tr key="${banque.id}">
+                                    <td>${facture ? facture.client.raison_sociale : 'N/A'}</td>
+                                    <td>${facture ? facture.reference : 'N/A'}</td>
+                                    <td>${facture ? facture.total_ttc : 'N/A'}</td>
+                                    <td>${facture ? facture.date : 'N/A'}</td>
+                                    <td>${banque.numero_cheque}</td>
+                                    <td>${banque.mode_de_paiement}</td>
+                                    <td>${banque.datee}</td>
+                                    <td>${ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                    <td>${banque.Status}</td>
+                                    <td>${banque.remarque}</td>
+                                </tr>
+                            `;
+            }).join('')}
+                    </tbody>
+                </table>
+
+                <div class="signature">
+                    <div>SIGNATURE CLIENT</div>
+                    <div>
+                        SIGNATURE AGENCE
+                        <br><br>
+                        <img src="path_to_stamp_image" alt="Stamp">
+                    </div>
+                </div>
+                
+                <script>
+                    setTimeout(() => {
+                        window.print();
+                        window.onafterprint = function () {
+                            window.close();
+                        };
+                    }, 1000);
+                </script>
             </body>
             </html>
-          `);
+        `);
 
-                newWindowDocument.close();
-            } else {
-                console.error(`Table with ID '${tableId}' not found.`);
-            }
+            newWindowDocument.close();
         } else {
-            console.error("Error opening print window.");
+            console.error("Erreur lors de l'ouverture de la fenêtre d'impression.");
         }
     };
     //------------------------- fournisseur export to pdf ---------------------//
@@ -518,14 +551,27 @@ const EncaissementList = () => {
     //------------------------- encaissement EDIT---------------------//
 
     const handleEdit = (encaissements) => {
-        setEditingEncaissement(encaissements); // Set the recouvrements to be edited
+        setEditingEncaissement(encaissements);
+        const banques_filtrees = banques.filter((banque)=>banque.mode_de_paiement === formData.type_encaissement);
+        console.log("banques  filtrees: ",banques_filtrees)
+        // Calculate the total montant from the filtered banques
+        const montant_total = banques_filtrees.reduce((total, banque) => {
+            const avances = banque.ligne_entrer_compte.map(item => parseFloat(item.avance));
+            return total + avances.reduce((sum, avance) => sum + avance, 0);
+        }, 0);
+
+        console.log("montant_total: ", montant_total);// Set the recouvrements to be edited
         // Populate form data with recouvrements details
         setFormData({
+
+
+
             referencee: encaissements.referencee,
             date_encaissement: encaissements.date_encaissement,
-            montant_total: encaissements.montant_total,
+            montant_total: montant_total,
             comptes_id: encaissements.comptes_id,
             type_encaissement: encaissements.type_encaissement,
+
 
         });
                 if (formContainerStyle.right === '-500px') {
@@ -594,7 +640,7 @@ const EncaissementList = () => {
     // };
     const handleSubmit = async (e) => {
         e.preventDefault();
-
+        console.log("e",e)
         try {
             // const userResponse = await axios.get("http://localhost:8000/api/users", {
             //   withCredentials: true,
@@ -607,17 +653,30 @@ const EncaissementList = () => {
             // console.log("auth user", authenticatedUserId);
             // Préparer les données du Encaissement
             console.log("authId",authId)
+            console.log(banques)
+            const banques_filtrees = banques.filter((banque)=>banque.mode_de_paiement === formData.type_encaissement);
+            console.log("banques  filtrees: ",banques_filtrees)
+
+            // Calculate the total montant from the filtered banques
+            const montant_total = banques_filtrees.reduce((total, banque) => {
+                const avances = banque.ligne_entrer_compte.map(item => parseFloat(item.avance));
+                return total + avances.reduce((sum, avance) => sum + avance, 0);
+            }, 0);
+
+            console.log("montant_total: ", montant_total);
+
+
 
             const EncaissementData = {
                 referencee: formData.referencee,
                 date_encaissement: formData.date_encaissement,
-                montant_total: formData.montant_total,
+                montant_total: montant_total,
                 comptes_id: formData.comptes_id,
                 type_encaissement: formData.type_encaissement,
 
                 // user_id: authId,
             };
-
+        console.log('encaissement data : ',EncaissementData)
             let response;
             if (editingEncaissement) {
                 // Mettre à jour le Encaissement existant
@@ -626,7 +685,7 @@ const EncaissementList = () => {
                     {
                         referencee: formData.referencee,
                         date_encaissement: formData.date_encaissement,
-                        montant_total: formData.montant_total,
+
                         comptes_id: formData.comptes_id,
                         type_encaissement: formData.type_encaissement,
 
@@ -696,17 +755,17 @@ const EncaissementList = () => {
                     EncaissementData
                 );
                 //console.log(response.data.devi)
-                const selectedPrdsData = selectedProductsData.map(
-                    (selectProduct, index) => {
+                const selectedData = banques_filtrees.map(
+                    (item, index) => {
                         return {
                             encaissements_id: response.data.encaissement.id,
-                            entrer_comptes_id: selectProduct.produit_id,
+                            entrer_comptes_id: item.id,
 
                         };
                     }
                 );
-                console.log("selectedPrdsData", selectedPrdsData);
-                for (const ligneencaissementData of selectedPrdsData) {
+                console.log("selectedData", selectedData);
+                for (const ligneencaissementData of selectedData) {
                     // Sinon, il s'agit d'une nouvelle ligne de Encaissement
                     await axios.post(
                         "http://localhost:8000/api/ligneencaissement",
@@ -761,13 +820,19 @@ const EncaissementList = () => {
         setFormData({ // Clear form data
             referencee: '',
             date_encaissement: '',
-            montant_total: '',
+
             comptes_id: '',
             type_encaissement: '',
         });
         setEditingEncaissement(null); // Clear editing encaissement
     };
-
+    const handleShowLigneEncaissements = async (encaissementId) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(encaissementId)
+                ? prevRows.filter((row) => row !== encaissementId)
+                : [...prevRows, encaissementId]
+        );
+    };
     return (
         <ThemeProvider theme={createTheme()}>
             <Box sx={{ display: 'flex' }}>
@@ -856,16 +921,13 @@ const EncaissementList = () => {
                                     >
                                         <option value="">Sélectionner un encaissement</option>
                                         {banques.map((banque) => (
-                                            <option key={banque.id} value={banque.id}>
+                                            <option key={banque.id} value={banque.mode_de_paiement}>
                                                 {banque.mode_de_paiement}
                                             </option>
                                         ))}
                                     </Form.Select>
                                 </Form.Group>
-                                <Form.Group className="col-sm-4 m-2">
-                                    <Form.Label>Montant Total</Form.Label>
-                                    <Form.Control type="text" placeholder="Montant Total" name="montant_total" value={formData.montant_total} onChange={handleChange} />
-                                </Form.Group>
+
                                 <div className="col-md-12">
                                     <Form.Group controlId="selectedFactureTable">
                                         <Form.Label> </Form.Label>
@@ -888,7 +950,8 @@ const EncaissementList = () => {
                                             {Banque && Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
 
                                                 const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
-                                                 console.log(ligneEntrerCompte)
+
+
                                                 const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
 
                                                 // Afficher les données de Banque et client s'il existe
@@ -927,6 +990,7 @@ const EncaissementList = () => {
                             <table className="table table-responsive table-bordered " id="encaissementTable">
                                 <thead >
                                 <tr>
+                                    <th></th>
                                     <th style={tableHeaderStyle}>
                                         <input type="checkbox" onChange={handleSelectAllChange} />
                                     </th>
@@ -940,8 +1004,24 @@ const EncaissementList = () => {
                                 </thead>
                                 <tbody>
                                 {filtredEncaissements && filtredEncaissements.slice (page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((encaissements) => (
-
+                                    <React.Fragment key={encaissements.id}>
                                     <tr key={encaissements.id}>
+                                        <td>
+                                            <div className="no-print ">
+                                                <button
+                                                    className="btn btn-sm btn-light"
+                                                    onClick={() => handleShowLigneEncaissements(encaissements.id)}
+                                                >
+                                                    <FontAwesomeIcon
+                                                        icon={
+                                                            expandedRows.includes(encaissements.id)
+                                                                ? faMinus
+                                                                : faPlus
+                                                        }
+                                                    />
+                                                </button>
+                                            </div>
+                                        </td>
                                         <td>
                                             <input type="checkbox" onChange={() => handleCheckboxChange(encaissements.id)} checked={selectedItems.includes(encaissements.id)} />
                                         </td>
@@ -964,6 +1044,56 @@ const EncaissementList = () => {
                                             </Button>
                                         </td>
                                     </tr>
+                                        {expandedRows.includes(encaissements.id) && encaissements.ligne_encaissement && (
+                                            <tr>
+                                                <td colSpan="8">
+                                                    <div>
+                                                        <table className="table table-responsive table-bordered" style={{ backgroundColor: "#adb5bd" }}>
+                                                            <thead>
+                                                            <tr>
+                                                                <th>Client</th>
+                                                                <th>N° de Facture</th>
+                                                                <th>Total TTC</th>
+                                                                <th>Date de Facture</th>
+                                                                <th>N° de Chéque</th>
+                                                                <th>Mode de Paiement</th>
+                                                                <th>date</th>
+                                                                <th>Avance</th>
+                                                                <th>Status</th>
+                                                                <th>Remarque</th>
+                                                            </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            {Banque && Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
+
+                                                                const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+
+
+                                                                const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+
+                                                                // Afficher les données de Banque et client s'il existe
+                                                                return (
+                                                                    <tr key={banque.id}>
+                                                                        <td>{facture.client.raison_sociale}</td>
+                                                                        <td>{facture.reference}</td>
+                                                                        <td>{facture.total_ttc}</td>
+                                                                        <td>{facture.date}</td>
+                                                                        <td>{banque.numero_cheque}</td>
+                                                                        <td>{banque.mode_de_paiement}</td>
+                                                                        <td>{banque.datee}</td>
+                                                                        <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                                                        <td>{banque.Status}</td>
+                                                                        <td>{banque.remarque}</td>
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </React.Fragment>
                                 ))}
 
                                 </tbody>
@@ -973,6 +1103,10 @@ const EncaissementList = () => {
 
                             <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
                                 <FontAwesomeIcon icon={faTrash} /></Button>
+                            <Button className="btn btn-primary" onClick={() => printEncaissements(encaissements)}>
+                                <FontAwesomeIcon icon={faPrint} />
+                            </Button>
+
 
                             <TablePagination
                                 rowsPerPageOptions={[5, 10, 25]}

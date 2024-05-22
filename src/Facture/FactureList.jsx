@@ -469,45 +469,48 @@ const FactureList = () => {
     };
 
 
-    const handleDelete = (id) => {
-        Swal.fire({
-            title: "Êtes-vous sûr de vouloir supprimer cette facture ?",
-            showDenyButton: true,
-            showCancelButton: false,
-            confirmButtonText: "Oui",
-            denyButtonText: "Non",
-            customClass: {
-                actions: "my-actions",
-                cancelButton: "order-1 right-gap",
-                confirmButton: "order-2",
-                denyButton: "order-3",
-            },
-        }).then((result) => {
+    const handleDelete = async (id) => {
+        try {
+            const result = await Swal.fire({
+                title: "Êtes-vous sûr de vouloir supprimer cette facture ?",
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: "Oui",
+                denyButtonText: "Non",
+                customClass: {
+                    actions: "my-actions",
+                    cancelButton: "order-1 right-gap",
+                    confirmButton: "order-2",
+                    denyButton: "order-3",
+                },
+            });
+
             if (result.isConfirmed) {
-                // Supprimer la facture avec l'ID donné
-                axios.delete(`http://localhost:8000/api/factures/${id}`)
-                    .then(() => {
-                        // Rafraîchir la liste des factures (si nécessaire)
-                        fetchFactures(); // Assurez-vous que cette fonction récupère à nouveau la liste des factures après la suppression
-                        Swal.fire({
-                            icon: "success",
-                            title: "Succès!",
-                            text: "Facture supprimée avec succès.",
-                        });
-                    })
-                    .catch((error) => {
-                        console.error("Erreur lors de la suppression de la facture:", error);
-                        Swal.fire({
-                            icon: "error",
-                            title: "Erreur!",
-                            text: "Échec de la suppression de la facture.",
-                        });
-                    });
+                // Delete the invoice with the given ID
+                await axios.delete(`http://localhost:8000/api/factures/${id}`);
+
+                // Refresh the list of invoices (if necessary)
+                fetchFactures(); // Ensure this function retrieves the list of invoices again after deletion
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Succès!",
+                    text: "Facture supprimée avec succès.",
+                });
             } else {
                 console.log("Suppression annulée");
             }
-        });
+        } catch (error) {
+            console.error("Erreur lors de la suppression de la facture:", error);
+
+            Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression de la facture.",
+            });
+        }
     };
+
 
     const clearFormData = () => {
         // Reset the form data to empty values
@@ -525,6 +528,7 @@ const FactureList = () => {
     };
 
     const handleEdit = (facture) => {
+        console.log("facture for edit", facture)
         // Populate the form data with the details of the selected facture
         setEditingFacture(facture);
 
@@ -539,8 +543,9 @@ const FactureList = () => {
             // user_id: facture.user_id,
         });
 
-        if (facture.ligne_facture && facture.ligne_facture.length > 0) {
-            const selectedProducts = facture.ligne_facture.map((lignefacture) => {
+        console.log("formData for edit",formData)
+        // if (facture.ligne_facture && facture.ligne_facture.length > 0) {
+            const selectedProducts = facture.ligne_facture && facture.ligne_facture .map((lignefacture) => {
                 const product = produits.find(
                     (produit) => produit.id === lignefacture.produit_id
                 );
@@ -557,7 +562,7 @@ const FactureList = () => {
             });
             setSelectedProductsData(selectedProducts);
             console.log("selectedProducts for edit",selectedProducts)
-        }
+        // }
 
         if (formContainerStyle.right === "-100%") {
             setFormContainerStyle({ right: "0" });

@@ -201,7 +201,7 @@ const DevisList = () => {
 
 
 // Définir le toggleRow pour basculer l'état des lignes de devis
-    // Définir le toggleRow pour basculer l'état des lignes de devis
+//     Définir le toggleRow pour basculer l'état des lignes de devis
         const toggleRow = async (devisId) => {
             if (!expandedRows.includes(devisId)) {
                 try {
@@ -235,13 +235,34 @@ const DevisList = () => {
 
 
 
-    const handleShowLigneEntreeCompte = async (devisId) => {
-        setExpandedRows((prevRows) =>
-            prevRows.includes(devisId)
-                ? prevRows.filter((row) => row !== devisId)
-                : [...prevRows, devisId]
-        );
-    };
+    // const handleShowLigneEntreeCompte = async (devisId) => {
+    //     setExpandedRows((prevRows) =>
+    //         prevRows.includes(devisId)
+    //             ? prevRows.filter((row) => row !== devisId)
+    //             : [...prevRows, devisId]
+    //     );
+    // };
+    // useEffect(() => {
+    //     // Préchargement des lignes de facture pour chaque facture
+    //     factures.forEach(async (devis) => {
+    //         if (!devis.ligneDevis) {
+    //             try {
+    //                 const ligneDevis = await fetchLigneDevis(devis.id);
+    //                 setDevises((pervDevis) => {
+    //                     return pervDevis.map((prevdevis) => {
+    //                         if (prevdevis.id === devis.id) {
+    //                             return { ...prevdevis, ligneDevis };
+    //                         }
+    //                         return prevdevis;
+    //                     });
+    //                 });
+    //             } catch (error) {
+    //                 console.error('Erreur lors du préchargement des lignes de facture:', error);
+    //             }
+    //         }
+    //     });
+    // }, []); // Le tableau de dépendances vide signifie que ce useEffect ne sera exécuté qu'une seule fois après le montage du composant
+
 
 
     const fetchLigneDevis = async (devisId) => {
