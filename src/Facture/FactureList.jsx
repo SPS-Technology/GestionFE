@@ -346,22 +346,22 @@ const FactureList = () => {
 
                     }
                 );
-                const existingLigneFacturesResponse = await axios.get(
-                    `http://localhost:8000/api/ligneFacture/${editingFacture.id}`
-                );
+                // const existingLigneFacturesResponse = await axios.get(
+                //     `http://localhost:8000/api/ligneFacture/${editingFacture.id}`
+                // );
 
-                const existingLigneFacture =
-                    existingLigneFacturesResponse.data.lignefactures;
-                console.log("existing lignefactures", existingLigneFacture);
+                const existingLigneFactures =
+                    editingFacture.ligne_facture;
+                console.log("existing lignefactures", existingLigneFactures);
                 const selectedPrdsData = selectedProductsData.map(
                     (selectedProduct, index) => {
-                        // const existingLigneDevis = existingLigneDevis.find(
-                        //   (ligneDevis) =>
-                        //     ligneDevis.produit_id === selectedProduct.produit_id
-                        // );
+                        const ligneFactureForSelectedProduct = existingLigneFactures.find(
+                          (ligneFacture) =>
+                              ligneFacture.produit_id === selectedProduct.produit_id
+                        );
 
                         return {
-                            id: selectedProduct.id,
+                            id: ligneFactureForSelectedProduct.id,
                             id_facture: editingFacture.id,
                             produit_id: selectedProduct.produit_id,
                             quantite: getElementValueById(
@@ -1187,7 +1187,7 @@ const FactureList = () => {
                                                 >
                                                     <i className="fas fa-edit"></i>
                                                 </button>
-                                                <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(facture)}>
+                                                <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(facture.id)}>
                                                     <FontAwesomeIcon icon={faTrash} />
                                                 </Button>
                                                 <Button

@@ -165,6 +165,12 @@ const DevisList = () => {
     };
     const fetchDevis = async () => {
         try {
+
+            const factureResponse = await axios.get(
+                "http://localhost:8000/api/factures"
+            );
+            setFactures(factureResponse.data.facture);
+            console.log("factures ",factures)
             const clientResponse = await axios.get(
                 "http://localhost:8000/api/clients"
             );
@@ -185,10 +191,7 @@ const DevisList = () => {
             );
             setProduits(produitResponse.data.produit);
 
-            const factureResponse = await axios.get(
-                "http://localhost:8000/api/factures"
-            );
-            setFactures(factureResponse.data.facture);
+
             const userResponse = await axios.get(
                 "http://localhost:8000/api/user"
             );
@@ -339,7 +342,8 @@ const DevisList = () => {
             // 1. Préparer les données de la facture
             const factureData = {
                 client_id: devis.client_id,
-                total_ttc: devis.total_ttc,
+                modePaiement: devis.modePaiement,
+                total_ttc: getTotalTTC(devis.ligneDevis),
                 user_id: authId,
                 id_devis: devis.id,
                 // Autres données de la facture...
@@ -350,43 +354,72 @@ const DevisList = () => {
                 "http://localhost:8000/api/factures",
                 factureData
             );
+            console.log("factureResponse",factureResponse)
 
             const facture = factureResponse.data;
 
-            console.log("Facture créée:", facture);
+
 
             // 3. Récupérer les lignes de devis associées au devis
             const lignesDevisResponse = await axios.get(
                 `http://localhost:8000/api/ligneDevis/${devis.id}`
             );
 
-            // Vérification si les données sont présentes et sous forme de tableau
-            if (Array.isArray(lignesDevisResponse.data)) {
-                const lignesDevis = lignesDevisResponse.data;
 
-                // 4. Créer les lignes de facture en utilisant l'ID de la facture créée
-                for (const ligneDevis of lignesDevis) {
-                    const ligneFactureData = {
-                        facture_id: facture.id,
-                        produit_id: ligneDevis.produit_id,
-                        quantite: ligneDevis.quantite,
-                        prix_unitaire: ligneDevis.prix_unitaire,
-                        // Autres données de la ligne de facture...
-                    };
 
-                    // 5. Envoyer une requête POST pour créer la ligne de facture
-                    const ligneFactureResponse = await axios.post(
-                        "http://localhost:8000/api/ligneFacture",
-                        ligneFactureData
-                    );
+            console.log("ligneDevis Response : ",lignesDevisResponse )
 
-                    console.log("Ligne de facture créée:", ligneFactureResponse.data);
-                }
+            // const factureData1 = lignesDevisResponse.data.ligneDevis.map((lignedevis)=>({
+            //
+            //             id_facture: facture.id,
+            //             produit_id: lignedevis.produit_id,
+            //             quantite: lignedevis.quantite,
+            //             prix_vente: lignedevis.prix_vente,
+            //     }));
 
-                setFactureGenerated(true);
-            } else {
-                console.error("Aucune donnée de lignes de devis trouvée ou les données ne sont pas sous forme de tableau.");
+            const lignesFactureData = lignesDevisResponse.data.ligneDevis.map((ligneDevis) => ({
+                id_facture: facture.facture.id,
+                produit_id: ligneDevis.produit_id,
+                quantite: ligneDevis.quantite,
+                prix_vente: ligneDevis.prix_vente,
+            }));
+
+            console.log("factureData1", lignesFactureData);
+            for (const ligneFactureData of lignesFactureData) {
+                // Sinon, il s'agit d'une nouvelle ligne de Devis
+                await axios.post(
+                    "http://localhost:8000/api/ligneFacture",
+                    ligneFactureData
+                );
             }
+
+            // // Vérification si les données sont présentes et sous forme de tableau
+            // if (Array.isArray(lignesDevisResponse.data)) {
+            //     const lignesDevis = lignesDevisResponse.data;
+            //
+            //     // 4. Créer les lignes de facture en utilisant l'ID de la facture créée
+            //     for (const ligneDevis of lignesDevis) {
+            //         const ligneFactureData = {
+            //             facture_id: facture.id,
+            //             produit_id: ligneDevis.produit_id,
+            //             quantite: ligneDevis.quantite,
+            //             prix_unitaire: ligneDevis.prix_unitaire,
+            //             // Autres données de la ligne de facture...
+            //         };
+            //
+            //         // 5. Envoyer une requête POST pour créer la ligne de facture
+            //         const ligneFactureResponse = await axios.post(
+            //             "http://localhost:8000/api/ligneFacture",
+            //             ligneFactureData
+            //         );
+            //
+            //         console.log("Ligne de facture créée:", ligneFactureResponse.data);
+            //     }
+            //
+            //     setFactureGenerated(true);
+            // } else {
+            //     console.error("Aucune donnée de lignes de devis trouvée ou les données ne sont pas sous forme de tableau.");
+            // }
         } catch (error) {
             console.error("Erreur lors de la génération de la facture :", error);
         }
@@ -576,10 +609,7 @@ const DevisList = () => {
                 console.log("existing LigneDevis", existingLigneDevis);
                 const selectedPrdsData = selectedProductsData.map(
                     (selectedProduct, index) => {
-                        // const existingLigneDevis = existingLigneDevis.find(
-                        //   (ligneDevis) =>
-                        //     ligneDevis.produit_id === selectedProduct.produit_id
-                        // );
+
 
                         return {
                             id: selectedProduct.id,
@@ -659,6 +689,7 @@ const DevisList = () => {
                         ligneDevisData
                     );
                 }
+
 
             }
             console.log("response of postDevis: ", response.data);
@@ -1595,16 +1626,7 @@ const DevisList = () => {
                                         </div>
                                     </div>
                                 </div>
-                                {formData.status === "Valider" && (
-                                    <div className="col-4">
-                                        <Button className="btn btn-sm m-2" variant="success" onClick={handleGenerateFacture}>
-                                            <LiaFileInvoiceSolid />
-                                        </Button>
-                                        <Button className="btn btn-sm m-2" variant="dark" onClick={handleGenerateBonLivraison}>
-                                            <CiDeliveryTruck />
-                                        </Button>
-                                    </div>
-                                )}
+
                                 <Form.Group className="col-4">
                                     <Button variant="primary" type="submit">
                                         Enregistrer le devis

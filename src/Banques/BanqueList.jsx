@@ -179,7 +179,7 @@ const BanqueList = () => {
         // Assuming you have a `clients` array containing client objects
         const ligneEntree = ligneEntrerComptes.filter((l) => l.entrer_comptes_id === banqueId);
 
-console.log("ligne Entree",ligneEntree)
+         console.log("ligne Entree",ligneEntree)
         // Check if the client is found
         if (ligneEntree) {
             const references = [];

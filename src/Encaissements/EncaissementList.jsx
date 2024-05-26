@@ -254,140 +254,158 @@ const EncaissementList = () => {
             const title = "Reçu de Remise à l'Encaissement";
 
             newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${title}</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 20px;
-                    }
-                    h1 {
-                        text-align: center;
-                        margin-top: 30px;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-top: 20px;
-                    }
-                    th, td {
-                        border: 1px solid #000;
-                        padding: 8px;
-                        text-align: left;
-                    }
-                    .cheque-img {
-                        width: 100%;
-                        height: auto;
-                    }
-                    .signature {
-                        margin-top: 30px;
-                        display: flex;
-                        justify-content: space-between;
-                    }
-                    .signature div {
-                        width: 45%;
-                        text-align: center;
-                        border-top: 1px solid #000;
-                    }
-                    .signature div:last-child {
-                        text-align: left;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>${title} : CHEQUE</h1>
-                <p>Numéro de remise : ${encaissements.referencee}</p>
-                <table>
-                    <tr>
-                        Code agence du compte :                       Nom agence du compte
-                        
-                    </tr>
-                    <tr>
-                        <td>Code agence de remise</td>
-                       
-                        <td>Nom agence de remise</td>
-                       
-                    </tr>
-                    <tr>
-                        <td>N° de compte</td>
-                       
-                        <td>Client Remettant</td>
-                   
-                    </tr>
-                    <tr>
-                        <td>Nombre de Valeurs</td>
-                       
-                        <td>Montant total (DH)</td>
-                   
-                    </tr>
-                    <tr>
-                        <td>Date et heure</td>
-                    </tr>
-                </table>
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                }
+                h1 {
+                    text-align: center;
+                    margin-top: 30px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                }
+                .cheque {
+                    width: 100%;
+                    border: 2px solid #000;
+                    padding: 20px;
+                    margin-top: 20px;
+                    position: relative;
+                }
+                .cheque-line {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-bottom: 10px;
+                }
+                .cheque-label {
+                    width: 30%;
+                }
+                .cheque-input {
+                    width: 65%;
+                    border-bottom: 1px solid #000;
+                }
+                .signature {
+                    margin-top: 30px;
+                    display: flex;
+                    justify-content: space-between;
+                }
+                .signature div {
+                    width: 45%;
+                    text-align: center;
+                    border-top: 1px solid #000;
+                }
+                .signature div:last-child {
+                    text-align: left;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>${title} : CHEQUE</h1>
+            <p>Numéro de remise : ${encaissements.referencee}</p>
+            <table>
+                <tr>
+                    <td>Code agence du compte</td>
+                    <td></td>
+                    <td>Nom agence du compte</td>
+                   <td></td>
+                </tr>
+                <tr>
+                    <td>Code agence de remise</td>
+                    <td></td>
+                    <td>Nom agence de remise</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td>N° de compte</td>
+                    <td>${encaissements.comptes_id}</td>
+                    <td>Client Remettant</td>
+                    <td>Amine</td>
+                </tr>
+                <tr>
+                    <td>Nombre de Valeurs</td>
+                    <td>1</td>
+                    <td>Montant total (DH)</td>
+                    <td>${encaissements.montant_total}</td>
+                </tr>
+                <tr>
+                    <td>Date et heure</td>
+                    <td>${encaissements.date_encaissement}</td>
+                </tr>
+            </table>
 
-                <h3>Détail Remise</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Raison Sociale</th>
-                            <th>Référence</th>
-                            <th>Total TTC</th>
-                            <th>Date</th>
-                            <th>Numéro de Chèque</th>
-                            <th>Mode de Paiement</th>
-                            <th>Date</th>
-                            <th>Avance</th>
-                            <th>Status</th>
-                            <th>Remarque</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(banque => {
+             <h3>Détail Remise</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>client</th>
+                        <th>reference </th>
+                        <th>totalttc</th>
+                        <th>Date</th>
+                        <th>Numéro de Chèque</th>
+                        <th>Mode de Paiement</th>
+                        <th>Date</th>
+                        <th>Avance</th>
+                        <th>Status</th>
+                        <th>Remarque</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(banque => {
                 const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
                 const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
 
                 return `
-                                <tr key="${banque.id}">
-                                    <td>${facture ? facture.client.raison_sociale : 'N/A'}</td>
-                                    <td>${facture ? facture.reference : 'N/A'}</td>
-                                    <td>${facture ? facture.total_ttc : 'N/A'}</td>
-                                    <td>${facture ? facture.date : 'N/A'}</td>
-                                    <td>${banque.numero_cheque}</td>
-                                    <td>${banque.mode_de_paiement}</td>
-                                    <td>${banque.datee}</td>
-                                    <td>${ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
-                                    <td>${banque.Status}</td>
-                                    <td>${banque.remarque}</td>
-                                </tr>
-                            `;
+                            <tr key="${banque.id}">
+                                <td>${facture ? facture.client.raison_sociale : 'N/A'}</td>
+                                <td>${facture ? facture.reference : 'N/A'}</td>
+                                <td>${facture ? facture.total_ttc : 'N/A'}</td>
+                                <td>${facture ? facture.date : 'N/A'}</td>
+                                <td>${banque.numero_cheque}</td>
+                                <td>${banque.mode_de_paiement}</td>
+                                <td>${banque.datee}</td>
+                                <td>${ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                <td>${banque.Status}</td>
+                                <td>${banque.remarque}</td>
+                            </tr>
+                        `;
             }).join('')}
-                    </tbody>
-                </table>
+                </tbody>
+            </table>
 
-                <div class="signature">
-                    <div>SIGNATURE CLIENT</div>
-                    <div>
-                        SIGNATURE AGENCE
-                        <br><br>
-                        <img src="path_to_stamp_image" alt="Stamp">
-                    </div>
+            <div class="signature">
+                <div>SIGNATURE CLIENT</div>
+                <div>
+                    SIGNATURE AGENCE
+                    <br><br>
+                   
                 </div>
-                
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        window.onafterprint = function () {
-                            window.close();
-                        };
-                    }, 1000);
-                </script>
-            </body>
-            </html>
-        `);
+            </div>
+            
+            <script>
+                setTimeout(() => {
+                    window.print();
+                    window.onafterprint = function () {
+                        window.close();
+                    };
+                }, 1000);
+            </script>
+        </body>
+        </html>
+    `);
 
             newWindowDocument.close();
         } else {
@@ -1042,25 +1060,28 @@ const EncaissementList = () => {
                                             <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(encaissements.id)}>
                                                 <FontAwesomeIcon icon={faTrash} />
                                             </Button>
+                                            <Button className="btn btn-primary" onClick={() => printEncaissements(encaissements)}>
+                                                <FontAwesomeIcon icon={faPrint} />
+                                            </Button>
                                         </td>
                                     </tr>
                                         {expandedRows.includes(encaissements.id) && encaissements.ligne_encaissement && (
                                             <tr>
                                                 <td colSpan="8">
                                                     <div>
-                                                        <table className="table table-responsive table-bordered" style={{ backgroundColor: "#adb5bd" }}>
+                                                        <table className="table table-responsive table-bordered" >
                                                             <thead>
                                                             <tr>
-                                                                <th>Client</th>
-                                                                <th>N° de Facture</th>
-                                                                <th>Total TTC</th>
-                                                                <th>Date de Facture</th>
-                                                                <th>N° de Chéque</th>
-                                                                <th>Mode de Paiement</th>
-                                                                <th>date</th>
-                                                                <th>Avance</th>
-                                                                <th>Status</th>
-                                                                <th>Remarque</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Client</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>N° de Facture</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Total TTC</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Date de Facture</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>N° de Chéque</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Mode de Paiement</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>date</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Avance</th>
+                                                                <th style={{ backgroundColor: "#adb5bd"}}>Status</th>
+                                                                <th style={{ backgroundColor: "#adb5bd" }}>Remarque</th>
                                                             </tr>
                                                             </thead>
                                                             <tbody>
@@ -1103,9 +1124,7 @@ const EncaissementList = () => {
 
                             <Button className="btn btn-danger btn-sm" onClick={handleDeleteSelected}>
                                 <FontAwesomeIcon icon={faTrash} /></Button>
-                            <Button className="btn btn-primary" onClick={() => printEncaissements(encaissements)}>
-                                <FontAwesomeIcon icon={faPrint} />
-                            </Button>
+
 
 
                             <TablePagination
