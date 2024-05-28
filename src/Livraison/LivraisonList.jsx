@@ -143,6 +143,49 @@ const LivraisonList = () => {
     //         }
     //     }
     // };
+    const fetchLignelivraison = async (livraisonsId) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:8000/api/livraisons/${livraisonsId}/lignelivraisons`
+            );
+            console.log("fetch lign livraison ", response.data.ligneLivraisons);
+            return response.data.ligneLivraisons;
+        } catch (error) {
+            console.error(
+                "Erreur lors de la récupération des lignes de livraison :",
+                error
+            );
+            return [];
+        }
+    };
+    const handleShowLigneLivraison = async (livraisonId) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(livraisonId)
+                ? prevRows.filter((row) => row !== livraisonId)
+                : [...prevRows, livraisonId]
+        );
+    };
+    useEffect(() => {
+        // Préchargement des lignes de facture pour chaque facture
+        livraisons.forEach(async (livraison) => {
+            if (!livraison.ligneLivraisons) {
+                try {
+                    const ligneLivraisons = await fetchLignelivraison(livraison.id);
+                    setLivraisons((prevlivraisons) => {
+                        return prevlivraisons.map((prevlivraison) => {
+                            if (prevlivraison.id === livraison.id) {
+                                return { ...prevlivraison, ligneLivraisons };
+                            }
+                            return prevlivraison;
+                        });
+                    });
+                } catch (error) {
+                    console.error('Erreur lors du préchargement des lignes de livraison:', error);
+                }
+            }
+        });
+    }, []); // Le tableau de dépendances vide signifie que ce useEffect ne sera exécuté qu'une seule fois après le montage du composant
+
 
     const handleProductSelection = (selectedProduct, index) => {
         console.log("selectedProduct", selectedProduct);
@@ -887,18 +930,18 @@ const LivraisonList = () => {
                                             <React.Fragment key={livraison.id}>
                                                 <tr key={livraison.id}>
                                                     <td>
-                                                        {/*<button*/}
-                                                        {/*    className="btn btn-sm btn-light"*/}
-                                                        {/*    onClick={() => toggleRow(livraison.commande.id)}*/}
-                                                        {/*>*/}
-                                                        {/*    <FontAwesomeIcon*/}
-                                                        {/*        icon={*/}
-                                                        {/*            expandedRows.includes(livraison.commande.id)*/}
-                                                        {/*                ? faMinus*/}
-                                                        {/*                : faPlus*/}
-                                                        {/*        }*/}
-                                                        {/*    />*/}
-                                                        {/*</button>*/}
+                                                        <button
+                                                            className="btn btn-sm btn-light"
+                                                            onClick={() => handleShowLigneLivraison(livraison.id)}
+                                                        >
+                                                            <FontAwesomeIcon
+                                                                icon={
+                                                                    expandedRows.includes(livraison.id)
+                                                                        ? faMinus
+                                                                        : faPlus
+                                                                }
+                                                            />
+                                                        </button>
                                                     </td>
                                                     <td>{livraison.reference}</td>
                                                     <td>{livraison.date}</td>
@@ -933,30 +976,31 @@ const LivraisonList = () => {
                                                                     <thead>
                                                                     <tr>
                                                                         <th>Code Produit</th>
-                                                                        <th>designation</th>
-                                                                        <th>calibre</th>
                                                                         <th>Quantite</th>
                                                                         <th>Prix Vente</th>
-                                                                        <th>Total HT </th>
+                                                                        {/*<th>Quantite</th>*/}
+                                                                        {/*<th></th>*/}
+                                                                        {/*<th>Total HT </th>*/}
                                                                         {/* <th className="text-center">Action</th> */}
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                    {livraison.ligneLivraisons.map((ligneLivraisons) => {
-                                                                        const produit = produits.find(prod => prod.id === ligneLivraisons.produit_id);
-                                                                        console.log("prod",produit)
-                                                                        console.log("id",ligneLivraisons.produit_id)
-                                                                        return (
+                                                                    {livraison.ligneLivraisons.map((ligneLivraisons) => (
+                                                                        // const produit = produits.find(prod => prod.id === ligneLivraisons.produit_id);
+                                                                        // console.log("prod",produit)
+                                                                        // console.log("id",ligneLivraisons.produit_id)
+                                                                        // return (
                                                                             <tr key={ligneLivraisons.id}>
-                                                                                <td>{produit.Code_produit}</td>
-                                                                                <td>{produit.designation}</td>
-                                                                                <td>{produit.calibre.calibre}</td>
+                                                                                <td>{ligneLivraisons.produit_id}</td>
+                                                                                {/*<td>{ligneLivraisons.designation}</td>*/}
+                                                                                {/*<td>{produit.calibre.calibre}</td>*/}
                                                                                 <td>{ligneLivraisons.quantite}</td>
                                                                                 <td>{ligneLivraisons.prix_vente} DH</td>
-                                                                                <td>{(ligneLivraisons.quantite * ligneLivraisons.prix_vente).toFixed(2)} DH</td>
+                                                                                {/*<td>{(ligneLivraisons.quantite * ligneLivraisons.prix_vente).toFixed(2)} DH</td>*/}
                                                                             </tr>
-                                                                        );
-                                                                    })}
+                                                                    )
+                                                                        // );
+                                                                   )}
                                                                     </tbody>
                                                                 </table>
                                                             </div>

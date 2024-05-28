@@ -976,7 +976,7 @@ const FactureList = () => {
                                                         <tbody>
                                                         {selectedProductsData.map((productData, index) => (
                                                             <tr key={index}>
-                                                                <td>
+                                                                <td style={{ backgroundColor: "white" }}>
                                                                     <Select
                                                                         options={produits.map((produit) => ({
                                                                             value: produit.id,
@@ -1010,30 +1010,37 @@ const FactureList = () => {
                                                                         placeholder="Code ..."
                                                                     />
                                                                 </td>
-                                                                <td>
+                                                                <td style={{ backgroundColor: "white" }}>
                                                                     <Select
                                                                         options={produits.map((produit) => ({
-                                                                            value: produit.designation,
+                                                                            value: produit.id,
                                                                             label: produit.designation,
                                                                         }))}
                                                                         onChange={(selected) => {
                                                                             const produit = produits.find(
-                                                                                (prod) => prod.designation === selected.value
+                                                                                (prod) => prod.id === selected[0].value
                                                                             );
-                                                                            if (produit) {
-                                                                                handleProductSelection({
-                                                                                    produit_id: produit.id,
+                                                                            handleProductSelection(
+                                                                                {
+                                                                                    produit_id: selected[0].value,
                                                                                     Code_produit: produit.Code_produit,
-                                                                                    designation: selected.value,
+                                                                                    designation: produit.designation,
                                                                                     calibre_id: produit.calibre_id,
                                                                                     calibre: produit.calibre,
-                                                                                }, index);
-                                                                            }
+                                                                                },
+                                                                                index
+                                                                            );
                                                                         }}
-                                                                        value={{
-                                                                            value: productData.designation,
-                                                                            label: productData.designation,
-                                                                        }}
+                                                                        values={
+                                                                            productData.produit_id
+                                                                                ? [
+                                                                                    {
+                                                                                        value: productData.produit_id,
+                                                                                        label: productData.designation,
+                                                                                    },
+                                                                                ]
+                                                                                : []
+                                                                        }
                                                                         placeholder="Designation ..."
                                                                     />
                                                                 </td>
@@ -1209,19 +1216,25 @@ const FactureList = () => {
                                                                 <th>designation</th>
 
                                                                 <th>Quantite</th>
-                                                                {/*<th>Prix Vente</th>*/}
+                                                                <th>Prix Vente</th>
                                                                 {/*<th>Total HT </th>*/}
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {facture.ligne_facture.map((lignefacture) => (
+                                                            {facture.ligne_facture.map((lignefacture) => {
+
+                                                                const produit = produits.find(
+                                                                (prod) =>
+                                                                prod.id === lignefacture.produit_id
+                                                                );
+                                                                return (
 
                                                                     <tr key={lignefacture.id}>
                                                                         <td>{lignefacture.produit_id}</td>
-                                                                        <td>{lignefacture.prix_vente}</td>
+                                                                        <td>{produit.designation}</td>
 
                                                                         <td>{lignefacture.quantite}</td>
-                                                                        {/*<td>{lignefactures.prix_vente} DH</td>*/}
+                                                                        <td>{lignefacture.prix_vente} DH</td>
                                                                         {/*<td>*/}
                                                                         {/*    {(*/}
                                                                         {/*        lignefactures.quantite **/}
@@ -1230,7 +1243,8 @@ const FactureList = () => {
                                                                         {/*    DH*/}
                                                                         {/*</td>*/}
                                                                     </tr>
-                                                                    )
+                                                                );
+                                                                }
                                                             )}
                                                             </tbody>
                                                         </table>

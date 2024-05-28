@@ -205,24 +205,52 @@ const DevisList = () => {
 
 // Définir le toggleRow pour basculer l'état des lignes de devis
 //     Définir le toggleRow pour basculer l'état des lignes de devis
-        const toggleRow = async (devisId) => {
-            if (!expandedRows.includes(devisId)) {
-                try {
-                    // Récupérer les lignes de devis associées à ce devis
-                    const ligneDevis = await fetchLigneDevis(devisId);
+//         const toggleRow = async (devisId) => {
+//             if (!expandedRows.includes(devisId)) {
+//                 try {
+//                     // Récupérer les lignes de devis associées à ce devis
+//                     const ligneDevis = await fetchLigneDevis(devisId);
+//
+//                     // Mettre à jour l'état pour inclure les lignes de devis récupérées
+//                     setDevises((prevDevises) => {
+//                         return prevDevises.map((devis) => {
+//                             if (devis.id === devisId) {
+//                                 return { ...devis, ligneDevis };
+//                             }
+//                             return devis;
+//                             console.log("devis",devis)
+//                         });
+//                     });
+//
+//                     // Ajouter l'ID du devis aux lignes étendues
+//                 setExpandedRows([...expandedRows, devisId]);
+//                 console.log("expandsRows",expandedRows);
+//             } catch (error) {
+//                 console.error(
+//                     "Erreur lors de la récupération des lignes de devis :",
+//                     error
+//                 );
+//             }
+//         }
+//     };
+    const toggleRow = async (devisId) => {
+        if (!expandedRows.includes(devisId)) {
+            try {
+                // Récupérer les lignes de devis associées à ce devis
+                const ligneDevis = await fetchLigneDevis(devisId);
 
-                    // Mettre à jour l'état pour inclure les lignes de devis récupérées
-                    setDevises((prevDevises) => {
-                        return prevDevises.map((devis) => {
-                            if (devis.id === devisId) {
-                                return { ...devis, ligneDevis };
-                            }
-                            return devis;
-                            console.log("devis",devis)
-                        });
+                // Mettre à jour l'état pour inclure les lignes de devis récupérées
+                setDevises((prevDevises) => {
+                    return prevDevises.map((devis) => {
+                        if (devis.id === devisId ) {
+                            return { ...devis, ligneDevis };
+                        }
+                        return devis;
+                        console.log("devis",devis)
                     });
+                });
 
-                    // Ajouter l'ID du devis aux lignes étendues
+                // Ajouter l'ID du devis aux lignes étendues
                 setExpandedRows([...expandedRows, devisId]);
                 console.log("expandsRows",expandedRows);
             } catch (error) {
@@ -235,6 +263,33 @@ const DevisList = () => {
     };
 
 
+    // const handleShowLignEdevis = async (devisId) => {
+    //     setExpandedRows((prevRows) =>
+    //         prevRows.includes(devisId)
+    //             ? prevRows.filter((row) => row !== devisId)
+    //             : [...prevRows, devisId]
+    //     );
+    // };
+    // useEffect(() => {
+    //     // Préchargement des lignes de facture pour chaque facture
+    //     devises.forEach(async (devis) => {
+    //         if (!devis.ligneDevis) {
+    //             try {
+    //                 const ligneDevis = await fetchLigneDevis(devis.id);
+    //                 setDevises((prevDevises) => {
+    //                     return prevDevises.map((devis) => {
+    //                         if (devis.id === devis.id) {
+    //                             return { ...devis, ligneDevis };
+    //                         }
+    //                         return devis;
+    //                     });
+    //                 });
+    //             } catch (error) {
+    //                 console.error('Erreur lors du préchargement des lignes de facture:', error);
+    //             }
+    //         }
+    //     });
+    // }, []); // Le tableau de dépendances vide signifie que ce useEffect ne sera exécuté qu'une seule fois après le montage du composant
 
 
 
@@ -369,13 +424,7 @@ const DevisList = () => {
 
             console.log("ligneDevis Response : ",lignesDevisResponse )
 
-            // const factureData1 = lignesDevisResponse.data.ligneDevis.map((lignedevis)=>({
-            //
-            //             id_facture: facture.id,
-            //             produit_id: lignedevis.produit_id,
-            //             quantite: lignedevis.quantite,
-            //             prix_vente: lignedevis.prix_vente,
-            //     }));
+
 
             const lignesFactureData = lignesDevisResponse.data.ligneDevis.map((ligneDevis) => ({
                 id_facture: facture.facture.id,
@@ -393,33 +442,6 @@ const DevisList = () => {
                 );
             }
 
-            // // Vérification si les données sont présentes et sous forme de tableau
-            // if (Array.isArray(lignesDevisResponse.data)) {
-            //     const lignesDevis = lignesDevisResponse.data;
-            //
-            //     // 4. Créer les lignes de facture en utilisant l'ID de la facture créée
-            //     for (const ligneDevis of lignesDevis) {
-            //         const ligneFactureData = {
-            //             facture_id: facture.id,
-            //             produit_id: ligneDevis.produit_id,
-            //             quantite: ligneDevis.quantite,
-            //             prix_unitaire: ligneDevis.prix_unitaire,
-            //             // Autres données de la ligne de facture...
-            //         };
-            //
-            //         // 5. Envoyer une requête POST pour créer la ligne de facture
-            //         const ligneFactureResponse = await axios.post(
-            //             "http://localhost:8000/api/ligneFacture",
-            //             ligneFactureData
-            //         );
-            //
-            //         console.log("Ligne de facture créée:", ligneFactureResponse.data);
-            //     }
-            //
-            //     setFactureGenerated(true);
-            // } else {
-            //     console.error("Aucune donnée de lignes de devis trouvée ou les données ne sont pas sous forme de tableau.");
-            // }
         } catch (error) {
             console.error("Erreur lors de la génération de la facture :", error);
         }
@@ -443,122 +465,49 @@ const DevisList = () => {
                 bonLivraisonData
             );
 
-            console.log("Bon de livraison créé :", bonLivraisonResponse.data);
-            setBonLivraisonGenerated(true);
+            const livraison = bonLivraisonResponse.data;
+
+
+
+            // 3. Récupérer les lignes de devis associées au devis
+            const lignesDevisResponsee = await axios.get(
+                `http://localhost:8000/api/ligneDevis/${devis.id}`
+            );
+
+
+
+            console.log("ligneDevis Responsee : ",lignesDevisResponsee )
+
+
+
+            const lignesbonLivraisonData = lignesDevisResponsee.data.ligneDevis.map((ligneDevis) => ({
+                id_bon__livraisons: livraison.livraison.id,
+                produit_id: ligneDevis.produit_id,
+                quantite: ligneDevis.quantite,
+                prix_vente: ligneDevis.prix_vente,
+            }));
+
+            console.log("livraison1", lignesbonLivraisonData);
+            for (const lignebonLivraisonData of lignesbonLivraisonData) {
+                // Sinon, il s'agit d'une nouvelle ligne de Devis
+                await axios.post(
+                    "http://localhost:8000/api/lignelivraisons",
+                    lignebonLivraisonData
+                );
+            }
+
         } catch (error) {
-            console.error("Erreur lors de la génération du bon de livraison :", error);
+            console.error("Erreur lors de la génération de la bon de livraison :", error);
         }
     };
-
-    // const handleSubmit = async (e) => {
-    //     e.preventDefault();
     //
-    //     try {
-    //         // Préparer les données du devis
-    //         const devisData = {
-    //             reference: formData.reference,
-    //             date: formData.date,
-    //             validation_offer: formData.validation_offer,
-    //             modePaiement: formData.modePaiement,
-    //             status: formData.status,
-    //             client_id: formData.client_id,
-    //             user_id: formData.user_id,
-    //             total_ttc: formData.total_ttc,
-    //         };
-    //
-    //         let response;
-    //         if (editingDevis) {
-    //             // Mettre à jour le devis existant
-    //             response = await axios.put(
-    //                 `http://localhost:8000/api/devises/${editingDevis.id}`,
-    //                 devisData
-    //             );
-    //         } else {
-    //             // Créer un nouveau devis
-    //             response = await axios.post(
-    //                 "http://localhost:8000/api/devises",
-    //                 devisData
-    //             );
-    //         }
-    //
-    //         if (formData.status === "Valider") {
-    //             // Afficher les boutons pour générer manuellement la facture et le bon de livraison
-    //             setFactureGenerated(false);
-    //             setBonLivraisonGenerated(false);
-    //         }
-    //
-    //         // Préparer les données des lignes de devis
-    //         const selectedPrdsData = selectedProductsData.map((selectProduct) => {
-    //             return {
-    //                 id: selectProduct.id, // Ajoutez l'ID de la ligne de devis
-    //                 Code_produit: selectProduct.Code_produit,
-    //                 designation: selectProduct.designation,
-    //                 id_devis: response.data.devis
-    //                     ? response.data.devis.id
-    //                     : selectProduct.id_devis, // Utiliser l'ID du devis créé ou mis à jour
-    //                 quantite: selectProduct.quantite,
-    //                 prix_vente: selectProduct.prix_vente,
-    //             };
-    //         });
-    //
-    //         // Envoyer une requête POST pour chaque produit sélectionné
-    //         for (const ligneDevisData of selectedPrdsData) {
-    //             if (ligneDevisData.id) {
-    //                 // Si l'ID existe, il s'agit d'une modification
-    //                 await axios.put(
-    //                     `http://localhost:8000/api/ligneDevis/${ligneDevisData.id}`,
-    //                     ligneDevisData
-    //                 );
-    //             } else {
-    //                 // Sinon, il s'agit d'une nouvelle ligne de devis
-    //                 await axios.post(
-    //                     "http://localhost:8000/api/ligneDevis",
-    //                     ligneDevisData
-    //                 );
-    //             }
-    //         }
-    //
-    //         // Récupérer les données mises à jour
-    //         fetchDevis();
-    //
-    //         // Réinitialiser les données du formulaire
-    //         setFormData({
-    //             reference: "",
-    //             date: "",
-    //             validation_offer: "",
-    //             modePaiement: "",
-    //             status: "",
-    //             client_id: "",
-    //             user_id: "",
-    //             Code_produit: "",
-    //             designation: "",
-    //             prix_vente: "",
-    //             quantite: "",
-    //             id_devis: "",
-    //         });
-    //
-    //         // Fermer le formulaire si nécessaire
-    //         setShowForm(false);
-    //
-    //         // Afficher un message de succès à l'utilisateur
-    //         Swal.fire({
-    //             icon: "success",
-    //             title: "Succès !",
-    //             text: "Détails du devis et des lignes de devis ajoutés avec succès.",
-    //         });
+    //         console.log("Bon de livraison créé :", bonLivraisonResponse.data);
+    //         setBonLivraisonGenerated(true);
     //     } catch (error) {
-    //         console.error("Erreur lors de la soumission des données :", error);
-    //
-    //         // Afficher un message d'erreur à l'utilisateur
-    //         Swal.fire({
-    //             icon: "error",
-    //             title: "Erreur !",
-    //             text: "Impossible d'ajouter les détails du devis et des lignes de devis.",
-    //         });
+    //         console.error("Erreur lors de la génération du bon de livraison :", error);
     //     }
-    //     closeForm();
     // };
-    //
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -887,6 +836,38 @@ const DevisList = () => {
             setSelectedItems(devises.map((devis) => devis.id));
         }
     };
+    const numberToWords = (number) => {
+        const ones = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+        const tens = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"];
+        const teens = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+
+        if (number === 0) return "zéro";
+
+        let words = "";
+
+        if (number > 99) {
+            let hundreds = Math.floor(number / 100);
+            words += (hundreds === 1 ? "cent" : ones[hundreds] + " cent");
+            number %= 100;
+            if (number > 0) words += " ";
+        }
+
+        if (number > 19) {
+            let ten = Math.floor(number / 10);
+            words += tens[ten];
+            number %= 10;
+            if (number > 0) words += "-";
+        } else if (number >= 10) {
+            words += teens[number - 10];
+            number = 0;
+        }
+
+        if (number > 0) {
+            words += ones[number];
+        }
+
+        return words;
+    };
 
     const handlePDF = (devisId) => {
         // Récupérer les informations spécifiques au devis sélectionné
@@ -895,72 +876,80 @@ const DevisList = () => {
         // Création d'une nouvelle instance de jsPDF
         const doc = new jsPDF();
 
-        // Position de départ pour l'impression des données
-        let startY = 20;
-
         // Dessiner un cadre noir pour les informations du client
+        const boxX = 90; // Ajustez la position horizontale du cadre pour l'élargir vers le centre
+        const boxY = 10;
+        const boxWidth = 80; // Ajustez la largeur du cadre pour l'élargir jusqu'au centre
+        const boxHeight = 40; // Ajustez la hauteur du cadre pour qu'il encadre juste les informations
         doc.setDrawColor(0); // Couleur noire
         doc.setLineWidth(0.5); // Épaisseur de la ligne
-        doc.rect(10, startY, 80, 40); // Rectangle pour les informations du client
+        doc.rect(boxX, boxY, boxWidth, boxHeight);
 
-        // Dessiner les informations du client dans un tableau à gauche
+        // Dessiner les informations du client dans le cadre à droite
         const clientInfo = [
-            { label: "Raison sociale:", value: selectedDevis.client.raison_sociale },
-            { label: "Adresse:", value: selectedDevis.client.adresse },
-            { label: "Téléphone:", value: selectedDevis.client.tele },
-            { label: "ICE:", value: selectedDevis.client.ice },
+            { label: "", value: selectedDevis.client.raison_sociale },
+            { label: "", value: selectedDevis.client.adresse },
+            { label: "", value: selectedDevis.client.tele },
+            { label: "", value: selectedDevis.client.ice },
             // Ajoutez d'autres informations client si nécessaire
         ];
 
-        // Décalage pour le texte dans le cadre
-        let textOffsetX = 15;
-        let textOffsetY = 30;
+        // Position de départ pour l'impression des données du client
+        let textOffsetX = boxX + 5;
+        let textOffsetY = boxY + 10;
+        const textIndent = boxWidth - 10; // Ajustez cette valeur selon vos besoins
 
         // Afficher les informations du client dans le cadre
         doc.setFontSize(10); // Police plus petite pour les informations du client
-        clientInfo.forEach((info) => {
-            doc.text(info.label, textOffsetX, textOffsetY);
-            doc.text(info.value, textOffsetX + 40, textOffsetY);
-            textOffsetY += 10; // Espacement entre les lignes du tableau
+        clientInfo.forEach((info, index) => {
+            if (index === 0) {
+                // Nom du client en gras et police plus grande
+                doc.setFontSize(12); // Police plus grande pour le nom du client
+                doc.setFont("helvetica", "bold"); // Police en gras
+                doc.text(info.value ? info.value.toString() : "", textOffsetX, textOffsetY);
+                doc.setFont("helvetica", "normal"); // Revenir à la police normale
+                doc.setFontSize(10); // Revenir à la taille de police normale
+            } else {
+                // Afficher les autres informations
+                if (index === 3) { // ICE
+                    doc.text(info.value ? info.value.toString() : "", boxX + boxWidth - 5, textOffsetY, { align: 'right' });
+                } else {
+                    doc.text(info.value ? info.value.toString() : "", textOffsetX, textOffsetY);
+                }
+            }
+            textOffsetY += 8; // Espacement entre les lignes du tableau
         });
 
-        // Dessiner le tableau des informations du devis à droite
-        const devisInfo = [
-            { label: "N° Devis:", value: selectedDevis.reference },
-            { label: "Date:", value: selectedDevis.date },
-            { label: "Validation de l'offre:", value: selectedDevis.validation_offer },
-            { label: "Mode de Paiement:", value: selectedDevis.modePaiement },
-        ];
-
-        // Dessiner le tableau des informations du devis à droite
-        startY = 20; // Réinitialiser la position Y
-        devisInfo.forEach((info) => {
-            doc.text(info.label, 120, startY);
-            doc.text(info.value, 160, startY);
-            startY += 10; // Espacement entre les lignes du tableau
-        });
+        // Dessiner le numéro de devis en gras à gauche des informations du client
+        doc.setFontSize(14); // Police plus grande pour le numéro de devis
+        doc.setFont("helvetica", "bold"); // Police en gras
+        doc.text("N° Devis:", 10, boxY + 24); // Déplacer le numéro de devis plus bas et ajouter un peu d'espace
+        doc.text(selectedDevis.reference ? selectedDevis.reference.toString() : "", 30, boxY + 24);
 
         // Vérifier si les détails des lignes de devis sont définis
         if (selectedDevis.lignedevis) {
             // Dessiner les en-têtes du tableau des lignes de devis
-            const headersLigneDevis = ["Produit","Code produit", "Désignation", "Quantité", "Prix", "Total HT"];
+            const headersLigneDevis = ["Produit", "Code produit", "Désignation", "Quantité", "Prix", "Total HT"];
 
             // Récupérer les données des lignes de devis
-            const rowsLigneDevis = selectedDevis.lignedevis.map((lignedevis) => [
-                lignedevis.produit_id,
-                lignedevis.produit_id,
-                lignedevis.produit_id,
-                lignedevis.quantite,
-                lignedevis.prix_vente,
-                // Calculate the total for each product line
-                (lignedevis.quantite * lignedevis.prix_vente).toFixed(2), // Assuming the price is in currency format
-            ]);
+            const rowsLigneDevis = selectedDevis.lignedevis.map((lignedevis) => {
+                const produit = produits.find(prod => prod.id === lignedevis.produit_id);
+                return [
+                    lignedevis.produit_id ? lignedevis.produit_id.toString() : "",
+                    produit ? produit.Code_produit : "", // Assurez-vous que Code_produit est récupéré correctement
+                    produit ? produit.designation : "", // Assurez-vous que designation est récupéré correctement
+                    lignedevis.quantite ? lignedevis.quantite.toString() : "",
+                    lignedevis.prix_vente ? lignedevis.prix_vente.toString() : "",
+                    // Calculer le total pour chaque ligne de produit
+                    (lignedevis.quantite && lignedevis.prix_vente) ? (lignedevis.quantite * lignedevis.prix_vente).toFixed(2).toString() : "0.00"
+                ];
+            });
 
             // Dessiner le tableau des lignes de devis
             doc.autoTable({
                 head: [headersLigneDevis],
                 body: rowsLigneDevis,
-                startY: startY + 20, // Décalage vers le bas pour éviter de chevaucher les informations du devis
+                startY: boxY + boxHeight + 20, // Décalage vers le bas pour éviter de chevaucher les informations du devis
                 margin: { top: 20 },
                 styles: {
                     lineWidth: 0.1,
@@ -968,19 +957,24 @@ const DevisList = () => {
                     fontSize: 8, // Police plus petite pour les lignes de devis
                 },
                 columnStyles: {
-                    0: { cellWidth: 40 }, // Largeur de la première colonne
-                    1: { cellWidth: 60 }, // Largeur de la deuxième colonne
-                    2: { cellWidth: 20 }, // Largeur de la troisième colonne
-                    3: { cellWidth: 30 }, // Largeur de la quatrième colonne
-                    4: { cellWidth: 30 }, // Largeur de la cinquième colonne
+                    0: { cellWidth: 30 }, // Largeur de la première colonne
+                    1: { cellWidth: 30 }, // Largeur de la deuxième colonne
+                    2: { cellWidth: 50 }, // Largeur de la troisième colonne
+                    3: { cellWidth: 20 }, // Largeur de la quatrième colonne
+                    4: { cellWidth: 25 }, // Largeur de la cinquième colonne
+                    5: { cellWidth: 25 }, // Largeur de la sixième colonne
                 },
             });
 
             // Dessiner le tableau des montants
+            const totalHT = getTotalHT(selectedDevis.lignedevis);
+            const tva = calculateTVA(totalHT);
+            const totalTTC = getTotalTTC(selectedDevis.lignedevis);
+
             const montantTable = [
-                ["Montant Total Hors Taxes:", getTotalHT(selectedDevis.lignedevis).toFixed(2)],
-                ["TVA (20%):", calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)],
-                ["TTC:", getTotalTTC(selectedDevis.lignedevis).toFixed(2)],
+                ["Montant Total Hors Taxes:", totalHT.toFixed(2)],
+                ["TVA (20%):", tva.toFixed(2)],
+                ["TTC:", totalTTC.toFixed(2)],
             ];
 
             doc.autoTable({
@@ -993,10 +987,56 @@ const DevisList = () => {
                     fontSize: 10, // Police plus petite pour les montants
                 },
             });
+
+            // Ajouter le total TTC en lettres en bas de la page
+            const totalTTCEnLettres = numberToWordsFr(totalTTC);
+            const text = "Arrêtée le présent devis à la somme de : " + totalTTCEnLettres;
+            doc.setFontSize(10);
+            doc.text(text, 10, doc.autoTable.previous.finalY + 10); // Placer le texte juste en dessous du tableau des montants
         }
 
         // Enregistrer le fichier PDF avec le nom 'devis.pdf'
         doc.save("devis.pdf");
+    };
+
+
+// Fonction pour convertir un nombre en lettres (français)
+    const numberToWordsFr = (number) => {
+        const ones = ["", "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf"];
+        const teens = ["dix", "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"];
+        const tens = ["", "dix", "vingt", "trente", "quarante", "cinquante", "soixante", "soixante-dix", "quatre-vingt", "quatre-vingt-dix"];
+
+        const convertHundreds = (num) => {
+            if (num > 99) {
+                let hundreds = Math.floor(num / 100);
+                if (hundreds === 1) {
+                    return "cent " + convertTens(num % 100);
+                } else {
+                    return ones[hundreds] + " cent " + convertTens(num % 100);
+                }
+            } else {
+                return convertTens(num);
+            }
+        };
+
+        const convertTens = (num) => {
+            if (num < 10) return ones[num];
+            else if (num >= 10 && num < 20) return teens[num - 10];
+            else {
+                if (num === 71) return "soixante et onze";
+                if (num === 81) return "quatre-vingt-un";
+                if (num === 91) return "quatre-vingt-onze";
+                return tens[Math.floor(num / 10)] + (num % 10 > 0 ? "-" + ones[num % 10] : "");
+            }
+        };
+
+        const integerPart = Math.floor(number);
+        const decimalPart = Math.round((number - integerPart) * 100);
+
+        const integerPartInWords = convertHundreds(integerPart);
+        const decimalPartInWords = decimalPart > 0 ? convertTens(decimalPart) : "zéro";
+
+        return integerPartInWords + " dirhams et " + decimalPartInWords + " centimes";
     };
     function convertirEnLettres(montant) {
         // Tableau des chiffres en lettres
@@ -1060,163 +1100,176 @@ const DevisList = () => {
 
             // Début du contenu HTML
             newWindowDocument.write(`
-            <!DOCTYPE html>
-            <html lang="fr">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>${title}</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        margin: 20px;
-                    }
-                    /*.client-info {*/
-                    /*    float: right;*/
-                    /*    width: 40%;*/
-                    /*     height: 180px;*/
-                    /*    border: 2px solid #000;*/
-                    /*    padding: 10px;*/
-                    /*    margin-left: 20px;*/
-                    /*}*/
-                    .client-info {
-                         position: relative;
-                         top: 10px; /* Ajuste cette valeur selon l'espace que tu veux entre l'en-tête et l'élément */
-                         width: 250px; /* Largeur du rectangle */
-                         height: 150px; /* Hauteur du rectangle */
-                         padding: 10px;
-                         border: 2px solid #000;
-                         margin-left: 20px;
-                         float: right;
-   
-    /*margin-top: 3px; !* Espace entre l'en-tête et l'élément *!*/
-}
-                    
-                    h1, h2 {
-                        text-align: center;
-                        margin-top: 30px;
-                    }
-                    table {
-                        width: 100%;
-                        border-collapse: collapse;
-                        margin-top: 20px;
-                    }
-                    th, td {
-                        border: 1px solid #000;
-                        padding: 8px;
-                        text-align: left;
-                    }
-                    .montant-table {
-                        border: 1px solid #000;
-                        margin-top: 20px;
-                    }
-                    .montant-table td {
-                        padding: 8px;
-                        text-align: left;
-                    }
-                    .montant-total {
-                        font-weight: bold;
-                        font-style: italic;
-                        font-size: 24px; /* Ajuster la taille de la police selon vos préférences */
-                        color: black; /* Changer la couleur des lettres */
-                    }
-                </style>
-            </head>
-            <body>
-               <div>
-    <h1>${title}</h1>
-</div>
-
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>${title}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                }
+                .client-info {
+                    position: relative;
+                    top: 10px;
+                    width: 50%; /* Adjust width to extend to the center of the page */
+                    height: auto; /* Adjust height to fit content */
+                    padding: 10px;
+                    border: 2px solid #000;
+                    margin-left: 20px;
+                    float: right;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    box-sizing: border-box;
+                }
+                .client-info h2 {
+                    text-align: center;
+                    margin: 0;
+                    margin-bottom: 10px;
+                }
+                .client-info .left {
+                    text-align: left;
+                    margin-bottom: 5px;
+                }
+                .client-info .right {
+                    text-align: right;
+                }
+                .client-info .row {
+                    display: flex;
+                    justify-content: space-between;
+                }
+                h1 {
+                    margin-top: 30px;
+                }
+                .title-container {
+                    display: flex;
+                    align-items: flex-end;
+                    margin-bottom: 10px;
+                }
+                .title-container h1 {
+                    flex: 1;
+                    text-align: left;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                }
+                th, td {
+                    border: 1px solid #000;
+                    padding: 8px;
+                    text-align: left;
+                }
+                .montant-table {
+                    border: 1px solid #000;
+                    margin-top: 20px;
+                }
+                .montant-table td {
+                    padding: 8px;
+                    text-align: left;
+                }
+                .montant-total {
+                    font-weight: bold;
+                    font-style: italic;
+                    font-size: 24px; /* Ajuster la taille de la police selon vos préférences */
+                    color: black; /* Changer la couleur des lettres */
+                }
+            </style>
+        </head>
+        <body>
+            <div class="title-container">
+                <h1>${title}</h1>
                 <div class="client-info">
-                    <h2><p>${selectedDevis.client.raison_sociale}</p></h2>
-                    <p>${selectedDevis.client.adresse}</p>
-                    <p>${selectedDevis.client.tele}</p>
-                    <p>${selectedDevis.client.ice}</p>
+
+                    <h2>${selectedDevis.client.raison_sociale}</h2>
+                    <p class="left">${selectedDevis.client.adresse}</p>
+                    <p class="left">${selectedDevis.client.tele}</p>
+                    <p class="right">${selectedDevis.client.ice}</p>
                 </div>
+            </div>
 
-                <div style="clear:both;"></div>
+            <div style="clear:both;"></div>
 
-               
-                <table>
-                    <thead>     
-                        <tr>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Date</th>
-<th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Validation de l'offre</th>
-<th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Mode de Paiement</th>
+            <table>
+                <thead>     
+                    <tr>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Date</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Validation de l'offre</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Mode de Paiement</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.date}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.validation_offer}</td>
+                        <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.modePaiement}</td>
+                    </tr>
+                </tbody>
+            </table>
 
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.date}</td>
-                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.validation_offer}</td>
-                            <td style="border: 1px solid #000; padding: 8px;">${selectedDevis.modePaiement}</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-              
-                <table>
-                    <thead>
-                        <tr>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Produit</th>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Code produit</th>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Désignation</th>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Quantité</th>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Prix unitaire</th>
-                            <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Total HT</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${selectedDevis.lignedevis.map((lignedevis, index) => {
+            <table>
+                <thead>
+                    <tr>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Produit</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Code produit</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Désignation</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Quantité</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Prix unitaire</th>
+                        <th style="border: 1px solid #000; padding: 8px; background-color: #adb5bd;">Total HT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${selectedDevis.lignedevis.map((lignedevis, index) => {
                 const produit = produits.find(prod => prod.id === lignedevis.produit_id);
                 return `
-                                <tr>
-                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.produit_id}</td>
-                                    <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.Code_produit : ''}</td>
-                                    <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.designation : ''}</td>
-                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.quantite}</td>
-                                    <td style="border: 1px solid #000; padding: 8px;">${lignedevis.prix_vente}</td>
-                                    <td style="border: 1px solid #000; padding: 8px;">${(lignedevis.quantite * lignedevis.prix_vente).toFixed(2)}</td>
-                                </tr>
-                            `;
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px;">${lignedevis.produit_id}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.Code_produit : ''}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${produit ? produit.designation : ''}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${lignedevis.quantite}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${lignedevis.prix_vente}</td>
+                                <td style="border: 1px solid #000; padding: 8px;">${(lignedevis.quantite * lignedevis.prix_vente).toFixed(2)}</td>
+                            </tr>
+                        `;
             }).join('')}
-                    </tbody>
-                </table>
+                </tbody>
+            </table>
 
-               
-                <table class="montant-table">
-                    <tbody>
-                        <tr>
-                            <td>Montant Total Hors Taxes :</td>
-                            <td>${getTotalHT(selectedDevis.lignedevis).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>TVA (20%) :</td>
-                            <td>${calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)}</td>
-                        </tr>
-                        <tr>
-                            <td>TTC :</td>
-                            <td>${getTotalTTC(selectedDevis.lignedevis).toFixed(2)}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <table class="montant-table">
+                <tbody>
+                    <tr>
+                        <td>Montant Total Hors Taxes :</td>
+                        <td>${getTotalHT(selectedDevis.lignedevis).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>TVA (20%) :</td>
+                        <td>${calculateTVA(getTotalHT(selectedDevis.lignedevis)).toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>TTC :</td>
+                        <td>${getTotalTTC(selectedDevis.lignedevis).toFixed(2)}</td>
+                    </tr>
+                </tbody>
+            </table>
 
-                <div>
-                    <p class="montant-total">Arrêtée le présent devis à la somme de : ${convertirEnLettres(getTotalTTC(selectedDevis.lignedevis))}</p>
-                </div>
-                
-                <script>
-                    setTimeout(() => {
-                        window.print();
-                        window.onafterprint = function () {
-                            window.close();
-                        };
-                    }, 1000);
-                </script>
-            </body>
-            </html>
-        `);
+            <div>
+                <p class="montant-total">Arrêtée le présent devis à la somme de : ${convertirEnLettres(getTotalTTC(selectedDevis.lignedevis))}</p>
+            </div>
+            
+            <script>
+                setTimeout(() => {
+                    window.print();
+                    window.onafterprint = function () {
+                        window.close();
+                    };
+                }, 1000);
+            </script>
+        </body>
+        </html>
+    `);
 
             newWindowDocument.close();
         } else {
@@ -1486,7 +1539,7 @@ const DevisList = () => {
                                                         <tbody>
                                                         {selectedProductsData.map((productData, index) => (
                                                             <tr key={index}>
-                                                                <td>
+                                                                <td style={{ backgroundColor: "white" }}>
                                                                     <Select
                                                                         options={produits.map((produit) => ({
                                                                             value: produit.id,
@@ -1520,30 +1573,37 @@ const DevisList = () => {
                                                                         placeholder="Code ..."
                                                                     />
                                                                 </td>
-                                                                <td>
+                                                                <td style={{ backgroundColor: "white" }}>
                                                                     <Select
                                                                         options={produits.map((produit) => ({
-                                                                            value: produit.designation,
+                                                                            value: produit.id,
                                                                             label: produit.designation,
                                                                         }))}
                                                                         onChange={(selected) => {
                                                                             const produit = produits.find(
-                                                                                (prod) => prod.designation === selected.value
+                                                                                (prod) => prod.id === selected[0].value
                                                                             );
-                                                                            if (produit) {
-                                                                                handleProductSelection({
-                                                                                    produit_id: produit.id,
+                                                                            handleProductSelection(
+                                                                                {
+                                                                                    produit_id: selected[0].value,
                                                                                     Code_produit: produit.Code_produit,
-                                                                                    designation: selected.value,
+                                                                                    designation: produit.designation,
                                                                                     calibre_id: produit.calibre_id,
                                                                                     calibre: produit.calibre,
-                                                                                }, index);
-                                                                            }
+                                                                                },
+                                                                                index
+                                                                            );
                                                                         }}
-                                                                        value={{
-                                                                            value: productData.designation,
-                                                                            label: productData.designation,
-                                                                        }}
+                                                                        values={
+                                                                            productData.produit_id
+                                                                                ? [
+                                                                                    {
+                                                                                        value: productData.produit_id,
+                                                                                        label: productData.designation,
+                                                                                    },
+                                                                                ]
+                                                                                : []
+                                                                        }
                                                                         placeholder="Designation ..."
                                                                     />
                                                                 </td>
@@ -1720,9 +1780,9 @@ const DevisList = () => {
                                                             <FontAwesomeIcon icon={faTrash} />
                                                         </Button>
 
-                                                        {/*<Button className="btn btn-sm m-2" onClick={() => handlePDF(devis.id)}>*/}
-                                                        {/*    <FontAwesomeIcon icon={faFilePdf} />*/}
-                                                        {/*</Button>*/}
+                                                        <Button className="btn btn-sm m-2" onClick={() => handlePDF(devis.id)}>
+                                                            <FontAwesomeIcon icon={faFilePdf} />
+                                                        </Button>
                                                         <Button className="btn btn-sm m-2" onClick={() => print(devis.id)}>
                                                             <FontAwesomeIcon icon={faPrint} />
                                                         </Button>
