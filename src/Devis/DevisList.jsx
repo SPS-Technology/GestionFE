@@ -262,7 +262,13 @@ const DevisList = () => {
         }
     };
 
-
+    const handleShowLigneDevis = async (id) => {
+        setExpandedRows((prevRows) =>
+            prevRows.includes(id)
+                ? prevRows.filter((row) => row !== id)
+                : [...prevRows, id]
+        );
+    };
     // const handleShowLignEdevis = async (devisId) => {
     //     setExpandedRows((prevRows) =>
     //         prevRows.includes(devisId)
@@ -409,29 +415,25 @@ const DevisList = () => {
                 "http://localhost:8000/api/factures",
                 factureData
             );
-            console.log("factureResponse",factureResponse)
+            console.log("factureResponse", factureResponse);
 
             const facture = factureResponse.data;
-
-
 
             // 3. Récupérer les lignes de devis associées au devis
             const lignesDevisResponse = await axios.get(
                 `http://localhost:8000/api/ligneDevis/${devis.id}`
             );
 
+            console.log("ligneDevis Response : ", lignesDevisResponse);
 
-
-            console.log("ligneDevis Response : ",lignesDevisResponse )
-
-
-
-            const lignesFactureData = lignesDevisResponse.data.ligneDevis.map((ligneDevis) => ({
-                id_facture: facture.facture.id,
-                produit_id: ligneDevis.produit_id,
-                quantite: ligneDevis.quantite,
-                prix_vente: ligneDevis.prix_vente,
-            }));
+            const lignesFactureData = lignesDevisResponse.data.ligneDevis.map(
+                (ligneDevis) => ({
+                    id_facture: facture.facture.id,
+                    produit_id: ligneDevis.produit_id,
+                    quantite: ligneDevis.quantite,
+                    prix_vente: ligneDevis.prix_vente,
+                })
+            );
 
             console.log("factureData1", lignesFactureData);
             for (const ligneFactureData of lignesFactureData) {
@@ -442,8 +444,21 @@ const DevisList = () => {
                 );
             }
 
+            // Afficher un message de succès à l'utilisateur
+            Swal.fire({
+                icon: "success",
+                title: "Facture générée avec succès",
+                text: "La facture a été générée avec succès.",
+            });
         } catch (error) {
             console.error("Erreur lors de la génération de la facture :", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: "error",
+                title: "Erreur lors de la génération de la facture",
+                text: "Une erreur s'est produite lors de la génération de la facture. Veuillez réessayer.",
+            });
         }
     };
 
@@ -500,13 +515,6 @@ const DevisList = () => {
             console.error("Erreur lors de la génération de la bon de livraison :", error);
         }
     };
-    //
-    //         console.log("Bon de livraison créé :", bonLivraisonResponse.data);
-    //         setBonLivraisonGenerated(true);
-    //     } catch (error) {
-    //         console.error("Erreur lors de la génération du bon de livraison :", error);
-    //     }
-    // };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -1723,7 +1731,11 @@ const DevisList = () => {
                                     <th>Status</th>
                                     <th>Validation l'offre</th>
                                     <th>Mode Paiement</th>
+                                    <th>Generation</th>
                                     <th>Actions</th>
+
+
+
                                 </tr>
                                 </thead>
                                 <tbody className="text-center">
@@ -1734,7 +1746,7 @@ const DevisList = () => {
                                                 <div className="no-print ">
                                                     <button
                                                         className="btn btn-sm btn-light"
-                                                        onClick={() => toggleRow(devis.id)}
+                                                        onClick={() => handleShowLigneDevis(devis.id)}
                                                     >
                                                         <FontAwesomeIcon
                                                             icon={
@@ -1770,6 +1782,20 @@ const DevisList = () => {
                                             <td>{devis.validation_offer}</td>
                                             <td>{devis.modePaiement}</td>
                                             <td>
+                                                <div>
+                                                    {devis.status === "Valider" && (
+                                                        <div>
+                                                            <Button className="btn btn-sm m-2" variant="success" onClick={() => handleGenerateFacture(devis)}>
+                                                                <LiaFileInvoiceSolid />
+                                                            </Button>
+                                                            <Button className="btn btn-sm m-2" variant="dark" onClick={() =>handleGenerateBonLivraison(devis)}>
+                                                                <CiDeliveryTruck />
+                                                            </Button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td>
                                                 <div className="d-inline-flex text-center">
 
 
@@ -1787,21 +1813,14 @@ const DevisList = () => {
                                                             <FontAwesomeIcon icon={faPrint} />
                                                         </Button>
 
-                                                    {devis.status === "Valider" && (
-                                                        <div>
-                                                            <Button className="btn btn-sm m-2" variant="success" onClick={() => handleGenerateFacture(devis)}>
-                                                                <LiaFileInvoiceSolid />
-                                                            </Button>
-                                                            <Button className="btn btn-sm m-2" variant="dark" onClick={() =>handleGenerateBonLivraison(devis)}>
-                                                                <CiDeliveryTruck />
-                                                            </Button>
-                                                        </div>
-                                                    )}
+
                                                 </div>
+
                                             </td>
 
+
                                         </tr>
-                                        {expandedRows.includes(devis.id) && devis.ligneDevis && (
+                                        {expandedRows.includes(devis.id) && devis.lignedevis && (
                                             <tr>
                                                 <td colSpan="12">
                                                     <div>
@@ -1821,7 +1840,7 @@ const DevisList = () => {
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {devis.ligneDevis.map((ligneDevis) => {
+                                                            {devis.lignedevis.map((ligneDevis) => {
                                                                     const produit = produits.find(
                                                                         (prod) =>
                                                                             prod.id === ligneDevis.produit_id

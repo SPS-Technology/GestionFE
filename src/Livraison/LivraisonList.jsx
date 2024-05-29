@@ -1014,7 +1014,7 @@ const LivraisonList = () => {
                                                         {/* </Button> */}
                                                     </td>
                                                 </tr>
-                                                {expandedRows.includes(livraison.id) && livraison.ligneLivraisons && (
+                                                {expandedRows.includes(livraison.id) && livraison.lignelivraison && (
                                                     <tr>
                                                         <td colSpan="6">
                                                             <div>
@@ -1031,7 +1031,7 @@ const LivraisonList = () => {
                                                                     </tr>
                                                                     </thead>
                                                                     <tbody>
-                                                                    {livraison.ligneLivraisons.map((ligneLivraisons) => (
+                                                                    {livraison.lignelivraison.map((ligneLivraisons) => (
                                                                         // const produit = produits.find(prod => prod.id === ligneLivraisons.produit_id);
                                                                         // console.log("prod",produit)
                                                                         // console.log("id",ligneLivraisons.produit_id)

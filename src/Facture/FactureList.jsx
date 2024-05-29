@@ -722,6 +722,165 @@ const FactureList = () => {
         // Enregistrer le fichier PDF avec le nom 'devis.pdf'
         doc.save("facturee.pdf");
     };
+    const printFacture = (factureId) => {
+        // Récupérer les informations spécifiques à la facture sélectionnée
+        const selectedFacture = factures.find((facture) => facture.id === factureId);
+
+        if (!selectedFacture) {
+            console.error(`Facture avec l'ID '${factureId}' introuvable.`);
+            return;
+        }
+
+        // Générer le contenu HTML pour impression
+        const printWindow = window.open("", "_blank", "");
+
+        if (printWindow) {
+            const newWindowDocument = printWindow.document;
+            const title = `Devis N° ${selectedFacture.reference}`;
+
+            // Début du contenu HTML
+            newWindowDocument.write(`
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px 20px; /* Marges en haut et en bas */
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .client-box {
+            border: 1px solid #000;
+            padding: 10px;
+            width: 50%;
+            margin-left: auto; /* Aligner à droite */
+            margin-bottom: 20px;
+        }
+        .title-container {
+                    display: flex;
+                    align-items: flex-end;
+                    margin-bottom: 10px;
+                }
+                .title-container h1 {
+                    flex: 1;
+                    text-align: left;
+                }
+        .details, .products {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        .details th, .details td, .products th, .products td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        .products th, .products td {
+            text-align: center;
+        }
+        .right-align {
+            text-align: right;
+        }
+        .center-align {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Titre de la facture -->
+    <div class="header">
+        <div class="title-container">
+            <h1>${title}</h1>
+        </div>
+    </div>
+    <!-- Informations du client -->
+    <div class="client-box">
+        <h2>${selectedFacture.client.raison_sociale}</h2>
+        <p>Adresse: ${selectedFacture.client.adresse}</p>
+        <p>Téléphone: ${selectedFacture.client.tele}</p>
+        <p>ICE: ${selectedFacture.client.ice}</p>
+    </div>
+    <div style="clear: both;"></div>
+    <!-- Détails de la facture -->
+    <div class="box">
+        <table class="details">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Référence BL</th>
+                    <th>Référence BC</th>
+                    <th>Total TTC</th>
+                    <th>Mode de paiement</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>${selectedFacture.date}</td>
+                    <td>${selectedFacture.ref_BL}</td>
+                    <td>${selectedFacture.ref_BC}</td>
+                    <td class="right-align">${selectedFacture.total_ttc}</td>
+                    <td>${selectedFacture.modePaiement}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Détails des produits -->
+    <div class="box">
+        <table class="products">
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th>Code produit</th>
+                    <th>Désignation</th>
+                    <th>Quantité</th>
+                    <th>Prix Unitaire</th>
+                    <th>Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${selectedFacture.ligne_facture.map((ligne, index) => {
+                const produit = produits.find(prod => prod.id === ligne.produit_id);
+                return `
+                        <tr>
+                            <td class="center-align">${index + 1}</td>
+                            <td class="center-align">${produit ? produit.Code_produit : ''}</td>
+                            <td class="center-align">${produit ? produit.designation : ''}</td>
+                            <td class="right-align">${ligne.quantite}</td>
+                            <td class="right-align">${Number(ligne.prix_vente).toFixed(2)}</td>
+                            <td class="right-align">${(Number(ligne.quantite) * Number(ligne.prix_vente)).toFixed(2)}</td>
+                        </tr>
+                    `;
+            }).join('')}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        setTimeout(() => {
+            window.print();
+            window.onafterprint = function () {
+                window.close();
+            };
+        }, 1000);
+    </script>
+</body>
+</html>
+`);
+
+            newWindowDocument.close();
+        } else {
+            console.error("Erreur lors de l'ouverture de la fenêtre d'impression.");
+        }
+    };
+
 
     function nombreEnLettres(nombre) {
         const units = ['', 'un', 'Deux', 'Trois', 'Quatre', 'Cinq', 'Six', 'Sept', 'Huit', 'Neuf'];
@@ -1154,6 +1313,12 @@ const FactureList = () => {
                                                     onClick={() => handlePDF(facture.id)}
                                                 >
                                                     <FontAwesomeIcon icon={faFilePdf} />
+                                                </Button>
+                                                <Button
+                                                    className="btn btn-sm m-2"
+                                                    onClick={() => printFacture(facture.id)}
+                                                >
+                                                    <FontAwesomeIcon icon={faPrint} />
                                                 </Button>
                                             </td>
                                         </tr>
