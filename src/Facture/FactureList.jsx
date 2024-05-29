@@ -607,168 +607,120 @@ const FactureList = () => {
         }
     };
 
-    const handleFactureExport = async (factureId) => {
-        try {
-            const response = await axios.get(`http://localhost:8000/api/factures/${factureId}`);
-            const selectedFacture = response.data.facture;
+    const handlePDF = (factureId) => {
+        // Récupérer les informations spécifiques à la facture sélectionnée
+        const selectedFacture = factures.find((facture) => facture.id === factureId);
 
-            if (!selectedFacture) {
-                console.error("Facture not found");
-                return;
+        // Création d'une nouvelle instance de jsPDF
+        const doc = new jsPDF();
+
+        // Dessiner un cadre noir pour les informations du client
+        const boxX = 130; // Ajustez la position horizontale du cadre pour l'élargir vers le centre
+        const boxY = 10;
+        const boxWidth = 70; // Ajustez la largeur du cadre pour l'élargir jusqu'au centre
+        const boxHeight = 40; // Ajustez la hauteur du cadre pour qu'il encadre juste les informations
+        doc.setDrawColor(0); // Couleur noire
+        doc.setLineWidth(0.5); // Épaisseur de la ligne
+        doc.rect(boxX, boxY, boxWidth, boxHeight);
+
+        // Dessiner les informations du client dans le cadre à droite
+        const clientInfo = [
+            { label: "", value: selectedFacture.client.raison_sociale },
+            { label: "", value: selectedFacture.client.adresse },
+            { label: "", value: selectedFacture.client.tele },
+            { label: "", value: selectedFacture.client.ice },
+        ];
+
+        // Position de départ pour l'impression des données du client
+        let textOffsetX = boxX + 5;
+        let textOffsetY = boxY + 10;
+
+        // Afficher les informations du client dans le cadre
+        doc.setFontSize(10); // Police plus petite pour les informations du client
+        clientInfo.forEach((info, index) => {
+            if (index === 0) {
+                // Nom du client en gras et police plus grande
+                doc.setFontSize(12); // Police plus grande pour le nom du client
+                doc.setFont("helvetica", "bold"); // Police en gras
+                doc.text(info.value ? info.value.toString() : "", textOffsetX, textOffsetY);
+                doc.setFont("helvetica", "normal"); // Revenir à la police normale
+                doc.setFontSize(10); // Revenir à la taille de police normale
+            } else {
+                // Afficher les autres informations
+                if (index === 3) { // ICE
+                    doc.text(info.value ? info.value.toString() : "", boxX + boxWidth - 5, textOffsetY, { align: 'right' });
+                } else {
+                    doc.text(info.value ? info.value.toString() : "", textOffsetX, textOffsetY);
+                }
             }
+            textOffsetY += 8; // Espacement entre les lignes du tableau
+        });
 
-            const doc = new jsPDF();
-            let startY = 20;
+        // Dessiner le numéro de facture en gras à gauche des informations du client
+        doc.setFontSize(14); // Police plus grande pour le numéro de facture
+        doc.setFont("helvetica", "bold"); // Police en gras
+        doc.text(`Devis N° ${selectedFacture.reference}`, 10, 20);
 
-            // Draw rectangle around client info
-            const clientInfoX = 10;
-            const clientInfoY = startY + 10;
-            const clientInfoWidth = 60;
-            const clientInfoHeight = 30;
-            doc.rect(clientInfoX, clientInfoY, clientInfoWidth, clientInfoHeight, "S");
-
-            // Info Client
-            const clientInfo = [
-                { label: 'Raison sociale:', value: selectedFacture.clients.raison_sociale },
-                { label: 'Adresse:', value: selectedFacture.clients.adresse },
-                { label: 'Téléphone:', value: selectedFacture.clients.tele },
-                { label: 'ICE:', value: selectedFacture.clients.ice }
-            ];
-
-            let clientInfoYPosition = startY + 15; // Adjust startY position for text
-
-            clientInfo.forEach((info) => {
-                doc.setFontSize(8); // Set font size to 8
-                doc.text(`${info.label}`, clientInfoX + 5, clientInfoYPosition);
-                doc.text(`${info.value}`, clientInfoX + 30, clientInfoYPosition);
-                clientInfoYPosition += 5; // Adjust vertical spacing
-            });
-
-            startY += 50; // Adjust startY position after client info and rectangle
-
-            // Table for factureInfo
-            const factureInfoRows = [
-                { title: 'N° Facture' },
-                { title: 'Date:' },
-                { title: 'REF BL N°:' },
-                { title: 'REF BC N°:' },
-                { title: 'Mode de Paiement:' }
-            ];
-
-            const factureInfoBody = [
-                selectedFacture.reference,
+        // Détails de la facture
+        const factureDetailsTable = [
+            ["Date", "Référence BL", "Référence BC", "Total TTC", "Mode de paiement"],
+            [
                 selectedFacture.date,
                 selectedFacture.ref_BL,
                 selectedFacture.ref_BC,
                 selectedFacture.total_ttc,
-                selectedFacture.modePaiement
-            ];
+                selectedFacture.modePaiement,
+            ],
+        ];
 
-            doc.autoTable({
-                head: [factureInfoRows.map(row => row.title)],
-                body: [factureInfoBody],
-                startY: startY,
-                margin: { top: 20 },
-                styles: {
-                    lineWidth: 0.1,
-                    lineColor: [0, 0, 0],
-                    fontSize: 8
-                },
-                columnStyles: {
-                    0: { cellWidth: 30 },
-                    1: { cellWidth: 30 },
-                    2: { cellWidth: 30 },
-                    3: { cellWidth: 30 },
-                    4: { cellWidth: 40 },
-                },
-                headerStyles: {
-                    fillColor: [187, 187, 187],
-                    textColor: [0, 0, 0],
-                    fontStyle: "bold",
-                },
-            });
+        // Position du tableau
+        const tableStartY = 70; // Ajustez la position verticale selon vos besoins
 
-            startY = doc.lastAutoTable.finalY + 10; // Move startY position below the factureInfo table
+        // Dessiner le tableau des détails de la facture
+        doc.autoTable({
+            head: [factureDetailsTable[0]],
+            body: [factureDetailsTable[1]],
+            startY: tableStartY,
+            styles: {
+                lineWidth: 0.1,
+                lineColor: [0, 0, 0],
+                fontSize: 10,
+            },
+            headStyles: {
+                fillColor: [0, 0, 255], // Couleur bleue pour les en-têtes
+                textColor: [255, 255, 255], // Couleur du texte des en-têtes en blanc
+            },
+        });
 
-            let ligneData = [];
+        // Détails des produits
+        const productDetailsTable = [
+            ["Produit", "Quantité", "Prix Unitaire", "Total"],
+            ...selectedFacture.ligne_facture.map(ligne => [
+                ligne.produit_id,
+                ligne.quantite,
+                ligne.prix_vente,
+                (ligne.quantite * ligne.prix_vente).toFixed(2) // Calculer le total pour chaque ligne de produit
+            ]),
+        ];
 
-            if (selectedFacture.devis && selectedFacture.devis.lignedevis) {
-                ligneData = selectedFacture.devis.lignedevis;
-            } else if (selectedFacture.ligne_facture && selectedFacture.ligne_facture.length > 0) {
-                ligneData = selectedFacture.ligne_facture;
-            }
+        // Dessiner le tableau des détails des produits
+        doc.autoTable({
+            head: [productDetailsTable[0]],
+            body: productDetailsTable.slice(1),
+            startY: doc.autoTable.previous.finalY + 10, // Positionner ce tableau juste en dessous du premier tableau
+            styles: {
+                lineWidth: 0.1,
+                lineColor: [0, 0, 0],
+                fontSize: 10,
+            },
+            headStyles: {
+                fillColor: [0, 0, 255], // Couleur bleue pour les en-têtes
+                textColor: [255, 255, 255], // Couleur du texte des en-têtes en blanc
+            },
+        });
 
-            if (ligneData.length > 0) {
-                startY += 2; // Add space between factureInfo and ligneData table
-
-                const headersLigne = ['#', 'Code produit', 'Désignation', 'Prix', 'Quantité', 'Total HT',];
-                const rowsLigne = ligneData.map((ligne, index) => [
-                    index + 1,
-                    ligne.Code_produit,
-                    ligne.designation,
-                    ligne.prix_vente,
-                    ligne.quantite,
-                    (ligne.quantite * ligne.prix_vente).toFixed(2)
-                ]);
-
-                doc.autoTable({
-                    head: [headersLigne],
-                    body: rowsLigne,
-                    startY: startY,
-                    margin: { top: 20 },
-                    styles: {
-                        lineWidth: 0.1,
-                        lineColor: [0, 0, 0],
-                        fontSize: 8
-                    },
-                    columnStyles: {
-                        0: { cellWidth: 7 },
-                        1: { cellWidth: 40 },
-                        2: { cellWidth: 50 },
-                        3: { cellWidth: 20 },
-                        4: { cellWidth: 25 },
-                        5: { cellWidth: 30 }
-                    },
-                    headerStyles: {
-                        fillColor: [187, 187, 187],
-                        textColor: [0, 0, 0],
-                        fontStyle: "bold",
-                    },
-                });
-
-                const totalHT = ligneData.reduce((total, ligne) => total + (ligne.quantite * ligne.prix_vente), 0);
-                const TVA = 0.2 * totalHT;
-                const TTC = totalHT + TVA;
-
-                const montantTable = [
-                    { label: 'Montant Total Hors Taxes:', value: `${totalHT.toFixed(2)} DH` },
-                    { label: 'TVA (20%):', value: `${TVA.toFixed(2)} DH` },
-                    { label: 'TTC:', value: `${TTC.toFixed(2)} DH` },
-                    { label: 'Total en lettres:', value: `${nombreEnLettres(TTC)} Dirhams` }
-                ];
-
-                doc.autoTable({
-                    body: montantTable.map(row => [row.label, row.value]),
-                    startY: doc.lastAutoTable.finalY + 10,
-                    margin: { top: 20 },
-                    styles: {
-                        lineWidth: 0.1,
-                        lineColor: [0, 0, 0],
-                        fontSize: 8
-                    }
-                });
-
-                const totalEnLettres = `Arrêteé la présente facture à la somme tout taxe comprise de : ${nombreEnLettres(TTC)} Dirhams`;
-                doc.setFontSize(10);
-                doc.text(totalEnLettres, 10, startY + 70);
-
-                doc.save("facture.pdf");
-            } else {
-                console.error("No ligne data found in selected facture");
-            }
-        } catch (error) {
-            console.error("Error exporting facture:", error);
-        }
+        // Enregistrer le fichier PDF avec le nom 'devis.pdf'
+        doc.save("facturee.pdf");
     };
 
     function nombreEnLettres(nombre) {
@@ -1199,7 +1151,7 @@ const FactureList = () => {
                                                 </Button>
                                                 <Button
                                                     className="btn btn-sm m-2"
-                                                    onClick={() => handleFactureExport(facture.id)}
+                                                    onClick={() => handlePDF(facture.id)}
                                                 >
                                                     <FontAwesomeIcon icon={faFilePdf} />
                                                 </Button>

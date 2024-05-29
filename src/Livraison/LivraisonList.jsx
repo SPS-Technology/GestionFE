@@ -557,6 +557,49 @@ const LivraisonList = () => {
             closeForm();
         }
     };
+
+    const handleDelete = async (id) => {
+        try {
+            const result = await Swal.fire({
+                title: "Êtes-vous sûr de vouloir supprimer cette bon de livraison ?",
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: "Oui",
+                denyButtonText: "Non",
+                customClass: {
+                    actions: "my-actions",
+                    cancelButton: "order-1 right-gap",
+                    confirmButton: "order-2",
+                    denyButton: "order-3",
+                },
+            });
+
+            if (result.isConfirmed) {
+                // Delete the invoice with the given ID
+                await axios.delete(`http://localhost:8000/api/livraisons/${id}`);
+
+                // Refresh the list of invoices (if necessary)
+                fetchLivraisons(); // Ensure this function retrieves the list of invoices again after deletion
+
+                Swal.fire({
+                    icon: "success",
+                    title: "Succès!",
+                    text: "bon de livraison supprimée avec succès.",
+                });
+            } else {
+                console.log("Suppression annulée");
+            }
+        } catch (error) {
+            console.error("Erreur lors de la suppression de la bon de livraison:", error);
+
+            Swal.fire({
+                icon: "error",
+                title: "Erreur!",
+                text: "Échec de la suppression de la bon de livraison.",
+            });
+        }
+    };
+
     const handleShowFormButtonClick = () => {
         if (formContainerStyle.right === "-100%") {
             setFormContainerStyle({ right: "-0%" });
@@ -959,6 +1002,9 @@ const LivraisonList = () => {
                                                         >
                                                             <i className="fas fa-edit"></i>
                                                         </button>
+                                                        <Button className="btn btn-danger btn-sm m-2" onClick={() => handleDelete(livraison.id)}>
+                                                            <FontAwesomeIcon icon={faTrash} />
+                                                        </Button>
                                                         {/* Uncomment if handleLivraisonExport function is defined */}
                                                         {/* <Button */}
                                                         {/*    className="btn btn-sm m-2" */}
