@@ -7,7 +7,7 @@ import Navigation from "../Acceuil/Navigation";
 import Search from "../Acceuil/Search";
 import TablePagination from '@mui/material/TablePagination';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus, faMinus,} from "@fortawesome/free-solid-svg-icons";
+import {faTrash, faFilePdf, faFileExcel, faPrint, faPlus, faMinus, faFilter,} from "@fortawesome/free-solid-svg-icons";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import "jspdf-autotable";
@@ -17,14 +17,18 @@ import { Toolbar } from "@mui/material";
 import {IoIosPersonAdd} from "react-icons/io";
 import PrintList from "./PrintList";
 import ExportPdfButton from "./ExportPdfButton";
-const BanqueList = () => {
+const BanquesList = () => {
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
-
+    const [editingEncaissement, setEditingEncaissement] = useState(null);
 
     const [filteredBanques, setFilteredBanques] = useState([]);
     const [banques, setBanques] = useState([]);
+    const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("");
+    const [comptes, setComptes] = useState([]);
+
 
     const [user, setUser] = useState({});
     // const [users, setUsers] = useState([]);
@@ -46,7 +50,7 @@ const BanqueList = () => {
     const [clientId,setClientId] = useState(null);
     const [ligneEntrerComptes, setLigneEntrerComptes] = useState([]);
 
-
+    const [showFormEncaissement, setShowFormEncaissement] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [formData, setFormData] = useState({
         client_id: "",
@@ -101,6 +105,12 @@ const BanqueList = () => {
     };
     const fetchBanques = async () => {
         try {
+            const compteResponse = await axios.get(
+                "http://localhost:8000/api/comptes"
+            );
+            console.log("API Response for Comptes:", compteResponse.data.comptes);
+            setComptes(compteResponse.data.comptes);
+
             const response = await axios.get("http://localhost:8000/api/banques");
             setBanques(response.data.banques);
             console.log("API Response for Banques:", response.data.banques);
@@ -395,66 +405,7 @@ const BanqueList = () => {
             setModifiedAvanceValues((prev) => ({...prev, [factureId]: newValue}));
         }
     }
-    const getAvancebyFacture = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
 
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.total_ttc);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-    const getDateFactureByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
-
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.date);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-    const gettotalttcByIdClient = (clientId) => {
-        // Assuming you have a `clients` array containing client objects
-        const client = clients.find((c) => c.id === clientId);
-
-        // Check if the client is found
-        if (client) {
-            // Assuming each client object has an `invoices` property which is an array
-            const invoices = client.invoices;
-            console.log("invoices", invoices);
-            // Return an array of invoice references or any other property you want
-            return invoices.map((invoice) => invoice.total_ttc);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
-    const getAvanceByIdClient = (factureId) => {
-        // Assuming you have a `clients` array containing client objects
-        const facture = factures.find((c) => c.id === factureId);
-
-        // Check if the client is found
-        if (facture) {
-            // Assuming each client object has an `invoices` property which is an array
-            const ligneEntrees = facture.ligne_entrer_compte;
-            console.log("ligneEntrees", ligneEntrees);
-            // Return an array of invoice references or any other property you want
-            return ligneEntrees.map((ligneEntree) => ligneEntree.avance);
-        } else {
-            return []; // or handle accordingly if client not found
-        }
-    };
 
     const gettotalttcByIdFacture = (factureId) => {
         // Assuming you have a `clients` array containing client objects
@@ -499,10 +450,6 @@ const BanqueList = () => {
         }
     };
 
-    const handleChangeRowsPerPage = (event) => {
-        setRowsPerPage(parseInt(event.target.value, 10));
-        setPage(0);
-    };
     //------------------------- banque Delete Selected ---------------------//
 
     const handleDeleteSelected = () => {
@@ -1051,6 +998,18 @@ const BanqueList = () => {
         }
         return "";
     };
+
+    const handleEncaisser =  () => {
+        setShowFormEncaissement(true)
+        if (formContainerStyle.right === '-100%') {
+            setFormContainerStyle({ right: '0' });
+            setTableContainerStyle({ marginRight: '3000px' });
+        } else {
+
+            setShowFormEncaissement(false)
+        }
+    };
+
     const closeForm = () => {
         setFilteredFactures([]);
         setFormContainerStyle({ right: '-100%' });
@@ -1072,6 +1031,56 @@ const BanqueList = () => {
         });
         setEditingBanque(null); // Clear editing banque
     };
+    // Créez une fonction pour filtrer les banques par mode de paiement
+    const filterBanquesByPaymentMode = (mode) => {
+        if (mode === "") {
+            console.log("No payment mode selected, displaying all banques");
+            setFilteredBanques(banques);
+        } else {
+            console.log("Filtering banques by payment mode:", mode);
+            const filtered = banques.filter((banque) => banque.mode_de_paiement === mode);
+            console.log("Filtered banques:", filtered);
+            setFilteredBanques(filtered);
+        }
+    };
+
+// Ajoutez une fonction pour gérer le changement de filtre de mode de paiement
+    const handlePaymentModeFilterChange = (event) => {
+        const mode = event.target.value;
+        setSelectedPaymentMode(mode);
+        filterBanquesByPaymentMode(mode);
+    };
+
+// Utilisez useEffect pour réappliquer le filtre lorsque le mode de paiement sélectionné change
+    useEffect(() => {
+        filterBanquesByPaymentMode(selectedPaymentMode);
+    }, [selectedPaymentMode, banques]);
+    // Créez une fonction pour filtrer les banques par statut
+    const filterBanquesByStatus = (status) => {
+        if (status === "") {
+            console.log("No status selected, displaying all banques");
+            setFilteredBanques(banques);
+        } else {
+            console.log("Filtering banques by status:", status);
+            const filtered = banques.filter((banque) => banque.Status === status);
+            console.log("Filtered banques:", filtered);
+            setFilteredBanques(filtered);
+        }
+    };
+
+// Ajoutez une fonction pour gérer le changement de filtre de statut
+    const handleStatusFilterChange = (event) => {
+        const status = event.target.value;
+        setSelectedStatus(status);
+        filterBanquesByStatus(status);
+    };
+
+// Utilisez useEffect pour réappliquer le filtre lorsque le statut sélectionné change
+    useEffect(() => {
+        filterBanquesByStatus(selectedStatus);
+    }, [selectedStatus, banques]);
+
+
 
     return (
         <ThemeProvider theme={createTheme()}>
@@ -1082,17 +1091,58 @@ const BanqueList = () => {
 
                     <div>
                         <h3>Entrer Banques</h3>
-                        <div className="search-container d-flex flex-row-reverse " role="search">
+                        <div className="search-container d-flex flex-row-reverse mb-3" role="search">
                             <Search onSearch={handleSearch} type="search" />
                         </div>
-                        <Button
-                            id="showFormButton"
-                            onClick={handleShowFormButtonClick}
-                            style={{ backgroundColor: 'white', color: 'black' }}
-                        >
-                            <IoIosPersonAdd  style={{ fontSize: '24px' }} />
-                            {/*{showForm ? "Modifier le formulaire" : <IoIosPersonAdd />}*/}
-                        </Button>
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                            <div>
+                                <Button
+                                    id="showFormButton"
+                                    onClick={handleShowFormButtonClick}
+                                    style={{ backgroundColor: 'white', color: 'black', marginRight: '10px' }}
+                                >
+                                    <IoIosPersonAdd style={{ fontSize: '24px' }} />
+                                </Button>
+                                <Button onClick={handleEncaisser} variant="success">
+                                    Encaisser
+                                </Button>
+                            </div>
+                            <div className="d-flex">
+                                <FontAwesomeIcon
+                                    icon={faFilter}
+                                    className="position-absolute top-50 start-0 translate-middle-y text-muted"
+                                />
+                                <Form.Group controlId="paymentModeFilter" className="mb-0 me-3">
+                                    <Form.Select
+                                        onChange={handlePaymentModeFilterChange}
+                                        value={selectedPaymentMode}
+                                        className="form-select form-select-sm"
+                                    >
+                                        <option value="">Tous les modes de paiement</option>
+                                        <option value="Effet">Effet</option>
+                                        <option value="Chéque">Chéque</option>
+                                        <option value="Espèce">Espèce</option>
+                                        <option value="Garantie">Garantie</option>
+                                        <option value="Virement">Virement</option>
+                                    </Form.Select>
+                                </Form.Group>
+                                <Form.Group controlId="statusFilter" className="mb-0">
+                                    <Form.Select
+                                        onChange={handleStatusFilterChange}
+                                        value={selectedStatus}
+                                        className="form-select form-select-sm"
+                                    >
+                                        <option value="">Tous les statuts</option>
+                                        <option value="En attente">En attente</option>
+                                        <option value="En cours de traitement">En cours de traitement</option>
+                                        <option value="Résolue">Résolue</option>
+                                        <option value="Fermée">Fermée</option>
+                                    </Form.Select>
+                                </Form.Group>
+                            </div>
+                        </div>
+
+
                         <div id="formContainer" className="mt-2" style={formContainerStyle}>
                             <Form className="col row" onSubmit={handleSubmit}>
                                 <Form.Label className="text-center m-2"><h5>{editingBanque ? 'Modifier ' : 'Ajouter '}</h5></Form.Label>
@@ -1209,6 +1259,102 @@ const BanqueList = () => {
 
                             </Form>
                         </div>
+                        {showFormEncaissement && (
+                            <div id="formContainer" className="mt-2" style={formContainerStyle}>
+                                <Form className="col row" onSubmit={handleSubmit}>
+                                    <Form.Label className="text-center m-2">
+                                        <h5>{editingEncaissement ? 'Modifier encaissement' : 'Ajouter un encaissement'}</h5>
+                                    </Form.Label>
+                                    <Form.Group className="col-sm-5 m-2" controlId="comptes_id">
+                                        <Form.Label>Compte</Form.Label>
+                                        <Form.Select
+                                            name="comptes_id"
+                                            value={formData.comptes_id}
+                                            onChange={handleChange}
+                                            className="form-select form-select-sm"
+                                        >
+                                            <option value="">Sélectionner un compte</option>
+                                            {comptes.map((compte) => (
+                                                <option key={compte.id} value={compte.id}>
+                                                    {compte.designations}
+                                                </option>
+                                            ))}
+                                        </Form.Select>
+                                    </Form.Group>
+                                    <Form.Group className="col-sm-10 m-2">
+                                        <Form.Label>Reference</Form.Label>
+                                        <Form.Control
+                                            type="text"
+                                            placeholder="Reference"
+                                            name="referencee"
+                                            value={formData.referencee}
+                                            onChange={handleChange}
+                                        />
+                                    </Form.Group>
+                                    <Form.Group className="col-sm-5 m-2">
+                                        <Form.Label>Date d'encaissement</Form.Label>
+                                        <Form.Control
+                                            type="date"
+                                            placeholder="Date d'encaissement"
+                                            name="date_encaissement"
+                                            value={formData.date_encaissement}
+                                            onChange={handleChange}
+                                        />
+                                    </Form.Group>
+
+
+                                    <div className="col-md-12">
+                                        <Form.Group controlId="selectedFactureTable">
+                                            <Table striped bordered hover responsive>
+                                                <thead>
+                                                <tr>
+                                                    <th>Client</th>
+                                                    <th>N° de Facture</th>
+                                                    <th>Total TTC</th>
+                                                    <th>Date de Facture</th>
+                                                    <th>N° de Chéque</th>
+                                                    <th>Mode de Paiement</th>
+                                                    <th>Date</th>
+                                                    <th>Avance</th>
+                                                    <th>Status</th>
+                                                    <th>Remarque</th>
+                                                </tr>
+                                                </thead>
+                                                <tbody>
+                                                {banques && banques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
+                                                    const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+                                                    const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+
+                                                    return (
+                                                        <tr key={banque.id}>
+                                                            <td>{facture?.client.raison_sociale}</td>
+                                                            <td>{facture?.reference}</td>
+                                                            <td>{facture?.total_ttc}</td>
+                                                            <td>{facture?.date}</td>
+                                                            <td>{banque.numero_cheque}</td>
+                                                            <td>{banque.mode_de_paiement}</td>
+                                                            <td>{banque.datee}</td>
+                                                            <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                                            <td>{banque.Status}</td>
+                                                            <td>{banque.remarque}</td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                                </tbody>
+                                            </Table>
+                                        </Form.Group>
+                                    </div>
+                                    <Form.Group className="col m-3 text-center">
+                                        <Button type="submit" className="btn btn-success col-6">
+                                            {editingEncaissement ? 'Modifier' : 'Ajouter'}
+                                        </Button>
+                                        <Button className="btn btn-secondary col-5 offset-1" onClick={closeForm}>
+                                            Annuler
+                                        </Button>
+                                    </Form.Group>
+                                </Form>
+                            </div>
+                        )}
                         <div id="tableContainer" className="table-responsive-sm" style={tableContainerStyle}>
                             <table className="table table-responsive table-bordered " id="banqueTable">
                                 <thead>
@@ -1239,7 +1385,11 @@ const BanqueList = () => {
 
                                         <tr>
                                             <td>
-
+                                                <input
+                                                    type="checkbox"
+                                                    onChange={() => handleCheckboxChange(banques.id)}
+                                                    checked={selectedItems.includes(banques.id)}
+                                                />
                                             </td>
                                             <td>
 
@@ -1295,6 +1445,8 @@ const BanqueList = () => {
                                                 <Button className="btn btn-danger btn-sm m-1" onClick={() => handleDelete(banques.id)}>
                                                     <FontAwesomeIcon icon={faTrash} />
                                                 </Button>
+
+
                                             </td>
                                         </tr>
 
@@ -1376,4 +1528,4 @@ const BanqueList = () => {
     );
 };
 
-export default BanqueList;
+export default BanquesList;

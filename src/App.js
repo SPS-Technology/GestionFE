@@ -20,6 +20,7 @@ import EncaissementList from "./Encaissements/EncaissementList";
 import DevisList from "./Devis/DevisList";
 import FactureList from "./Facture/FactureList";
 import LivraisonList from "./Livraison/LivraisonList";
+import BanquesList from "./Banquess/BanquesList";
 
 
 const App = () => {
@@ -46,6 +47,9 @@ const App = () => {
         <Route path="/devis" element={<DevisList/>}/>
         <Route path="/factures" element={<FactureList/>}/>
         <Route path="/livraisons" element={<LivraisonList/>}/>
+        <Route path="/banquess" element={<BanquesList/>}/>
+
+
 
       </Routes>
       </AuthProvider>
