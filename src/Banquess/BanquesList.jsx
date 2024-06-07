@@ -22,12 +22,15 @@ const BanquesList = () => {
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [editingEncaissement, setEditingEncaissement] = useState(null);
-
+    const [authId, setAuthId] = useState([]);
+    const csrfTokenMeta = document.head.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfTokenMeta ? csrfTokenMeta.content : null;
     const [filteredBanques, setFilteredBanques] = useState([]);
     const [banques, setBanques] = useState([]);
     const [selectedPaymentMode, setSelectedPaymentMode] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("");
     const [comptes, setComptes] = useState([]);
+    const [selectedProductsData, setSelectedProductsData] = useState([]);
 
 
     const [user, setUser] = useState({});
@@ -921,7 +924,170 @@ const BanquesList = () => {
         }
 
     };
+    const handleSubmit1 = async (e) => {
+        e.preventDefault();
+        console.log("e",e)
+        try {
+            // const userResponse = await axios.get("http://localhost:8000/api/users", {
+            //   withCredentials: true,
+            //   headers: {
+            //     "X-CSRF-TOKEN": csrfToken,
+            //   },
+            // });
 
+            // const authenticatedUserId = userResponse.data[0].id;
+            // console.log("auth user", authenticatedUserId);
+            // Préparer les données du Encaissement
+            console.log("authId",authId)
+            console.log(banques)
+            const banques_filtrees = banques.filter(banque => selectedItems.includes(banque.id));
+            console.log("banques  filtrees: ",banques_filtrees)
+
+            // Calculate the total montant from the filtered banques
+            const montant_total = banques_filtrees.reduce((total, banque) => {
+                const avances = banque.ligne_entrer_compte.map(item => parseFloat(item.avance));
+                return total + avances.reduce((sum, avance) => sum + avance, 0);
+            }, 0);
+
+            console.log("montant_total: ", montant_total);
+
+
+
+            const EncaissementData = {
+                referencee: formData.referencee,
+                date_encaissement: formData.date_encaissement,
+                montant_total: montant_total,
+                comptes_id: formData.comptes_id,
+                type_encaissement: formData.type_encaissement,
+
+                // user_id: authId,
+            };
+            console.log('encaissement data : ',EncaissementData)
+            let response;
+            if (editingEncaissement) {
+                // Mettre à jour le Encaissement existant
+                response = await axios.put(
+                    `http://localhost:8000/api/encaissements/${editingEncaissement.id}`,
+                    {
+                        referencee: formData.referencee,
+                        date_encaissement: formData.date_encaissement,
+
+                        comptes_id: formData.comptes_id,
+                        type_encaissement: formData.type_encaissement,
+
+                        // user_id: authId,
+                    }
+                );
+                const existingligneencaissementResponse = await axios.get(
+                    `http://localhost:8000/api/ligneencaissement/${editingEncaissement.id}`
+                );
+
+                const existingligneencaissement =
+                    existingligneencaissementResponse.data.ligneencaissement;
+                console.log("existing ligneencaissement", existingligneencaissement);
+                const selectedPrdsData = selectedProductsData.map(
+                    (selectedProduct, index) => {
+                        // const existingligneencaissement = existingligneencaissement.find(
+                        //   (ligneencaissement) =>
+                        //     ligneencaissement.produit_id === selectedProduct.produit_id
+                        // );
+
+                        return {
+                            id: selectedProduct.id,
+                            id_Encaissement: editingEncaissement.id,
+
+                        };
+                    }
+                );
+                console.log("selectedPrdsData:", selectedPrdsData);
+                for (const ligneencaissementData of selectedPrdsData) {
+                    // Check if ligneencaissement already exists for this produit_id and update accordingly
+
+                    if (ligneencaissementData.id) {
+                        // If exists, update the existing ligneencaissement
+                        await axios.put(
+                            `http://localhost:8000/api/ligneencaissement/${ligneencaissementData.id}`,
+                            ligneencaissementData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    } else {
+                        // If doesn't exist, create a new ligneencaissement
+                        await axios.post(
+                            "http://localhost:8000/api/ligneencaissement",
+                            ligneencaissementData,
+                            {
+                                withCredentials: true,
+                                headers: {
+                                    "X-CSRF-TOKEN": csrfToken,
+                                },
+                            }
+                        );
+                    }
+                }
+
+
+
+
+
+            } else {
+                // Créer un nouveau Encaissement
+                response = await axios.post(
+                    "http://localhost:8000/api/encaissements",
+                    EncaissementData
+                );
+                //console.log(response.data.devi)
+                const selectedData = banques_filtrees.map(
+                    (item, index) => {
+                        return {
+                            encaissements_id: response.data.encaissement.id,
+                            entrer_comptes_id: item.id,
+
+                        };
+                    }
+                );
+                console.log("selectedData", selectedData);
+                for (const ligneencaissementData of selectedData) {
+                    // Sinon, il s'agit d'une nouvelle ligne de Encaissement
+                    await axios.post(
+                        "http://localhost:8000/api/ligneencaissement",
+                        ligneencaissementData
+                    );
+                }
+
+            }
+            console.log("response of postEncaissement: ", response.data);
+
+
+
+
+
+            //setSelectedProductsData([]);
+            //fetchExistingligneencaissement();
+            closeForm();
+
+            // Afficher un message de succès à l'utilisateur
+            Swal.fire({
+                icon: "success",
+                title: "Encaissement ajoutée avec succès",
+                text: "Encaissement a été ajoutée avec succès.",
+            });
+        } catch (error) {
+            console.error("Erreur lors de la soumission des données :", error);
+
+            // Afficher un message d'erreur à l'utilisateur
+            Swal.fire({
+                icon: "error",
+                title: "Erreur !",
+                text: "Erreur !",
+            });
+        }
+        closeForm();
+    };
     //------------------------- banque EDIT---------------------//
 
     const handleEdit = async (banques) => {
@@ -1103,7 +1269,7 @@ const BanquesList = () => {
                                 >
                                     <IoIosPersonAdd style={{ fontSize: '24px' }} />
                                 </Button>
-                                <Button onClick={handleEncaisser} variant="success">
+                                <Button onClick={handleEncaisser} variant="success" disabled={selectedItems.length === 0}>
                                     Encaisser
                                 </Button>
                             </div>
@@ -1261,7 +1427,7 @@ const BanquesList = () => {
                         </div>
                         {showFormEncaissement && (
                             <div id="formContainer" className="mt-2" style={formContainerStyle}>
-                                <Form className="col row" onSubmit={handleSubmit}>
+                                <Form className="col row" onSubmit={handleSubmit1}>
                                     <Form.Label className="text-center m-2">
                                         <h5>{editingEncaissement ? 'Modifier encaissement' : 'Ajouter un encaissement'}</h5>
                                     </Form.Label>
@@ -1304,8 +1470,9 @@ const BanquesList = () => {
 
 
                                     <div className="col-md-12">
-                                        <Form.Group controlId="selectedFactureTable">
-                                            <Table striped bordered hover responsive>
+                                        <Form.Group controlId="selectedBanqueTable">
+                                            <Form.Label>Banques sélectionnées:</Form.Label>
+                                            <Table striped bordered hover>
                                                 <thead>
                                                 <tr>
                                                     <th>Client</th>
@@ -1314,32 +1481,36 @@ const BanquesList = () => {
                                                     <th>Date de Facture</th>
                                                     <th>N° de Chéque</th>
                                                     <th>Mode de Paiement</th>
-                                                    <th>Date</th>
+                                                    <th>date</th>
                                                     <th>Avance</th>
+                                                    <th>Reste</th>
                                                     <th>Status</th>
                                                     <th>Remarque</th>
                                                 </tr>
                                                 </thead>
                                                 <tbody>
-                                                {banques && banques.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
-                                                    const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
-                                                    const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+                                                {banques && banques
+                                                    .filter(banque => selectedItems.includes(banque.id))
+                                                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                                    .map((banque) => {
+                                                        const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+                                                        const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
 
-                                                    return (
-                                                        <tr key={banque.id}>
-                                                            <td>{facture?.client.raison_sociale}</td>
-                                                            <td>{facture?.reference}</td>
-                                                            <td>{facture?.total_ttc}</td>
-                                                            <td>{facture?.date}</td>
-                                                            <td>{banque.numero_cheque}</td>
-                                                            <td>{banque.mode_de_paiement}</td>
-                                                            <td>{banque.datee}</td>
-                                                            <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
-                                                            <td>{banque.Status}</td>
-                                                            <td>{banque.remarque}</td>
-                                                        </tr>
-                                                    );
-                                                })}
+                                                        return (
+                                                            <tr key={banque.id}>
+                                                                <td>{facture?.client.raison_sociale}</td>
+                                                                <td>{facture?.reference}</td>
+                                                                <td>{facture?.total_ttc}</td>
+                                                                <td>{facture?.date}</td>
+                                                                <td>{banque.numero_cheque}</td>
+                                                                <td>{banque.mode_de_paiement}</td>
+                                                                <td>{banque.datee}</td>
+                                                                <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
+                                                                <td>{banque.Status}</td>
+                                                                <td>{banque.remarque}</td>
+                                                            </tr>
+                                                        );
+                                                    })}
                                                 </tbody>
                                             </Table>
                                         </Form.Group>

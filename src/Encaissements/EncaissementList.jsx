@@ -1085,26 +1085,26 @@ const EncaissementList = () => {
                                                             </tr>
                                                             </thead>
                                                             <tbody>
-                                                            {Banque && Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((banque) => {
+                                                            {encaissements.ligne_encaissement.map((ligneEncaissement) =>  {
 
-                                                                const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
+                                                                const entreCompte = banques.find(entreCompt => entreCompt.id === ligneEncaissement.entrer_comptes_id);
+                                                                const ligneEntreeCompte = entreCompte.ligne_entrer_compte.find(ligne => ligne.client_id === entreCompte.client_id )
 
-
-                                                                const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+                                                                const facture = factures.find(facture => facture.id === ligneEntreeCompte?.id_facture);
 
                                                                 // Afficher les données de Banque et client s'il existe
                                                                 return (
-                                                                    <tr key={banque.id}>
-                                                                        <td>{facture.client.raison_sociale}</td>
+                                                                    <tr key={entreCompte.id}>
+                                                                        <td>{entreCompte.client_id}</td>
                                                                         <td>{facture.reference}</td>
                                                                         <td>{facture.total_ttc}</td>
                                                                         <td>{facture.date}</td>
-                                                                        <td>{banque.numero_cheque}</td>
-                                                                        <td>{banque.mode_de_paiement}</td>
-                                                                        <td>{banque.datee}</td>
-                                                                        <td>{ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
-                                                                        <td>{banque.Status}</td>
-                                                                        <td>{banque.remarque}</td>
+                                                                        <td>{entreCompte.numero_cheque}</td>
+                                                                        <td>{entreCompte.mode_de_paiement}</td>
+                                                                        <td>{entreCompte.datee}</td>
+                                                                        <td>{ligneEntreeCompte ? ligneEntreeCompte.avance : 'N/A'}</td>
+                                                                        <td>{entreCompte.Status}</td>
+                                                                        <td>{entreCompte.remarque}</td>
                                                                     </tr>
                                                                 );
                                                             })}
