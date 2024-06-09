@@ -68,7 +68,11 @@ const BanquesList = () => {
         date:{},
     });
     const [formContainerStyle, setFormContainerStyle] = useState({ right: "-100%", });
+    const [formContainerStyle1, setFormContainerStyle1] = useState({ right: "-100%", });
+
     const [tableContainerStyle, setTableContainerStyle] = useState({ marginRight: "0", });
+    const [tableContainerStyle1, setTableContainerStyle1] = useState({ marginRight: "0", });
+
     const tableHeaderStyle = {
         background: "#f2f2f2",
         padding: "10px",
@@ -1167,19 +1171,23 @@ const BanquesList = () => {
 
     const handleEncaisser =  () => {
         setShowFormEncaissement(true)
-        if (formContainerStyle.right === '-100%') {
-            setFormContainerStyle({ right: '0' });
+        if (formContainerStyle1.right === '-100%') {
+            setFormContainerStyle1({ right: '0' });
             setTableContainerStyle({ marginRight: '3000px' });
         } else {
 
-            setShowFormEncaissement(false)
+            closeForm();
         }
     };
 
     const closeForm = () => {
         setFilteredFactures([]);
         setFormContainerStyle({ right: '-100%' });
+        setFormContainerStyle1({ right: '-100%' });
+
         setTableContainerStyle({ marginRight: '0' });
+        setTableContainerStyle1({ marginRight: '0' });
+
         setShowForm(false); // Hide the form
         setFormData({ // Clear form data
             client_id: '',
@@ -1426,7 +1434,7 @@ const BanquesList = () => {
                             </Form>
                         </div>
                         {showFormEncaissement && (
-                            <div id="formContainer" className="mt-2" style={formContainerStyle}>
+                            <div id="formContainer" className="mt-2" style={formContainerStyle1}>
                                 <Form className="col row" onSubmit={handleSubmit1}>
                                     <Form.Label className="text-center m-2">
                                         <h5>{editingEncaissement ? 'Modifier encaissement' : 'Ajouter un encaissement'}</h5>

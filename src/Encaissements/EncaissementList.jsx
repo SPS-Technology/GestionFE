@@ -247,165 +247,172 @@ const EncaissementList = () => {
     };
     //------------------------- fournisseur print ---------------------//
 
-    const printEncaissements = (encaissements, Banque = [], ligneEntrerComptes = [], factures = [], page = 0, rowsPerPage = 10) => {
+    const printEncaissements = (encaissements, banques = [], factures = [], page = 0, rowsPerPage = 10) => {
         const printWindow = window.open("", "_blank", "");
         if (printWindow) {
             const newWindowDocument = printWindow.document;
             const title = "Reçu de Remise à l'Encaissement";
 
             newWindowDocument.write(`
-        <!DOCTYPE html>
-        <html lang="fr">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>${title}</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    margin: 20px;
-                }
-                h1 {
-                    text-align: center;
-                    margin-top: 30px;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-top: 20px;
-                }
-                th, td {
-                    border: 1px solid #000;
-                    padding: 8px;
-                    text-align: left;
-                }
-                .cheque {
-                    width: 100%;
-                    border: 2px solid #000;
-                    padding: 20px;
-                    margin-top: 20px;
-                    position: relative;
-                }
-                .cheque-line {
-                    display: flex;
-                    justify-content: space-between;
-                    margin-bottom: 10px;
-                }
-                .cheque-label {
-                    width: 30%;
-                }
-                .cheque-input {
-                    width: 65%;
-                    border-bottom: 1px solid #000;
-                }
-                .signature {
-                    margin-top: 30px;
-                    display: flex;
-                    justify-content: space-between;
-                }
-                .signature div {
-                    width: 45%;
-                    text-align: center;
-                    border-top: 1px solid #000;
-                }
-                .signature div:last-child {
-                    text-align: left;
-                }
-            </style>
-        </head>
-        <body>
-            <h1>${title} : CHEQUE</h1>
-            <p>Numéro de remise : ${encaissements.referencee}</p>
-            <table>
-                <tr>
-                    <td>Code agence du compte</td>
-                    <td></td>
-                    <td>Nom agence du compte</td>
-                   <td></td>
-                </tr>
-                <tr>
-                    <td>Code agence de remise</td>
-                    <td></td>
-                    <td>Nom agence de remise</td>
-                    <td></td>
-                </tr>
-                <tr>
-                    <td>N° de compte</td>
-                    <td>${encaissements.comptes_id}</td>
-                    <td>Client Remettant</td>
-                    <td>Amine</td>
-                </tr>
-                <tr>
-                    <td>Nombre de Valeurs</td>
-                    <td>1</td>
-                    <td>Montant total (DH)</td>
-                    <td>${encaissements.montant_total}</td>
-                </tr>
-                <tr>
-                    <td>Date et heure</td>
-                    <td>${encaissements.date_encaissement}</td>
-                </tr>
-            </table>
+    <!DOCTYPE html>
+    <html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>${title}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+            }
+            h1 {
+                text-align: center;
+                margin-top: 30px;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            th, td {
+                border: 1px solid #000;
+                padding: 8px;
+                text-align: left;
+            }
+            th {
+                background-color: #adb5bd;
+            }
+            .cheque {
+                width: 100%;
+                border: 2px solid #000;
+                padding: 20px;
+                margin-top: 20px;
+                position: relative;
+            }
+            .cheque-line {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+            .cheque-label {
+                width: 30%;
+            }
+            .cheque-input {
+                width: 65%;
+                border-bottom: 1px solid #000;
+            }
+            .signature {
+                margin-top: 30px;
+                display: flex;
+                justify-content: space-between;
+            }
+            .signature div {
+                width: 45%;
+                text-align: center;
+                border-top: 1px solid #000;
+            }
+            .signature div:last-child {
+                text-align: left;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>${title} : CHEQUE</h1>
+        <p>Numéro de remise : ${encaissements.referencee}</p>
+        <table>
+            <tr>
+                <td>Code agence du compte</td>
+                <td></td>
+                <td>Nom agence du compte</td>
+               <td></td>
+            </tr>
+            <tr>
+                <td>Code agence de remise</td>
+                <td></td>
+                <td>Nom agence de remise</td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>N° de compte</td>
+                <td>${encaissements.comptes_id}</td>
+                <td>Client Remettant</td>
+                <td>Amine</td>
+            </tr>
+            <tr>
+                <td>Nombre de Valeurs</td>
+                <td>1</td>
+                <td>Montant total (DH)</td>
+                <td>${encaissements.montant_total}</td>
+            </tr>
+            <tr>
+                <td>Date et heure</td>
+                <td>${encaissements.date_encaissement}</td>
+            </tr>
+        </table>
 
-             <h3>Détail Remise</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>client</th>
-                        <th>reference </th>
-                        <th>totalttc</th>
-                        <th>Date</th>
-                        <th>Numéro de Chèque</th>
-                        <th>Mode de Paiement</th>
-                        <th>Date</th>
-                        <th>Avance</th>
-                        <th>Status</th>
-                        <th>Remarque</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${Banque.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(banque => {
-                const ligneEntrerCompte = ligneEntrerComptes.find(ligne => ligne.client_id === banque.client_id);
-                const facture = factures.find(facture => facture.id === ligneEntrerCompte?.id_facture);
+         <h3>Détail Remise</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Client</th>
+                    <th>N° de Facture</th>
+                    <th>Total TTC</th>
+                    <th>Date de Facture</th>
+                    <th>N° de Chéque</th>
+                    <th>Mode de Paiement</th>
+                    <th>Date</th>
+                    <th>Avance</th>
+                    <th>Status</th>
+                    <th>Remarque</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${encaissements.ligne_encaissement.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map(ligneEncaissement => {
+                
+                    const entreCompte = banques.find(entreCompt => entreCompt.id === ligneEncaissement.entrer_comptes_id);
+                
+                    const ligneEntreeCompte = entreCompte ? entreCompte.ligne_entrer_compte.find(ligne => ligne.client_id === entreCompte.client_id) : null;
+               
+                    const facture = ligneEntreeCompte ? factures.find(facture => facture.id === ligneEntreeCompte.id_facture) : null;
 
-                return `
-                            <tr key="${banque.id}">
-                                <td>${facture ? facture.client.raison_sociale : 'N/A'}</td>
-                                <td>${facture ? facture.reference : 'N/A'}</td>
-                                <td>${facture ? facture.total_ttc : 'N/A'}</td>
-                                <td>${facture ? facture.date : 'N/A'}</td>
-                                <td>${banque.numero_cheque}</td>
-                                <td>${banque.mode_de_paiement}</td>
-                                <td>${banque.datee}</td>
-                                <td>${ligneEntrerCompte ? ligneEntrerCompte.avance : 'N/A'}</td>
-                                <td>${banque.Status}</td>
-                                <td>${banque.remarque}</td>
-                            </tr>
-                        `;
+                return entreCompte ? `
+                        <tr key="${entreCompte.id}">
+                            <td>${facture ? facture.client.raison_sociale : 'N/A'}</td>
+                            <td>${facture ? facture.reference : 'N/A'}</td>
+                            <td>${facture ? facture.total_ttc : 'N/A'}</td>
+                            <td>${facture ? facture.date : 'N/A'}</td>
+                            <td>${entreCompte.numero_cheque}</td>
+                            <td>${entreCompte.mode_de_paiement}</td>
+                            <td>${entreCompte.datee}</td>
+                            <td>${ligneEntreeCompte ? ligneEntreeCompte.avance : 'N/A'}</td>
+                            <td>${entreCompte.Status}</td>
+                            <td>${entreCompte.remarque}</td>
+                        </tr>
+                    ` : '';
             }).join('')}
-                </tbody>
-            </table>
+            </tbody>
+        </table>
 
-            <div class="signature">
-                <div>SIGNATURE CLIENT</div>
-                <div>
-                    SIGNATURE AGENCE
-                    <br><br>
-                   
-                </div>
+        <div class="signature">
+            <div>SIGNATURE CLIENT</div>
+            <div>
+                SIGNATURE AGENCE
+                <br><br>
+               
             </div>
-            
-            <script>
-                setTimeout(() => {
-                    window.print();
-                    window.onafterprint = function () {
-                        window.close();
-                    };
-                }, 1000);
-            </script>
-        </body>
-        </html>
-    `);
+        </div>
+        
+        <script>
+            setTimeout(() => {
+                window.print();
+                window.onafterprint = function () {
+                    window.close();
+                };
+            }, 1000);
+        </script>
+    </body>
+    </html>
+`);
 
             newWindowDocument.close();
         } else {
@@ -1095,7 +1102,7 @@ const EncaissementList = () => {
                                                                 // Afficher les données de Banque et client s'il existe
                                                                 return (
                                                                     <tr key={entreCompte.id}>
-                                                                        <td>{entreCompte.client_id}</td>
+                                                                        <td>{facture.client.raison_sociale}</td>
                                                                         <td>{facture.reference}</td>
                                                                         <td>{facture.total_ttc}</td>
                                                                         <td>{facture.date}</td>
